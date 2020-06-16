@@ -188,6 +188,11 @@ RSET:
             RUN_OFF(head + 4);
             WRITE("250 SMTPd greats you\r\n", 22);
 
+        } else if (match("EHLO", head)) {
+
+            RUN_OFF(head + 4);
+            WRITE("250 SMTPd greats you\r\n", 22);
+
         } else if (rev_path == NULL && match("MAIL FROM:", head)) {
 
             char* p;
