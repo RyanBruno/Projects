@@ -14,6 +14,9 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #define RUN_OFF(p) \
     char* z = p; \
     for (;; z++) { \
@@ -51,20 +54,37 @@ struct addrinfo ai_hints = {
 /* Random */
 int rfd;
 
-#define CLEANUP() { cleanup(fd); }
-void cleanup(int fd) { close(fd); exit(0); }
 char greeting[24] = "220 SMTP Service Ready\r\n";
 int greeting_len = 24;
 
-#define READ(b, s) read_some(fd, b, s)
-#define READ_F(f, b, s) read_some(f, b, s)
-char* read_some(int fd, char* b, size_t s)
+#define CLEANUP() { cleanup_a(f); }
+void cleanup_f(int* f) { close(*f); exit(0); }
+void cleanup_s(int* f)
+{
+    SSL* ssl = (SSL*) f;
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    EVP_cleanup();
+    close(SSL_get_fd(ssl));
+    exit(0);
+}
+
+/* Abstracted Reading and Writing */
+ssize_t read_r(int* f, void* b, size_t s) { read(*f, b, s); }
+ssize_t write_w(int* f, const void* b, size_t s) { write(*f, b, s); }
+ssize_t read_s(int* f, void* b, size_t s) { SSL_read((SSL*) f, b, s); }
+ssize_t write_s(int* f, const void* b, size_t s) { SSL_write((SSL*) f, b, s); }
+
+#define READ(b, s) read_some(f, read_a, b, s)
+#define READ_F(f, b, s) read_some(&f, read_r, b, s)
+char* read_some(int* f, ssize_t(*read_a)(int*, void*, size_t), char* b, size_t s)
 {
     int r;
 
     for (s--;;) {
 
-        if ((r = read(fd, b, s)) == 0)
+        errno = 0;
+        if ((r = read_a(f, b, s)) == 0)
             /* Either EOF or socket closed */
             break;
 
@@ -83,13 +103,13 @@ char* read_some(int fd, char* b, size_t s)
     return b;
 }
 
-#define WRITE(b, s) write_all(fd, b, s)
-#define WRITE_F(f, b, s) write_all(f, b, s)
-void write_all(int fd, const char* b, size_t s)
+#define WRITE(b, s) write_all(f, write_a, cleanup_a, b, s)
+#define WRITE_F(f, b, s) write_all(&f, write_w, cleanup_a, b, s)
+void write_all(int* f, ssize_t(*write_a)(int*, const void*, size_t), void(*cleanup_a)(int*), const char* b, size_t s)
 {
     for (int w;;) {
 
-        w = write(fd, b, s);
+        w = write_a(f, b, s);
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
@@ -103,8 +123,40 @@ void write_all(int fd, const char* b, size_t s)
     }
 }
 
-#define SAVE(p) save_path(p, &head, fd, buf, sizeof(buf))
-char* save_path(char* ptr, char** head, int fd, char* buf, size_t s)
+SSL *starttls(int fd)
+{
+    SSL_load_error_strings();
+    OpenSSL_add_ssl_algorithms();
+
+    SSL_CTX *ctx;
+    SSL *ssl;
+
+    if ((ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
+        ERR_print_errors_fp(stderr);
+        exit(0);
+    }
+    SSL_CTX_set_ecdh_auto(ctx, 1);
+
+    /* Set the key and cert */
+    if (SSL_CTX_use_certificate_chain_file(ctx, "../fullchain.pem") <= 0 ||
+        SSL_CTX_use_PrivateKey_file(ctx, "../key.pem", SSL_FILETYPE_PEM) <= 0 )
+    {
+        ERR_print_errors_fp(stderr);
+        return NULL;
+    }
+
+    ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, fd);
+
+    /* Wait for client to initiate a handshake */
+    if (SSL_accept(ssl) <= 0)
+        return NULL;
+
+    return ssl;
+}
+
+#define SAVE(p) save_path(p, &head, f, read_a, cleanup_a, buf, sizeof(buf))
+char* save_path(char* ptr, char** head, int* f, ssize_t(*read_a)(int*, void*, size_t), void(*cleanup_a)(int*), char* buf, size_t s)
 {
     /* Find the start */
     for (; *ptr == '<' || *ptr == ' '; ptr++) { }
@@ -157,15 +209,25 @@ int smtp(int fd, struct sockaddr_in* pa)
     char path[197];
     char buf[12800];
 
+    /* Read/Write Abstractions */
+    int* f;
+    ssize_t(*read_a)(int*, void*, size_t);
+    ssize_t(*write_a)(int*, const void*, size_t);
+    void(*cleanup_a)(int*);
+
     /* Reverse loopup addr */
     if (getnameinfo((struct sockaddr*) pa, sizeof(struct sockaddr_in),
                 buf, 64, NULL, 0, 0))
         return 0;
 
     /* Greeting */
-    WRITE(greeting, greeting_len);
+    WRITE_F(fd, greeting, greeting_len);
 
     host = buf;
+    f = &fd;
+    read_a = read_r;
+    write_a = write_w;
+    cleanup_a = cleanup_f;
 RSET:
     head = buf + strlen(host) + 1;
     rev_path = NULL;
@@ -188,10 +250,25 @@ RSET:
             RUN_OFF(head + 4);
             WRITE("250 SMTPd greats you\r\n", 22);
 
+        } else if (*f == fd && match("EHLO", head)) {
+
+            RUN_OFF(head + 4);
+            WRITE("250-SMTPd greats you\r\n", 22);
+            WRITE("250 STARTTLS\r\n", 14);
+
         } else if (match("EHLO", head)) {
 
             RUN_OFF(head + 4);
             WRITE("250 SMTPd greats you\r\n", 22);
+
+        } else if (*f == fd && match("STARTTLS", head)) {
+
+            RUN_OFF(head + 8);
+            WRITE("220 Go ahead\r\n", 14);
+            f = (int*) starttls(fd);
+            read_a = read_s;
+            write_a = write_s;
+            cleanup_a = cleanup_s;
 
         } else if (rev_path == NULL && match("MAIL FROM:", head)) {
 
