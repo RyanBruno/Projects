@@ -1,0 +1,135 @@
+---
+output: pdf_document
+---
+
+## Stat2 -- Chapter 9 part 2 Homework
+
+### Ryan Bruno
+
+```{r setup, echo=FALSE, message=FALSE}
+library(tidyverse)
+
+sirds <- read.csv("SIRDS.csv", header = TRUE);
+flight <- read.csv("FlightResponse.csv", header = TRUE);
+election <- read.csv("Election16.csv", header = TRUE);
+levee <- read.csv("LeveeFailures.csv", header = TRUE);
+
+dump <- function(mod) {
+    print(summary(mod))
+    print(mod$coefficients[2])
+    odds <- exp(mod$coefficients[2])
+    print(odds)
+    print(odds / (1 + odds))
+}
+```
+
+### 1
+
+##### a
+
+$I = -3.6 + 1.714BirthWeight$
+
+For evey pound increase in BodyWeight the odds of surviale increases by 5.701.
+
+##### b
+
+The birthweight p-value has a value of 0.00262 so it is signicantly different then zero and we can reject the null hypothesis.
+
+```{r one, echo = FALSE, eval = FALSE}
+glm(survival ~ birthweight, data = sirds, family = "binomial") %>% summary()
+
+```
+
+### 9.34
+
+##### a
+
+The table below shows that there is a relationship between LatCat and Flight. The increase in probability at each level decreases as LatCat goes from one to four.
+
+```{r nine34a, echo = FALSE, eval = FALSE}
+flight <- flight %>%
+    mutate(one = ifelse(LatCat == 1, 1, 0),
+           two = ifelse(LatCat == 2, 1, 0),
+           three = ifelse(LatCat == 3, 1, 0),
+           four = ifelse(LatCat == 4, 1, 0))
+
+glm(Flight ~ one, data = flight, family = "binomial") %>% dump()
+glm(Flight ~ two, data = flight, family = "binomial") %>% dump()
+glm(Flight ~ three, data = flight, family = "binomial") %>% dump()
+glm(Flight ~ four, data = flight, family = "binomial") %>% dump()
+```
+
+|           |   One   |   two   |  three  |  four   |
+|----------:|---------|---------|---------|---------|
+| log(odds) | 3.1003  | -1.4124 | -3.1309 | -4.0462 |
+| odds      | 22.2046 | 0.2435  | 0.0437  | 0.0174  |
+| $\pi$     | 0.9568  | 0.1958  | 0.0418  | 0.0172  |
+
+##### b
+
+Model: $I=4.0518-2.2448LatCat$
+
+It does confirm my suspicion in part a as the $\beta_{1}$ is negative and has a significant p-value.
+
+```{r nine34b, echo = FALSE, eval = FALSE}
+glm(Flight ~ LatCat, data = flight, family = "binomial") %>% summary()
+```
+
+### 9.36
+
+Model: $I = 11.879 - 0.0001785Income + 0.0663HS - 0.2754BA - 0.2520DemRep$
+
+The most (and only) significant variable is Dem.Rep all others are not significant. HS is least significant.
+
+```{r nine36, echo = FALSE, eval = FALSE}
+glm(TrumpWin ~ Income + HS + BA + Dem.Rep, data = election, family = "binomial") %>% summary()
+```
+
+### 9.38
+
+##### a
+
+From Income to IncomeTh the $\beta_{1}$ changed by a factor of one thousand. From -0.0001967 to -0.1967. The probability changed from 0.4999 to 0.451
+
+##### b
+
+Odds: 0.8214 or $8,214/10,000$
+
+Meaning we expect that for every thousand dollar increase in income the odds increases by 0.8214
+
+##### c
+
+$(0.7363, 0.9164)$
+
+
+```{r nine38, echo = FALSE, eval = FALSE}
+election %>%
+    mutate(IncomeTh = Income / 1000) %>%
+    glm(data = ., TrumpWin ~ IncomeTh, family = "binomial") %>%
+    dump()
+
+
+0.8215 + 2.00957524 * exp(0.05582)
+0.8215 - 2.00957524 * exp(0.05582)
+```
+
+### 9.40
+
+##### a
+
+$H_{0}$: $\beta_{1}=0$
+
+##### b
+
+As ConstrictionFactor goes up the probability of a LeveeFailure does down. We know this due to the negative $\beta_{1}$ value which decrease the log(odds). As log(odds) goes down so does odds and probability.
+
+##### c
+
+$-0.691 \pm 1.989 * 0.346 = (-0.0028, -1.3792)$
+
+```{r nine40, echo = FALSE, eval = FALSE}
+glm(data = levee, Failure ~ ConstrictionFactor, family = "binomial") %>%
+    dump()
+-0.691 + 1.989 * 0.346 
+-0.691 - 1.989 * 0.346 
+```

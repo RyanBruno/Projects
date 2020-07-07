@@ -1,0 +1,53 @@
+---
+title: "Ryan Bruno"
+author: "Homework #9 - Stat2 - ex03.52"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+
+load("ex0352LewyB2.rda", verbose = FALSE)
+#ex0352LewyB2 %>% mutate(interaction = levels(ex0352LewyB2$Type) <- c(0, 1))
+
+data <- ex0352LewyB2 %>%
+    mutate(indicator = recode(ex0352LewyB2$Type, "DLB"=0, "DLB/AD"=1))
+data <- data %>%
+    mutate(interaction = indicator * APC)
+#data %>% glimpse()
+```
+
+# EX03.52:
+
+### Part A:
+
+$MMSE = -0.5846 + 2.3176 APC - 1.8513 Type - 0.9732 (Type * APC)$
+
+Type => 1 for DLB/AD
+
+### Part B:
+
+$H_{0}: \beta_{3} = 0$
+
+t-value: -0.766
+
+p-value: 0.4490
+
+Since the p-value is so high we cannot reject our null hypothesis and we can remove it from the model.
+
+### Part C:
+
+Model: $MMSE = -1.6032 - 0.8328 Type + 1.3444 (Type * APC)$
+
+F-Statistics: 6.815
+
+p-value: 0.00309
+
+
+```{r model1, echo=FALSE}
+model_1 <- lm(MMSE ~ APC + indicator + interaction, data=data)
+#summary(model_1)
+model_2 <- lm(MMSE ~ indicator + interaction, data=data)
+#summary(model_2)
+```

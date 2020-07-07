@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+\usepackage[margin={1.25in,1.25in}]{geometry}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage[
+    backend=biber,
+    style=apa,
+    url=false, 
+    doi=false,
+    eprint=false
+]{biblatex}
+
+\usepackage{parskip}
+
+\title{Experiment Design (Draft)}
+\author{Ryan Bruno}
+\date{\today}
+
+%\addbibresource{bib.bib}
+
+\renewcommand{\maketitle}{
+    \begin{center}
+        \Huge\textbf{\thetitle}
+    \end{center}
+    \begin{multicols}{2}
+        \begin{flushright}
+        By: \theauthor
+        \end{flushright}
+
+        \columnbreak
+        
+        \thedate
+    \end{multicols}
+}
+
+\begin{document}
+
+\maketitle
+
+\section*{Goal}
+
+To acquire the knowledge of whether or not the use of an Or-Set in a data distributed environment provides the guarantees listed in the objectives when compared to the controlled trial.
+
+\section*{Treatments}
+
+In order to accomplish the goal a single policy (a merging algorithm) must be tested with different variables in the form of different situations of concurrent data modification listed below:
+
+    - No concurrent Modifications
+
+    - Concurrent additions of different items
+
+    - Concurrent additions of the same item
+
+    - Concurrent modification of the same item
+
+    - Concurrent deletion and deletion then addition of the same item
+
+\section*{Trial}
+
+A complete trial would consist of all treatments that include the above listed variables using either the Or-Set merging algorithm or the control.
+
+\section*{Control Trial}
+
+In order to show in benefits of an Or-Set it's trial will be compared with a control trial. The set used in the control trial will keep no meta-data about items but will simply add and remove items from a local set. When nodes merge the resulting set will be a simple set union of both the node's sets.
+
+\section*{Protocol}
+
+Each trial will follow the following steps:
+
+    1. Two nodes are created that are connection via a network connection and initially hold no data.
+
+    2. Both nodes are given the exact same preset, random data.
+
+    3. The two nodes are disconnected from each other such that they cannot share any information.
+
+    4. According to the treatments data is concurrently changed differently on each node.
+
+    5. The nodes are reconnected and may share data then preform the merging algorithm in the current treatment.
+
+    6. The data on each node is inspected to ensure it meets the requirements in the objective.
+
+\section*{Trial Run-Time}
+
+We can estimate the run time of a single trial to be about one person hour.
+
+\end{document}

@@ -1,0 +1,140 @@
+---
+output: pdf_document
+---
+
+## Stat2 -- Chapter 9 Homework
+
+### Ryan Bruno
+
+```{r setup, echo=FALSE, message=FALSE}
+library(tidyverse)
+
+#data <- read.csv("Cars.csv", header = TRUE);
+load("ex09-20WlkDog.Rda", verbose=FALSE);
+launch = read.csv("LAUNCH.csv", header = TRUE);
+```
+
+### 9.4a
+
+Odds: $0.8/0.2 = 4/1$
+
+### 9.6ab
+
+#### a
+
+Probability: $1/4$
+
+#### b
+
+Probability: $5/7$
+
+### 9.8
+
+Exposure: $6/4$
+
+No Exposure: $1/99$
+
+### 9.10
+
+
+#### a
+
+The midpoint shifts from $2/3$ to $2$.
+
+#### b
+
+The midpoint shifts from $2/3$ to $1 2/3$.
+
+#### c
+
+The slope is now negative.
+
+### 9.20ac
+
+#### a
+
+Logit: $Y = -1.883 + 0.1745 Steps$
+
+Probability: $\pi = e^{-1.883 + 0.1745 Steps} / 1 + e^{-1.883 + 0.1745 Steps}$
+
+#### b
+
+Odds Radtio: 1.19
+
+An increase in 1,000 steps increases the odds of going for walk by 1.19.
+
+#### c
+
+$Y = -1.883 + 0.1745 (4)$
+
+$Y = -1.185$
+
+$\pi = e^{-1.185} / 1 + e^{-1.185}$
+
+$\pi = 0.3057 / 1.3057 = 0.234$
+
+### Launch Problem
+
+#### a
+
+Explanatory: Temperature
+
+Response: Success
+
+#### b
+
+Looking at the plot below it is evident that success is related to temperature.
+
+```{r launch1, fig.height = 3, fig.width = 4, echo = FALSE}
+
+ggplot(launch, aes(x = Temperature, y = Success)) +
+   geom_point()
+
+```
+
+#### c
+
+Plot with regression line.
+
+```{r launch2, echo = FALSE, eval = FALSE}
+summary(lm(Success ~ Temperature, data = launch))
+```
+```{r launch3, fig.height = 3, fig.width = 4, echo = FALSE}
+
+ggplot(launch, aes(x = Temperature, y = Success)) +
+   geom_abline(slope = 0.03738, intercept = -1.90476) +
+   geom_point()
+
+```
+
+#### d
+
+Logit: $Y = -15.04 + 0.232 Temperature$
+
+#### e 
+
+31: $Y = -15.04 + 0.232 (31)$
+
+$Y = -7.848$
+
+$\pi = 0.00039 / 1.00039$
+
+50: $Y = -15.04 + 0.232 (50)$
+
+$Y = -3.44$
+
+$\pi = 0.032 / 1.032$
+
+75: $Y = -15.04 + 0.232 (75)$
+
+$Y = 2.36$
+
+$\pi = 10.59 / 11.59$
+
+#### f
+
+
+$ln(odds) = -15.04 + 0.232 (59)$
+$odds = 0.2587 or about 1/4$
+
+This means with 5 trials at 59 degrees about one of them will be a success and 4 will not.

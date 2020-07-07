@@ -1,0 +1,58 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+\usepackage[margin={.95in,.75in}]{geometry}
+\usepackage{titlesec}
+\usepackage{titling}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\renewcommand{\baselinestretch}{1.5}
+
+\title{AI Project Worksheet}
+\author{Ryan Bruno}
+\date{\today}
+
+\titleformat {\section} % command
+[display] % shape
+{\bfseries} % format
+{\thesection} % label
+{0.5ex} % sep
+{\vspace{1ex}} % before-code
+[\vspace{.5ex}] % after-code
+
+\title{Homework 7}
+\author{Ryan Bruno}
+\date{December 5, 2019}
+
+\renewcommand{\maketitle}{
+\begin{multicols}{2}
+
+\begin{flushleft}
+\Large\thetitle
+\end{flushleft}
+
+\columnbreak
+
+\begin{flushright}
+\theauthor
+
+\thedate
+\end{flushright}
+
+\end{multicols}
+}
+
+\begin{document}
+
+\Large{Ryan Bruno}
+
+To demonstrate, using a Conflict-free Replicated Data Type (CRDT), that the union of two sets will commute in a data distriburd enviroment with a varying number of nodes subject to the following governing propositions:
+
+\begin{itemize}
+\item nodes are allowed to make changes to their copy of the data without other nodes being available.
+\item concurrent writes and updates will never be lost.
+\item limited to 1.5 person weeks over 12 weeks.
+\end{itemize}
+
+\end{document}

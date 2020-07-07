@@ -1,0 +1,87 @@
+---
+title: "Ryan Bruno"
+author: "Homework #5 - Stat2 - ex02.36"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+
+load("ex02-36ChldSpk.Rda")
+
+```
+
+# Problem 2.36:
+
+## Part a:
+
+I would expect there to be a relationship between Gesell score and speaking age because both are measurements of cognition in children. For the Gesell score, a higher number is better while for speaking age a lower score is better therefore the relationship should be negative.
+
+## Part b:
+
+```{r, fig.height=4, fig.width=4, echo=FALSE}
+
+ggplot(data, aes(x = Gesell, y = Age)) +
+    geom_point() + 
+    geom_smooth(method='lm', formula= y~x, se= FALSE)
+
+```
+
+Based on the plot there does appear to be evidence that Gesell scores can predict speaking age, however, it also shows the plot has a large amount of influential points.
+
+## Part c:
+
+$r^{2}$ = 0.4099
+
+$H_{0}: \beta = 0$
+
+t = $\displaystyle \frac{sqrt(r^{2} * 19)}{sqrt(1 - r^{2})} = 3.633$
+
+OR
+
+$\beta = -0.3638$
+
+SE = 0.1001
+
+$t = \displaystyle \frac{\beta}{SE} = -3.633$
+
+P-Value = 0.00177
+
+Since our p-value is small we can reject our null hypothesis and state the relationship between Gesell scores and speaking age is significant.
+
+## Part d:
+
+The observation with the largest residual is child number 19. With a Gesell score of 121 we expect the child's speaking age to be 4.4 months but observed 17 months (a residual of 12.6).
+
+# Problem 2.40:
+
+## Part a:
+
+To consutruct a confidence interval we start by getting a y-hat for the list price $y = \beta_{0} + \beta_{1}x = 292,774$.
+
+$C.I. = y \pm t * SE_{\mu} = (281,833-283,716)$
+
+## Part b:
+
+Prediction Interval:
+
+$P.I. = y \pm t * SE_{y} = (269,537-296,011)$
+
+## Part c:
+
+The confidence interval states with a 90% confidence we expect the mean sales price for the given list price of \$300,000 to be between \$281,833 and \$283,716. The Prediction interval says if there is a single house with a list price of \$300,000 we expect with a 90% confidence to be between \$269,537 and \$296,011.
+
+
+```{r, echo=FALSE}
+
+#summary(lm(data$Age~data$Gesell))$r.squared
+#summary(lm(data$Age~data$Gesell))
+#load("ex02-40Grinnell.Rda")
+#model <- lm(SalePrice~ListPrice, data = data)
+#summary(model)
+#predict(model, data.frame(ListPrice = c(300000)), interval="confidence", level=0.90)
+#predict(model, data.frame(ListPrice = c(300000)), interval="predict", level=0.90)
+
+
+```

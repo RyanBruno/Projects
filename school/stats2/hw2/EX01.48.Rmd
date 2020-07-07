@@ -1,0 +1,74 @@
+---
+title: "Ryan Bruno"
+author: "Homework #2 - Stat2 - ex01.48"
+output: html_document
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+
+load("ex01-48MetRate.Rda")
+
+reg_1 <- lm(data$Mrate~data$BodySize)
+reg_2 <- lm(data$LogMrate~data$LogBodySize)
+
+data$predicted_1 <- predict(reg_1, data.frame(data$BodySize))
+data$predicted_2 <- predict(reg_2, data.frame(data$LogBodySize))
+
+data <- data %>%
+  mutate(Residual_Direct = predicted_1 - Mrate)
+
+
+data <- data %>%
+  mutate(Residual_Log = predicted_2 - LogMrate)
+
+```
+
+## Part A
+
+There is a problem when comparing BodySize and Mrate directly using a linear model (shown below). While it does appear to be linear it's spread is not uniform. This is shown when comparing BodySize to residual (also shown below).
+
+```{r,fig.height=3, fig.width=3, fig.show="hold", echo=FALSE}
+
+ggplot(data, mapping = aes(x = BodySize, y = Mrate)) + 
+    geom_point()
+
+ggplot(data, mapping = aes(x = BodySize, y = Residual_Direct)) + 
+    geom_point()
+```
+
+However, if we try to use either LogBodySize (on the left) or LogMrate (on the right) alone we do not end up with a linear graph.
+
+```{r,fig.height=3, fig.width=3, fig.show="hold", echo=FALSE}
+
+ggplot(data, mapping = aes(x = LogBodySize, y = Mrate)) + 
+    geom_point()
+
+ggplot(data, mapping = aes(x = BodySize, y = LogMrate)) + 
+    geom_point()
+```
+
+The solution is shown when we plot LogBodySize against LogMrate. The resulting model is roughly linear and shows a uniform speard.
+
+```{r,fig.height=3, fig.width=3, fig.show="hold", echo=FALSE}
+
+ggplot(data, mapping = aes(x = LogBodySize, y = LogMrate)) + 
+    geom_point()
+
+ggplot(data, mapping = aes(x = LogBodySize, y = Residual_Log)) + 
+    geom_point()
+
+```
+
+Final model: **LogMrate = 1.3066 + (0.9164 * LogBodySize)**
+
+## Part B
+Below is the work for predicting a caterpillar with a body size of 1 gram:
+
+| Step                            | Work                     |
+|---------------------------------|--------------------------|
+| First take the log of BodySize  | log(1) = 0               |
+| Then multiply                   | 0 * 0.9164 = 0           |
+| Then add                        | 0 + 1.3066 = 1.3066      |
+| Lastly raise to the power of 10 | 10 ^ 1.3066 = 20.26      |

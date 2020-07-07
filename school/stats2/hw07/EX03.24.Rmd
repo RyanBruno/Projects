@@ -1,0 +1,63 @@
+---
+title: "Ryan Bruno"
+author: "Homework #7 - Stat2 - ex03.24"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+
+load("ex0324LewyB2.rda", verbose = FALSE)
+```
+
+# Part A:
+```{r plot, echo=FALSE}
+ggplot(ex0324LewyB2, aes(x = APC, y = MMSE, color = Type)) + 
+    geom_point()
+```
+
+By looking at the plot above we can see there is a slight difference in slope and intercept between those with type DLB and those with type DLB/AD.
+
+# Part B:
+```{r model1, echo=FALSE}
+model_1 <- lm(ex0324LewyB2$MMSE~ex0324LewyB2$APC)
+#summary(model_1)
+```
+
+Model: $MMSE = -1.4214 + 1.7462APC$
+
+Test:
+
+$H_{0}: \beta = 0$
+F-Value = 15.74
+P-Value = 0.0003208
+
+There is a linear relationship between these two variables because of the low p-value we can reject $H_{0}$
+
+# Part C:
+```{r model2, echo=FALSE}
+data2 <- ex0324LewyB2 %>%
+    filter(Type == "DLB")
+model_2 <- lm(data2$MMSE~data2$APC)
+data3 <- ex0324LewyB2 %>%
+    filter(Type == "DLB/AD")
+model_3 <- lm(data3$MMSE~data3$APC)
+
+#summary(model_2)
+#summary(model_3)
+```
+
+Fitted Equation for Type **DLB**:
+
+Model: $MMSE = -0.5846 + 2.3176APC$
+
+Fitted Equation for Type **DLB/AD**:
+
+Model: $MMSE = -2.4359 + 1.3444APC$
+
+Combined Equation:
+
+$MMSE = -2.4359 + 1.3444APC + 1.8513I + 0.9732(I)(APC)$
+
+I => (DLB = 1) (DLB/AD  = 0)
