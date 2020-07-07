@@ -82,6 +82,19 @@ char* read_some(int* f, ssize_t(*read_a)(int*, void*, size_t), char* b, size_t s
     int r;
 
     for (s--;;) {
+        int fd = *f;
+        if (read_a == read_s) { SSL_get_fd((SSL*) f); }
+
+        fd_set fds; FD_ZERO(&fds); FD_SET(fd, &fds);
+
+        /* 20 Second timeout */
+        struct timeval timeout;
+        timeout.tv_sec = 20;
+        timeout.tv_usec = 0;
+
+        if (select(fd + 1, &fds, NULL, NULL, &timeout) < 1)
+            /* Timeout or error */
+            break;
 
         errno = 0;
         if ((r = read_a(f, b, s)) == 0)
