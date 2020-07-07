@@ -153,18 +153,13 @@ cleanup:
     memcpy(head - 1, "\0", 2);
 }
 
-int match(const char* cmd, char* head, int fd, char* buf, size_t s)
+int match(const char* cmd, char* head)
 {
     for (; *cmd != '\0'; cmd++, head++) {
+        char c = *head;
 
-        if (*head == '\0')
-            read_some(fd, head, s - (head - buf));
-
-        if (*head == '\0')
-            cleanup(fd);
-
-        if (*head != *cmd)
-            return 0;
+        if (c > 96) c -= 32;
+        if (c != *cmd) return 0;
     }
     return 1;
 }
@@ -173,7 +168,7 @@ void pop3(int fd)
 {
 
     /* Buffers */
-    char buf[1024];
+    char buf[4096];
     char* head;
 
     /* Register(s) */
@@ -188,8 +183,13 @@ void pop3(int fd)
     /* AUTHORIZATION */
     do {
         *head = '\0';
-        if (maildrop == NULL &&
-                match("USER ", head, fd, buf, sizeof(buf))) {
+        /* Prelaod the command */
+        for (char* p = head; *p != ' ' && *p != '\n'; p++) {
+            if (*p == '\0') read_some(fd, head, sizeof(buf) - (head - buf));
+            if (*p == '\0') cleanup(fd);
+        }
+
+        if (maildrop == NULL && match("USER ", head)) {
             char* p;
 
             /* Save the maildrop */
@@ -217,8 +217,7 @@ void pop3(int fd)
             /* For Security USER always returns +OK */
             write_all(fd, "+OK\r\n", 5);
 
-        } else if (maildrop != NULL &&
-                match("PASS ", head, fd, buf, sizeof(buf))) {
+        } else if (maildrop != NULL && match("PASS ", head)) {
 
             struct stat st;
             char* pass = head + 5;
@@ -242,7 +241,7 @@ void pop3(int fd)
 
             break;
 
-        } else if (match("QUIT", head, fd, buf, sizeof(buf))) {
+        } else if (match("QUIT", head)) {
 
             write_all(fd, "+OK\r\n", 5);
             cleanup(fd);
@@ -257,8 +256,13 @@ void pop3(int fd)
     /* TRANSACTION */
     do {
         *head = '\0';
-        if (0) {
-        } else if (match("STAT", head, fd, buf, sizeof(buf))) {
+        /* Prelaod the command */
+        for (char* p = head; *p != ' ' && *p != '\n'; p++) {
+            if (*p == '\0') read_some(fd, head, sizeof(buf) - (head - buf));
+            if (*p == '\0') cleanup(fd);
+        }
+
+        if (match("STAT", head)) {
             int num = 0;
             int octets = 0;
             int len;
@@ -277,8 +281,7 @@ void pop3(int fd)
             len = sprintf(head, "+OK %d %d\r\n", num, octets);
             write_all(fd, head, len);
 
-        } else if (match("LIST ", head, fd, buf, sizeof(buf)) ||
-                   match("UIDL ", head, fd, buf, sizeof(buf))) {
+        } else if (match("LIST ", head) || match("UIDL ", head)) {
 
             char* p;
             int len;
@@ -294,8 +297,7 @@ void pop3(int fd)
 
             write_all(fd, head, len);
 
-        } else if (match("LIST", head, fd, buf, sizeof(buf)) ||
-                   match("UIDL", head, fd, buf, sizeof(buf))) {
+        } else if (match("LIST", head) || match("UIDL", head)) {
 
             int len;
             struct mail_t* m;
@@ -303,7 +305,7 @@ void pop3(int fd)
             int l = *head == 'L';
 
             write_all(fd, "+OK\r\n", 5);
-
+            RUN_OFF(head + 4);
 
             /* List all mail in the maildrop with num and size */
             for (n = 1, m = md_head; m != NULL; n++, m = m->m_next) {
@@ -318,11 +320,9 @@ void pop3(int fd)
                 write_all(fd, head, len);
             }
 
-            RUN_OFF(head + 4);
             write_all(fd, ".\r\n", 3);
 
-        } else if (match("RETR", head, fd, buf, sizeof(buf)) ||
-                   match("TOP ", head, fd, buf, sizeof(buf))) {
+        } else if (match("RETR", head) || match("TOP ", head)) {
 
             char* p;
             int ffd;
@@ -363,7 +363,7 @@ void pop3(int fd)
 
             write_all(fd, "\r\n.\r\n", 5);
 
-        } else if (match("DELE ", head, fd, buf, sizeof(buf))) {
+        } else if (match("DELE ", head)) {
             char* p;
 
             FIND_MAIL(head + 5, p);
@@ -374,12 +374,12 @@ void pop3(int fd)
             RUN_OFF(head + 5);
             write_all(fd, "+OK\r\n", 5);
 
-        } else if (match("NOOP", head, fd, buf, sizeof(buf))) {
+        } else if (match("NOOP", head)) {
 
             RUN_OFF(head + 4);
             write_all(fd, "+OK\r\n", 5);
 
-        } else if (match("RSET", head, fd, buf, sizeof(buf))) {
+        } else if (match("RSET", head)) {
             struct mail_t* m;
 
             /* Mark all mail undeleted */
@@ -388,7 +388,7 @@ void pop3(int fd)
             RUN_OFF(head + 4);
             write_all(fd, "+OK\r\n", 5);
 
-        } else if (match("QUIT", head, fd, buf, sizeof(buf))) {
+        } else if (match("QUIT", head)) {
             struct mail_t* m;
 
             FOR_EACH(m) {
