@@ -53,6 +53,8 @@ int rfd;
 
 #define CLEANUP() { cleanup(fd); }
 void cleanup(int fd) { close(fd); exit(0); }
+char greeting[24] = "220 SMTP Service Ready\r\n";
+int greeting_len = 24;
 
 #define READ(b, s) read_some(fd, b, s)
 #define READ_F(f, b, s) read_some(f, b, s)
@@ -153,7 +155,7 @@ int smtp(int fd, struct sockaddr_in* pa)
     /* Buffers */
     char* head;
     char path[197];
-    char buf[12992];
+    char buf[12800];
 
     /* Reverse loopup addr */
     if (getnameinfo((struct sockaddr*) pa, sizeof(struct sockaddr_in),
@@ -161,7 +163,7 @@ int smtp(int fd, struct sockaddr_in* pa)
         return 0;
 
     /* Greeting */
-    WRITE("220 SMTP Service Ready\r\n", 24);
+    WRITE(greeting, greeting_len);
 
     host = buf;
 RSET:
@@ -173,13 +175,11 @@ RSET:
 
     do {
         *head = '\0';
-        /* Prelaod the firsrt word */
 
+        /* Prelaod the command */
         for (char* p = head; *p != ':' && *p != '\n'; p++) {
-            if (*p == '\0')
-                READ(p, END_GUARD(buf) - head);
-            if (*p == '\0')
-                return 0;
+            if (*p == '\0') READ(p, END_GUARD(buf) - head);
+            if (*p == '\0') CLEANUP();
         }
 
         if (match("HELO", head)) {
@@ -408,6 +408,9 @@ int main(int argc, char **argv)
         case 'g':
             gid = *++argv;
             break;
+        case 'o':
+            greeting_len = snprintf(greeting, greeting_len, "220 %s\r\n", *++argv);
+            break;
         default:
             goto help;
         }
@@ -455,6 +458,6 @@ int main(int argc, char **argv)
     return -1;
 
 help:
-    printf("smtpd -h <host> -p <port>\n");
+    printf("smtpd -h <host> -p <port> -u <uid> -g <gid> -o <hostname>\n");
     return -1;
 }
