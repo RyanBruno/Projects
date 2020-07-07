@@ -64,6 +64,17 @@ char* read_some(int fd, char* b, size_t s)
 
     for (s--;;) {
 
+        fd_set fds; FD_ZERO(&fds); FD_SET(fd, &fds);
+
+        /* 20 Second timeout */
+        struct timeval timeout;
+        timeout.tv_sec = 20;
+        timeout.tv_usec = 0;
+
+        if (select(fd + 1, &fds, NULL, NULL, &timeout) < 1)
+            /* Timeout or error */
+            break;
+
         if ((r = read(fd, b, s)) == 0)
             /* Either EOF or socket closed */
             break;
