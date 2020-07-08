@@ -415,7 +415,8 @@ void pop3(int fd)
             }
 
             write_all(fd, "+OK\r\n", 5);
-            return;
+            cleanup(fd);
+
         } else {
             RUN_OFF(head);
             write_all(fd, "-ERR\r\n", 6);
