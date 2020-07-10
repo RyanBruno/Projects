@@ -75,6 +75,18 @@ char* read_some(int fd, char* b, size_t s)
     return b;
 }
 
+long int read_reply_code(int fd, char* b, size_t s)
+{
+    read_some(fd, b, s);
+    for (char* p = b; *p != ' ' && *p != '\n'; p++) {
+        if (*p == '\0')
+            read_some(fd, p, s - (p - b));
+        if (*p == '\0')
+            exit(0);
+    }
+    return strtol(b, NULL, 10);
+}
+
 void write_all(int fd, const char* b, size_t s)
 {
     for (int w;;) {
@@ -186,9 +198,9 @@ int main(int argc, char *argv[])
         if (r[0] == NULL) continue;
 
         /* Socket Setup */
-        if (resolve_first_mx(r[1], target_mx_host, sizeof(target_mx_host)) < 0 ||
-            getaddrinfo(target_mx_host, port, &ai_hints, &a) != 0 ||
-        //if (getaddrinfo("0.0.0.0", port, &ai_hints, &a) != 0 ||
+        /*if (resolve_first_mx(r[1], target_mx_host, sizeof(target_mx_host)) < 0 ||
+            getaddrinfo(target_mx_host, port, &ai_hints, &a) != 0 || */
+        if (getaddrinfo("127.0.0.1", port, &ai_hints, &a) != 0 ||
             (fd = socket(a->ai_family, a->ai_socktype, a->ai_protocol)) == -1 ||
             connect(fd, a->ai_addr, a->ai_addrlen) == -1)
         {
@@ -201,20 +213,17 @@ int main(int argc, char *argv[])
         freeaddrinfo(a);
 
         /* Wait for initial greeting */
-        read_some(fd, data_buf, sizeof(data_buf));
-        if (data_buf[0] != '2') goto HOLD_ALL;
+        if (read_reply_code(fd, data_buf, sizeof(data_buf)) != 220) goto HOLD_ALL;
         RUN_OFF(data_buf);
 
         /* Send HELO */
         write_all(fd, greet, greet_len);
-        read_some(fd, data_buf, sizeof(data_buf));
-        if (data_buf[0] != '2') goto HOLD_ALL;
+        if (read_reply_code(fd, data_buf, sizeof(data_buf)) != 250) goto HOLD_ALL;
         RUN_OFF(data_buf);
 
         /* Reverse path */
         SEND("MAIL FROM:<%s>\r\n", rcpt_set[0]);
-        read_some(fd, data_buf, sizeof(data_buf));
-        if (data_buf[0] != '2') goto HOLD_ALL;
+        if (read_reply_code(fd, data_buf, sizeof(data_buf)) != 250) goto HOLD_ALL;
         RUN_OFF(data_buf);
 
         for (int i = 0; i < rcpt_set_i; i += 2) {
@@ -222,17 +231,19 @@ int main(int argc, char *argv[])
             if (strcmp(r[1], r[i + 1]) == 0) {
                 SEND("RCPT TO:<%s>\r\n", r[i]);
 
-                read_some(fd, data_buf, sizeof(data_buf));
-                if (data_buf[0] != '2')
-                    /* Bounce */
+                /* Bounce */
+                if (read_reply_code(fd, data_buf, sizeof(data_buf)) != 250)
                     bounce_set[bounce_set_i++] = r[i];
+
                 r[i] = NULL;
                 RUN_OFF(data_buf);
             }
         }
         write_all(fd, "DATA\r\n", 6);
-        read_some(fd, data_buf, sizeof(data_buf));
-        if (data_buf[0] != '3') goto HOLD_ALL;
+        if (read_reply_code(fd, data_buf, sizeof(data_buf)) != 354) goto HOLD_ALL;
+        RUN_OFF(data_buf);
+
+        /* Write the entire file */
         write_all(fd, data, data_end - data);
         lseek(ffd, f_ptr, SEEK_SET);
         for (;;) {
@@ -243,10 +254,10 @@ int main(int argc, char *argv[])
             write_all(fd, data_buf, end - data_buf);
         }
         write_all(fd, "\r\n.\r\n", 5);
-        printf("1\n");
-        read_some(fd, data_buf, sizeof(data_buf));
-        printf("2\n");
-        if (data_buf[0] != '2') goto HOLD_ALL;
+
+        /* Wait for reply */
+        if (read_reply_code(fd, data_buf, sizeof(data_buf)) != 250) goto HOLD_ALL;
+        RUN_OFF(data_buf);
         continue;
         
 HOLD_ALL:
