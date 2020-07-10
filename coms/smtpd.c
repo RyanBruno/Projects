@@ -40,8 +40,6 @@
 #define BACKLOG  10
 #define RAND_LEN 64
 #define END_GUARD(b) b + sizeof(b)
-/* Coming soon */
-#define authorized 0
 
 const char* DATA_END_TOKEN = "\r\n.\r\n";
 
@@ -216,6 +214,7 @@ int smtp(int fd, struct sockaddr_in* pa)
     /* Operational vars */
     int ffds[MAX_RCPT];
     int sfd = -1;
+    int authorized = 0;
 
     /* Buffers */
     char* head;
@@ -227,6 +226,9 @@ int smtp(int fd, struct sockaddr_in* pa)
     ssize_t(*read_a)(int*, void*, size_t);
     ssize_t(*write_a)(int*, const void*, size_t);
     void(*cleanup_a)(int*);
+
+    if (pa->sin_addr.s_addr == ntohl(INADDR_LOOPBACK))
+        authorized = 1;
 
     /* Reverse loopup addr */
     if (getnameinfo((struct sockaddr*) pa, sizeof(struct sockaddr_in),
@@ -337,10 +339,10 @@ RSET:
                 /* First remote path setup */
                 fwd_path[fwd_path_len++] = "\0spool" + 5;
                 /* Build spool path */
-                memcpy(path + 118, "spool/tmp/", 10);
+                memcpy(path + 123, "spool/tmp/", 10);
 
                 /* Open spool file */
-                if ((sfd = open(path + 118, O_CREAT | O_WRONLY, 0644)) < 0)
+                if ((sfd = open(path + 123, O_CREAT | O_WRONLY, 0644)) < 0)
                     CLEANUP();
 
                 WRITE_F(sfd, rev_path, (unsigned int) rev_path[-1]);
