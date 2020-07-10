@@ -184,9 +184,10 @@ void pop3(int fd)
     do {
         *head = '\0';
         /* Prelaod the command */
-        for (char* p = head; *p != ' ' && *p != '\n'; p++) {
+        for (char* p = head; ; p++) {
             if (*p == '\0') read_some(fd, head, sizeof(buf) - (head - buf));
             if (*p == '\0') cleanup(fd);
+            if (*p == ' ' || *p == '\n') break;
         }
 
         if (maildrop == NULL && match("USER ", head)) {
@@ -257,9 +258,10 @@ void pop3(int fd)
     do {
         *head = '\0';
         /* Prelaod the command */
-        for (char* p = head; *p != ' ' && *p != '\n'; p++) {
+        for (char* p = head; ; p++) {
             if (*p == '\0') read_some(fd, head, sizeof(buf) - (head - buf));
             if (*p == '\0') cleanup(fd);
+            if (*p == ' ' || *p == '\n') break;
         }
 
         if (match("STAT", head)) {

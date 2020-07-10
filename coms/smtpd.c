@@ -177,9 +177,10 @@ RSET:
         *head = '\0';
 
         /* Prelaod the command */
-        for (char* p = head; *p != ':' && *p != '\n'; p++) {
+        for (char* p = head; ; p++) {
             if (*p == '\0') READ(p, END_GUARD(buf) - head);
             if (*p == '\0') CLEANUP();
+            if (*p == ':' || *p == '\n') break;
         }
 
         if (match("HELO", head)) {
