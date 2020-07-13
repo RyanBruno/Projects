@@ -7,7 +7,8 @@ set folder=~/Maildir/
 set spoolfile=+/ryan@rbruno.com
 #set spoolfile=pop://ryan@testing.rbruno.com:password@127.0.0.1:9595
 set message_cachedir = "~/.cache/mutt"
-#set edit_headers=yes
+set edit_headers=yes
+set sort=reverse-threads
 
 unset crypt_use_gpgme
 source /usr/share/doc/mutt/samples/gpg.rc
