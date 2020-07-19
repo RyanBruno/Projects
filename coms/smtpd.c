@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <ctype.h>
 
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -13,18 +14,6 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
-
-#define RUN_OFF(p) \
-    char* z = p; \
-    for (;; z++) { \
-        if (*z == '\0') { \
-            READ(head, END_GUARD(buf) - head); \
-            z = head;  \
-        }\
-        if (*z == '\0')  \
-            CLEANUP(); \
-        if (*z == '\n') \
-            break; } 
 
 #define STRBCPY(d, s) \
         char* h = d; \
@@ -36,7 +25,6 @@
 #define MAX_DATA 16384
 #define BACKLOG  10
 #define RAND_LEN 64
-#define END_GUARD(b) b + sizeof(b)
 /* Coming soon */
 #define authorized 0
 
@@ -51,13 +39,26 @@ struct addrinfo ai_hints = {
 /* Random */
 int rfd;
 
-#define CLEANUP() { cleanup(fd); }
-void cleanup(int fd) { close(fd); exit(0); }
 char greeting[24] = "220 SMTP Service Ready\r\n";
 int greeting_len = 24;
 
-#define READ(b, s) read_some(fd, b, s)
-#define READ_F(f, b, s) read_some(f, b, s)
+struct smtp_context {
+    /* Buffer */
+    int sfd;
+    char path[197];
+    char r[64];
+    char path_buf[1024];
+    char* path_buf_head;
+    char* fwd_path[MAX_RCPT];
+    int fwd_path_len;
+};
+
+struct input_iterator {
+    int fd;
+    int i;
+    char input_buffer[1024];
+};
+
 char* read_some(int fd, char* b, size_t s)
 {
     int r;
@@ -83,17 +84,16 @@ char* read_some(int fd, char* b, size_t s)
     return b;
 }
 
-#define WRITE(b, s) write_all(fd, b, s)
-#define WRITE_F(f, b, s) write_all(f, b, s)
 void write_all(int fd, const char* b, size_t s)
 {
-    for (int w;;) {
+    int w;
 
+    for (;;) {
         w = write(fd, b, s);
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
-            CLEANUP();
+            exit(-1);
         }
 
         b += w;
@@ -103,215 +103,173 @@ void write_all(int fd, const char* b, size_t s)
     }
 }
 
-#define SAVE(p) save_path(p, &head, fd, buf, sizeof(buf))
-char* save_path(char* ptr, char** head, int fd, char* buf, size_t s)
+char next(struct input_iterator* it)
 {
+    if (it->input_buffer[it->i] != '\0')
+        return it->input_buffer[it->i++];
+
+    if (read_some(it->fd, it->input_buffer, sizeof(it->input_buffer)) == it->input_buffer)
+        exit(-1);
+
+    it->i = 0;
+    return it->input_buffer[it->i++];
+}
+
+void find(struct input_iterator* it, char c)
+{
+    for (char s = next(it); s != c; s = next(it)) { }
+}
+
+char* save_path(char* dest, struct input_iterator* it, int n)
+{
+    char c;
+    char* d;
+    int l;
     /* Find the start */
-    for (; *ptr == '<' || *ptr == ' '; ptr++) { }
+    for (c = next(it); c == '<' || c == ' '; c = next(it)) { }
 
-    for (;; (*head)++, ptr++) {
+    n--;
 
-        if (*ptr == '\0') {
-            READ(*head, buf + s - RAND_LEN - *head);
-            ptr = *head;
+    for (d = dest + sizeof(int); c != '\r' && c != '>'; c = next(it), d++, n--) {
+
+        if (n < 1) exit(-1);
+
+        /* Forward slashes are illegal */
+        if (c == '/') {
+            d--;
+            n++;
+            continue;
         }
-
-        if (*ptr == '/' || *ptr == '\0') CLEANUP();
-
-        if (*ptr == '\r' || *ptr == '\n' || *ptr == '>')
-            break;
-
-        **head = *ptr;
+        *d = c;
     }
-    **head = '\0';
-    (*head)++;
 
-    return ptr;
+    l = d - dest - sizeof(int);
+    memcpy(dest, &l, sizeof(int));
+
+    return d;
 }
 
-int match(const char* cmd, char* head)
+struct smtp_context* unknown_command(struct smtp_context* sc, struct input_iterator* it)
 {
-    for (; *cmd != '\0'; cmd++, head++) {
-        char c = *head;
-
-        if (c > 96) c -= 32;
-        if (c != *cmd) return 0;
-    }
-    return 1;
+    write_all(it->fd, "500 Syntax error\r\n", 18);
+    return sc;
 }
 
-int smtp(int fd, struct sockaddr_in* pa)
+struct smtp_context* helo_command(struct smtp_context* sc, struct input_iterator* it)
 {
-    /* Registers */
-    char* host;
-    char* rev_path;
-    char* fwd_path[MAX_RCPT];
-    unsigned short fwd_path_len;
+    write_all(it->fd, "250 SMTPd greats you\r\n", 22);
+    return sc;
+}
 
-    /* Operational vars */
+struct smtp_context* mail_command(struct smtp_context* sc, struct input_iterator* it)
+{
+    /* Save reverse path */
+    sc->path_buf_head = save_path(sc->path_buf, it, sizeof(sc->path_buf)) + 1;
+    sc->fwd_path_len = 0;
+
+    write_all(it->fd, "250 OK\r\n", 8);
+
+    {/* Setup Random */
+        for (char* e = sc->path + 133; e - sc->path < sizeof(sc->path) - 1;)
+            e += read(rfd, e, sizeof(sc->path) - (e - sc->path));
+
+        /* Encode and terminate Random */
+        for (int j = sizeof(sc->path) - 64; j < sizeof(sc->path) - 1; j++)
+            { sc->path[j] = (abs(sc->path[j]) % 26) + 97; }
+        sc->path[sizeof(sc->path) - 1] = '\0';
+    }
+
+    return sc;
+}
+
+struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator* it)
+{
+
+    char *p;
+    char *h;
+    struct stat st;
+    int l;
+
+    /* Ordering */
+    if (sc->path_buf_head == NULL)
+        return unknown_command(sc, it);
+
+    /* Save forward_path */
+    h = sc->path_buf_head;
+    sc->path_buf_head = save_path(h, it, sizeof(sc->path_buf) - (sc->path_buf_head - sc->path_buf));
+    sc->path_buf_head[0] = '\0';
+
+    if (stat(h + sizeof(int), &st) == 0) {
+        /* Push forward rcpt */
+        sc->fwd_path[sc->fwd_path_len++] = h;
+
+        write_all(it->fd, "250 OK\r\n", 8);
+        return sc;
+    }
+
+    if (!authorized) {
+        /* Reset head */
+        sc->path_buf_head = h;
+        write_all(it->fd, "551 User not local\r\n", 20);
+        return sc;
+    }
+
+    /* Need to forward */
+    if (sc->sfd < 0) {
+        /* First remote path setup */
+        sc->fwd_path[sc->fwd_path_len++] = "\0spool" + 5;
+        /* Build spool path */
+        memcpy(sc->path + 118, "spool/tmp/", 10);
+
+        /* Open spool file */
+        if ((sc->sfd = open(sc->path + 118, O_CREAT | O_WRONLY, 0644)) < 0)
+            exit(-1);
+
+        memcpy(&l, sc->path_buf, sizeof(int));
+        sc->path_buf[l + sizeof(int)] = ',';
+        write_all(sc->sfd, sc->path_buf + sizeof(int), l);
+    }
+
+    /* Write remote path to spool file */
+    sc->path_buf_head[0] = ',';
+    write_all(sc->sfd, h + sizeof(int), (sc->path_buf_head - h) + 1);
+    write_all(it->fd, "251 User not local; will forward\r\n", 34);
+}
+
+struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator* it)
+{
     int ffds[MAX_RCPT];
-    int sfd = -1;
 
-    /* Buffers */
-    char* head;
-    char path[197];
-    char buf[12800];
+    /* Ordering */
+    if (sc->fwd_path_len < 1)
+        return unknown_command(sc, it);
 
-    /* Reverse loopup addr */
-    if (getnameinfo((struct sockaddr*) pa, sizeof(struct sockaddr_in),
-                buf, 64, NULL, 0, 0))
-        return 0;
+    /*if (sc->sfd != -1)
+        fwrite(sfd, "\r\n", 2);*/
 
-    /* Greeting */
-    WRITE(greeting, greeting_len);
-
-    host = buf;
-RSET:
-    head = buf + strlen(host) + 1;
-    rev_path = NULL;
-    fwd_path_len = 0;
-    if (sfd != -1) close(sfd);
-    sfd = -1;
-
-    do {
-        *head = '\0';
-
-        /* Prelaod the command */
-        for (char* p = head; ; p++) {
-            if (*p == '\0') READ(p, END_GUARD(buf) - head);
-            if (*p == '\0') CLEANUP();
-            if (*p == ':' || *p == '\n') break;
-        }
-
-        if (match("HELO", head)) {
-
-            RUN_OFF(head + 4);
-            WRITE("250 SMTPd greats you\r\n", 22);
-
-        } else if (rev_path == NULL && match("MAIL FROM:", head)) {
-
-            char* p;
-
-            /* Save reverse path, prepend its length */
-            head++;
-            rev_path = head;
-            p = SAVE(head + 10);
-            rev_path[-1] = (unsigned char) (head - rev_path - 1);
-
-            RUN_OFF(p);
-            WRITE("250 OK\r\n", 8);
-
-            /* Setup Random */
-            for (char* e = path + 133; e - path < sizeof(path) - 1;)
-                e = READ_F(rfd, e, sizeof(path) - (e - path));
-
-            /* Encode and terminate Random */
-            for (int j = sizeof(path) - RAND_LEN; j < sizeof(path) - 1; j++)
-                { path[j] = (abs(path[j]) % 26) + 97; }
-            path[sizeof(path) - 1] = '\0';
-
-        } else if (rev_path != NULL && match("RCPT TO:", head)) {
-
-            char *p;
-            char *h;
-            struct stat st;
-
-            /* Save forward_path */
-            h = head;
-            p = SAVE(head + 8);
-
-            RUN_OFF(p);
-
-            if (stat(h, &st) == 0) {
-                /* Push forward rcpt */
-                fwd_path[fwd_path_len++] = head - 2;
-
-                WRITE("250 OK\r\n", 8);
-                continue;
-            }
-
-            if (!authorized) {
-                /* Will not forward, reset head */
-                head = h;
-                WRITE("551 User not local\r\n", 20);
-                continue;
-            }
-
-            /* Need to forward */
-            if (sfd < 0) {
-                /* First remote path setup */
-                fwd_path[fwd_path_len++] = "\0spool" + 5;
-                /* Build spool path */
-                memcpy(path + 118, "spool/tmp/", 10);
-
-                /* Open spool file */
-                if ((sfd = open(path + 118, O_CREAT | O_WRONLY, 0644)) < 0)
-                    CLEANUP();
-
-                WRITE_F(sfd, rev_path, (unsigned int) rev_path[-1]);
-                WRITE_F(sfd, ",", 1);
-            }
-
-            /* Build a comma separated remote path string for smtpf */
-            head[-1] = ',';
-            WRITE_F(sfd, h, head - h);
-            head[-1] = '\0';
-
-            WRITE("251 User not local; will forward\r\n", 34);
-
-        } else if (fwd_path_len > 0 && match("DATA", head)) {
-            
-            if (sfd != -1)
-                WRITE_F(sfd, "\r\n", 2);
-
-            RUN_OFF(head + 4);
-            WRITE("354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46);
-            break;
-
-        } else if (match("RSET", head)) {
-
-            RUN_OFF(head + 4);
-            WRITE("250 OK\r\n", 8);
-            goto RSET;
-
-        } else if (match("NOOP", head)) {
-
-            RUN_OFF(head + 4);
-            WRITE("250 OK\r\n", 8);
-
-        } else if (match("QUIT", head)) {
-
-            WRITE("250 OK\r\n", 8);
-            CLEANUP();
-
-        } else {
-
-            RUN_OFF(head);
-            WRITE("500 Syntax error\r\n", 18);
-        }
-
-    } while (1);
-
-    /* Fill the end of the info buf with the end of the path */
-    memcpy(path + 128, "/tmp/", 5);
+    /* Prep Path */
+    memcpy(sc->path + 128, "/tmp/", 5);
 
     /* Open tmp files */
-    for (int i = 0; i < fwd_path_len; i++) {
+    for (int i = 0; i < sc->fwd_path_len; i++) {
+        int l;
 
-        ffds[i] = sfd;
+        //fps[i] = sfd;
 
-        if (strncmp("\0spool", fwd_path[i] - 5, 7)) {
-
+        //if (strncmp("\0spool", sc->fwd_path[i] - 5, 7)) {
             /* Write forward path backwards */
-            STRBCPY(path + 127, fwd_path[i]);
+        memcpy(&l, sc->fwd_path[i], sizeof(int));
+        memcpy(sc->path + 128 - l, sc->fwd_path[i] + sizeof(int), l);
 
             /* Open the temp file */
-            if ((ffds[i] = open(++h, O_CREAT | O_WRONLY, 0644)) < 0)
-                CLEANUP();
-        }
+            if ((ffds[i] = open(sc->path + 128 - l, O_CREAT | O_EXCL | O_WRONLY, 0644)) < 0)
+                exit(-1);
+        //}
 
         // TODO SMTP headers
     }
+
+    write_all(it->fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46);
 
     {
         const char* t;
@@ -323,11 +281,11 @@ RSET:
         for (;;) {
             char* end;
 
-            end = READ(head, END_GUARD(buf) - head);
+            end = read_some(it->fd, it->input_buffer, sizeof(it->input_buffer));
 
             end -= 5;
-            if (end < head)
-                end = head;
+            if (end < it->input_buffer)
+                end = it->input_buffer;
 
             /* Find the DATA_END_TOKEN */
             for (; *end != '\0' && *t != '\0'; end++, t++) {
@@ -336,8 +294,8 @@ RSET:
 
                 if (t != DATA_END_TOKEN) {
                     /* Make up for unwritten DATA_END_TOKEN pieces */
-                    for (int i = 0; i < fwd_path_len; i++)
-                        WRITE_F(ffds[i], DATA_END_TOKEN, t - DATA_END_TOKEN);
+                    for (int i = 0; i < sc->fwd_path_len; i++)
+                        write_all(ffds[i], DATA_END_TOKEN, t - DATA_END_TOKEN);
                     end--;
                 }
 
@@ -346,40 +304,112 @@ RSET:
             }
 
             /* Write to all files */
-            if ((t - DATA_END_TOKEN) < (end - head))
-                for (int i = 0; i < fwd_path_len; i++)
-                    WRITE_F(ffds[i], head, end - head - (t - DATA_END_TOKEN));
+            if ((t - DATA_END_TOKEN) < (end - it->input_buffer))
+                for (int i = 0; i < sc->fwd_path_len; i++)
+                    write_all(ffds[i], it->input_buffer, end - it->input_buffer - (t - DATA_END_TOKEN));
 
             if (*t == '\0') break;
         }
     }
+    it->input_buffer[it->i] = '\0';
 
     /* Move all files from tmp to new */
-    for (int i = 0; i < fwd_path_len; i++) {
+    for (int i = 0; i < sc->fwd_path_len; i++) {
         char nb[197];
+        int l;
 
-        /* Write forward path backwards */
-        STRBCPY(path + 127, fwd_path[i]);
+        memcpy(&l, sc->fwd_path[i], sizeof(int));
+        memcpy(sc->path + 128 - l, sc->fwd_path[i] + sizeof(int), l);
 
         /* Copy tmp file path to nb */
-        h++;
-        memcpy(nb, h, sizeof(path) - (h - path));
-        memcpy(nb + (129 - (h - path)), "new", 3);
+        memcpy(nb, sc->path + 128 - l, l + 64 + 5);
+        memcpy(nb + l + 1, "new", 3);
 
         /* Move file from tmp to new */
-        if (rename(h, nb) < 0) CLEANUP(); // TODO rollback half commits
+        if (rename(sc->path + 128 - l, nb) < 0)
+            exit(-1); // TODO rollback half commits
+
         close(ffds[i]);
     }
 
-    WRITE("250 will deliver\r\n", 18);
+    write_all(it->fd, "250 will deliver\r\n", 18);
 
-    /* Fork and exec to forward remote mail */
-    //if (rmt_path[0] != '\0' && fork() == 0) ;
-        //execl("./smtpf", "./smtpf", r, NULL);
+    sc->path_buf_head = NULL;
+    sc->fwd_path_len = 0;
+    return sc;
+}
 
-    goto RSET;
+struct smtp_context* rset_command(struct smtp_context* sc, struct input_iterator* it)
+{
+    sc->path_buf_head = NULL;
+    sc->fwd_path_len = 0;
+    write_all(it->fd, "250 OK\r\n", 8);
+    return sc;
+}
+struct smtp_context* noop_command(struct smtp_context* sc, struct input_iterator* it)
+{
+    write_all(it->fd, "250 OK\r\n", 8);
+    return sc;
+}
+struct smtp_context* quit_command(struct smtp_context* sc, struct input_iterator* it)
+{
+    write_all(it->fd, "250 OK\r\n", 8);
+    exit(-1);
+}
 
-    return 0;
+int stritmatch(char* str, struct input_iterator* it, int n)
+{
+    for (char c; n > 0; str++, n--) {
+        c = next(it);
+
+        if (toupper(c) != *str) return 0;
+        if (*str == '\0') break;
+    }
+    return 1;
+}
+
+struct smtp_context*(*command_mapper(struct input_iterator* it))(struct smtp_context*, struct input_iterator*)
+{
+    switch (toupper(next(it))) {
+        case 'H':
+            if (stritmatch("ELO", it, 3))       return helo_command;
+        case 'M':
+            if (stritmatch("AIL FROM:", it, 9)) return mail_command;
+        case 'R':
+            switch (toupper(next(it))) {
+                case 'C':
+                    if (stritmatch("PT TO:", it, 6)) return rcpt_command;
+                case 'S':
+                    if (stritmatch("ET", it, 2))     return rset_command;
+            }
+        case 'D':
+            if (stritmatch("ATA", it, 3))       return data_command;
+        case 'N':
+            if (stritmatch("OOP", it, 3))       return noop_command;
+        case 'Q':
+            if (stritmatch("UIT", it, 3))       return quit_command;
+    }
+    return unknown_command;
+}
+
+int smtp(int fd, struct sockaddr_in* pa)
+{
+    struct smtp_context sc;
+    struct input_iterator it;
+
+    sc.path_buf_head = NULL;
+    sc.fwd_path_len = 0;
+    it.fd = fd;
+    it.i = 0;
+    it.input_buffer[0] = '\0';
+
+    /* Greeting */
+    write_all(fd, greeting, greeting_len);
+    
+    for (;;) {
+        command_mapper(&it)(&sc, &it);
+        find(&it, '\n');
+    }
 }
 
 int main(int argc, char **argv)
