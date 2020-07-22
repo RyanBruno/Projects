@@ -15,20 +15,11 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define STRBCPY(d, s) \
-        char* h = d; \
-        char* p = s; \
-        for (; *p != '\0'; h--, p--) \
-            *h = *p; \
-
-#define MAX_RCPT 100
-#define MAX_DATA 16384
 #define BACKLOG  10
+#define MAX_RCPT 100
 #define RAND_LEN 64
 /* Coming soon */
 #define authorized 0
-
-const char* DATA_END_TOKEN = "\r\n.\r\n";
 
 struct addrinfo ai_hints = {
     .ai_flags    = AI_NUMERICSERV,
@@ -41,12 +32,13 @@ int rfd;
 
 char greeting[24] = "220 SMTP Service Ready\r\n";
 int greeting_len = 24;
+const char* DATA_END_TOKEN = "\r\n.\r\n";
 
 struct smtp_context {
     /* Buffer */
     int sfd;
-    char path[197];
-    char r[64];
+    char path[256 + 5 + RAND_LEN]; // 197
+    char r[RAND_LEN];
     char path_buf[1024];
     char* path_buf_head;
     char* fwd_path[MAX_RCPT];
@@ -56,7 +48,7 @@ struct smtp_context {
 struct input_iterator {
     int fd;
     int i;
-    char input_buffer[1024];
+    char input_buffer[1000];
 };
 
 char* read_some(int fd, char* b, size_t s)
@@ -93,7 +85,8 @@ void write_all(int fd, const char* b, size_t s)
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
-            exit(-1);
+            close(fd);
+            exit(0);
         }
 
         b += w;
@@ -103,13 +96,20 @@ void write_all(int fd, const char* b, size_t s)
     }
 }
 
+void cleanup(struct input_iterator* it) { close(it->fd); exit(0); }
+void abort_cleanup(struct input_iterator* it)
+{
+    write_all(it->fd, "451 Requested action aborted: local error in processing\r\n", 57);
+    cleanup(it);
+}
+
 char next(struct input_iterator* it)
 {
     if (it->input_buffer[it->i] != '\0')
         return it->input_buffer[it->i++];
 
     if (read_some(it->fd, it->input_buffer, sizeof(it->input_buffer)) == it->input_buffer)
-        exit(-1);
+        cleanup(it);
 
     it->i = 0;
     return it->input_buffer[it->i++];
@@ -132,7 +132,7 @@ char* save_path(char* dest, struct input_iterator* it, int n)
 
     for (d = dest + sizeof(int); c != '\r' && c != '>'; c = next(it), d++, n--) {
 
-        if (n < 1) exit(-1);
+        if (n < 1) abort_cleanup(it);
 
         /* Forward slashes are illegal */
         if (c == '/') {
@@ -170,11 +170,11 @@ struct smtp_context* mail_command(struct smtp_context* sc, struct input_iterator
     write_all(it->fd, "250 OK\r\n", 8);
 
     {/* Setup Random */
-        for (char* e = sc->path + 133; e - sc->path < sizeof(sc->path) - 1;)
+        for (char* e = sc->path + sizeof(sc->path) - RAND_LEN; e - sc->path < sizeof(sc->path) - 1;)
             e += read(rfd, e, sizeof(sc->path) - (e - sc->path));
 
         /* Encode and terminate Random */
-        for (int j = sizeof(sc->path) - 64; j < sizeof(sc->path) - 1; j++)
+        for (int j = sizeof(sc->path) - RAND_LEN; j < sizeof(sc->path) - 1; j++)
             { sc->path[j] = (abs(sc->path[j]) % 26) + 97; }
         sc->path[sizeof(sc->path) - 1] = '\0';
     }
@@ -219,11 +219,11 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
         /* First remote path setup */
         sc->fwd_path[sc->fwd_path_len++] = "\0spool" + 5;
         /* Build spool path */
-        memcpy(sc->path + 118, "spool/tmp/", 10);
+        memcpy(sc->path + sizeof(sc->path) - RAND_LEN - 10, "spool/tmp/", 10);
 
         /* Open spool file */
-        if ((sc->sfd = open(sc->path + 118, O_CREAT | O_WRONLY, 0644)) < 0)
-            exit(-1);
+        if ((sc->sfd = open(sc->path + sizeof(sc->path) - RAND_LEN - 10, O_CREAT | O_WRONLY, 0644)) < 0)
+            abort_cleanup(it);
 
         memcpy(&l, sc->path_buf, sizeof(int));
         sc->path_buf[l + sizeof(int)] = ',';
@@ -263,7 +263,7 @@ struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator
 
             /* Open the temp file */
             if ((ffds[i] = open(sc->path + 128 - l, O_CREAT | O_EXCL | O_WRONLY, 0644)) < 0)
-                exit(-1);
+                abort_cleanup(it);
         //}
 
         // TODO SMTP headers
@@ -273,10 +273,8 @@ struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator
 
     {
         const char* t;
-        size_t s = 0;
 
         t = DATA_END_TOKEN;
-        s = 0;
 
         for (;;) {
             char* end;
@@ -327,7 +325,7 @@ struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator
 
         /* Move file from tmp to new */
         if (rename(sc->path + 128 - l, nb) < 0)
-            exit(-1); // TODO rollback half commits
+            abort_cleanup(it); // TODO rollback half commits
 
         close(ffds[i]);
     }
@@ -354,7 +352,7 @@ struct smtp_context* noop_command(struct smtp_context* sc, struct input_iterator
 struct smtp_context* quit_command(struct smtp_context* sc, struct input_iterator* it)
 {
     write_all(it->fd, "250 OK\r\n", 8);
-    exit(-1);
+    cleanup(it);
 }
 
 int stritmatch(char* str, struct input_iterator* it, int n)
