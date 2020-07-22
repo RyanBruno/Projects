@@ -103,7 +103,7 @@ void abort_cleanup(struct input_iterator* it)
     cleanup(it);
 }
 
-char next(struct input_iterator* it)
+char input_next(struct input_iterator* it)
 {
     if (it->input_buffer[it->i] != '\0')
         return it->input_buffer[it->i++];
@@ -117,7 +117,7 @@ char next(struct input_iterator* it)
 
 void find(struct input_iterator* it, char c)
 {
-    for (char s = next(it); s != c; s = next(it)) { }
+    for (char s = input_next(it); s != c; s = input_next(it)) { }
 }
 
 char* save_path(char* dest, struct input_iterator* it, int n)
@@ -126,11 +126,11 @@ char* save_path(char* dest, struct input_iterator* it, int n)
     char* d;
     int l;
     /* Find the start */
-    for (c = next(it); c == '<' || c == ' '; c = next(it)) { }
+    for (c = input_next(it); c == '<' || c == ' '; c = input_next(it)) { }
 
     n--;
 
-    for (d = dest + sizeof(int); c != '\r' && c != '>'; c = next(it), d++, n--) {
+    for (d = dest + sizeof(int); c != '\r' && c != '>'; c = input_next(it), d++, n--) {
 
         if (n < 1) abort_cleanup(it);
 
@@ -248,7 +248,7 @@ struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator
         fwrite(sfd, "\r\n", 2);*/
 
     /* Prep Path */
-    memcpy(sc->path + 128, "/tmp/", 5);
+    memcpy(sc->path + sizeof(sc->path) - RAND_LEN, "/tmp/", 5);
 
     /* Open tmp files */
     for (int i = 0; i < sc->fwd_path_len; i++) {
@@ -358,7 +358,7 @@ struct smtp_context* quit_command(struct smtp_context* sc, struct input_iterator
 int stritmatch(char* str, struct input_iterator* it, int n)
 {
     for (char c; n > 0; str++, n--) {
-        c = next(it);
+        c = input_next(it);
 
         if (toupper(c) != *str) return 0;
         if (*str == '\0') break;
@@ -368,13 +368,13 @@ int stritmatch(char* str, struct input_iterator* it, int n)
 
 struct smtp_context*(*command_mapper(struct input_iterator* it))(struct smtp_context*, struct input_iterator*)
 {
-    switch (toupper(next(it))) {
+    switch (toupper(input_next(it))) {
         case 'H':
             if (stritmatch("ELO", it, 3))       return helo_command;
         case 'M':
             if (stritmatch("AIL FROM:", it, 9)) return mail_command;
         case 'R':
-            switch (toupper(next(it))) {
+            switch (toupper(input_next(it))) {
                 case 'C':
                     if (stritmatch("PT TO:", it, 6)) return rcpt_command;
                 case 'S':
