@@ -83,11 +83,19 @@ void linked_blocks_char_put(struct linked_blocks_char_iterator* it, char c)
     it->p++;
 }
 
+void linked_blocks_free(struct linked_blocks* lb)
+{
+    struct linked_blocks* tmp;
+
+    for (tmp = lb; tmp != NULL; free(lb)) { tmp = lb->next; }
+}
+
 
 struct smtp_context {
     /* Buffer */
     int sfd;
     char r[RAND_LEN];
+    struct linked_blocks* blocks;
     struct linked_blocks_char_iterator it_head;
     struct linked_blocks_char_iterator rev_path;
     struct linked_blocks_char_iterator fwd_path[MAX_RCPT];
@@ -209,7 +217,7 @@ struct smtp_context* helo_command(struct smtp_context* sc, struct input_iterator
 struct smtp_context* mail_command(struct smtp_context* sc, struct input_iterator* it)
 {
     /* Save reverse path */
-    sc->rev_path = save_path(&sc->rev_path, it, MAX_PATH_LEN);
+    sc->rev_path = save_path(&sc->it_head, it, MAX_PATH_LEN);
     sc->fwd_path_len = 0;
 
     write_all(it->fd, "250 OK\r\n", 8);
