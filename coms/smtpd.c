@@ -288,6 +288,7 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
     /*sc->path_buf_head[0] = ',';
     write_all(sc->sfd, h + sizeof(int), (sc->path_buf_head - h) + 1);*/
     write_all(it->fd, "251 User not local; will forward\r\n", 34);
+    return sc;
 }
 
 struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator* it)

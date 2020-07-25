@@ -35,7 +35,7 @@
     exit(-1); }
 
 const char* host =          "0.0.0.0";
-const char* port =          "2526";
+const char* port =          "2525";
 
 struct addrinfo ai_hints = {
     .ai_flags    = AI_NUMERICSERV,
