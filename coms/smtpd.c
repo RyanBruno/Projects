@@ -108,6 +108,7 @@ char* read_some(int fd, char* b, size_t s)
 
     for (s--;;) {
 
+        errno = 0;
         if ((r = read(fd, b, s)) == 0)
             /* Either EOF or socket closed */
             break;
@@ -127,6 +128,8 @@ char* read_some(int fd, char* b, size_t s)
     return b;
 }
 
+void cleanup(int fd) { close(fd); exit(0); }
+
 void write_all(int fd, const char* b, size_t s)
 {
     int w;
@@ -136,8 +139,7 @@ void write_all(int fd, const char* b, size_t s)
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
-            close(fd);
-            exit(0);
+            cleanup(fd);
         }
 
         b += w;
@@ -147,11 +149,10 @@ void write_all(int fd, const char* b, size_t s)
     }
 }
 
-void cleanup(struct input_iterator* it) { close(it->fd); exit(0); }
-void abort_cleanup(struct input_iterator* it)
+void abort_cleanup(int fd)
 {
-    write_all(it->fd, "451 Requested action aborted: local error in processing\r\n", 57);
-    cleanup(it);
+    write_all(fd, "451 Requested action aborted: local error in processing\r\n", 57);
+    cleanup(fd);
 }
 
 char input_next(struct input_iterator* it)
@@ -160,7 +161,7 @@ char input_next(struct input_iterator* it)
         return it->input_buffer[it->i++];
 
     if (read_some(it->fd, it->input_buffer, sizeof(it->input_buffer)) == it->input_buffer)
-        cleanup(it);
+        cleanup(it->fd);
 
     it->i = 0;
     return it->input_buffer[it->i++];
@@ -186,7 +187,7 @@ save_path(struct linked_blocks_char_iterator* dest, struct input_iterator* it, i
 
     for (i = 0; c != '\r' && c != '>'; c = input_next(it)) {
 
-        if (i >= n) abort_cleanup(it);
+        if (i >= n) abort_cleanup(it->fd);
 
         /* Forward slashes are illegal */
         if (c == '/')
@@ -216,6 +217,10 @@ struct smtp_context* helo_command(struct smtp_context* sc, struct input_iterator
 
 struct smtp_context* mail_command(struct smtp_context* sc, struct input_iterator* it)
 {
+    /* Ordering */
+    if (sc->it_head.p != sc->it_head.block->data)
+        return unknown_command(sc, it);
+
     /* Save reverse path */
     sc->rev_path = save_path(&sc->it_head, it, MAX_PATH_LEN);
     sc->fwd_path_len = 0;
@@ -243,8 +248,8 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
     char b[MAX_PATH_LEN];
 
     /* Ordering */
-    /*if (sc->path_buf_head == NULL)
-        return unknown_command(sc, it);*/
+    if (sc->it_head.p == sc->it_head.block->data)
+        return unknown_command(sc, it);
 
     if (sc->fwd_path_len >= MAX_RCPT)
         exit(-1);
@@ -277,7 +282,7 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
 
         /* Open spool file */
         /*if ((sc->sfd = open(sc->fwd_path[sc->fwd_path_len], O_CREAT | O_WRONLY, 0644)) < 0)
-            abort_cleanup(it);*/
+            abort_cleanup(it->fd);*/
 
         /*memcpy(&l, sc->path_buf, sizeof(int));
         sc->path_buf[l + sizeof(int)] = ',';
@@ -319,7 +324,7 @@ struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator
 
         /* Open the temp file */
         if ((ffds[i] = open(s + 1, O_CREAT /*| O_EXCL*/ | O_WRONLY, 0644)) < 0)
-            abort_cleanup(it);
+            abort_cleanup(it->fd);
 HEADERS:
         ; // TODO SMTP headers
     }
@@ -334,7 +339,8 @@ HEADERS:
         for (;;) {
             char* end;
 
-            end = read_some(it->fd, it->input_buffer, sizeof(it->input_buffer));
+            if ((end = read_some(it->fd, it->input_buffer, sizeof(it->input_buffer))) == it->input_buffer)
+                cleanup(it->fd);
 
             end -= 5;
             if (end < it->input_buffer)
@@ -379,7 +385,7 @@ HEADERS:
 
         /* Move file from tmp to new */
         if (rename(b + o, nb) < 0)
-            abort_cleanup(it); // TODO rollback half commits
+            abort_cleanup(it->fd); // TODO rollback half commits
 
         /* Cleanup */
         close(ffds[i]);
@@ -387,13 +393,22 @@ HEADERS:
 
     write_all(it->fd, "250 will deliver\r\n", 18);
 
+    if (sc->sfd != -1) close(sc->sfd);
+    sc->sfd = -1;
+
+    sc->it_head.block = sc->blocks;
+    sc->it_head.p = sc->blocks->data;
     sc->fwd_path_len = 0;
     return sc;
 }
 
 struct smtp_context* rset_command(struct smtp_context* sc, struct input_iterator* it)
 {
-    /* TODO mem leak */
+    if (sc->sfd != -1) close(sc->sfd);
+    sc->sfd = -1;
+
+    sc->it_head.block = sc->blocks;
+    sc->it_head.p = sc->blocks->data;
     sc->fwd_path_len = 0;
     write_all(it->fd, "250 OK\r\n", 8);
     return sc;
@@ -406,7 +421,7 @@ struct smtp_context* noop_command(struct smtp_context* sc, struct input_iterator
 struct smtp_context* quit_command(struct smtp_context* sc, struct input_iterator* it)
 {
     write_all(it->fd, "250 OK\r\n", 8);
-    cleanup(it);
+    cleanup(it->fd);
 }
 
 int stritmatch(char* str, struct input_iterator* it, int n)
