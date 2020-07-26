@@ -18,8 +18,8 @@
 #define BACKLOG  10
 #define MAX_RCPT 100
 #define MAX_PATH_LEN 256
-#define MAX_PATH_BUF MAX_PATH_LEN + RAND_LEN + 5
 #define RAND_LEN 64
+#define PATH_EXTRA RAND_LEN + 5
 /* Coming soon */
 #define authorized 0
 
@@ -56,6 +56,7 @@ struct linked_blocks_char_iterator {
 char linked_blocks_char_next(struct linked_blocks_char_iterator* it)
 {
     char c;
+
     if (it->p - it->block->data >= sizeof(it->block->data)) {
         it->block = it->block->next;
         it->p = it->block->data;
@@ -70,14 +71,36 @@ void linked_blocks_str_print(char* dest, struct linked_blocks_char_iterator it, 
     for (; n > 0; n--, dest++) { *dest = linked_blocks_char_next(&it); }
 }
 
-void linked_blocks_char_put(struct linked_blocks_char_iterator* it, char c)
+struct linked_blocks*
+linked_blocks_init(void*(*alloc)(size_t s))
 {
-    if (it->p - it->block->data >= sizeof(it->block->data)) {
-        it->block->next = malloc(sizeof(struct linked_blocks));
-        it->block = it->block->next;
-        it->block->next = NULL;
-        it->p = it->block->data;
-    }
+    struct linked_blocks* lb;
+
+    lb = alloc(sizeof(struct linked_blocks));
+    lb->next = NULL;
+    return lb;
+}
+
+struct linked_blocks*
+linked_blocks_next(struct linked_blocks* bl, void*(*alloc)(size_t s))
+{
+    if (bl->next == NULL)
+        bl->next = linked_blocks_init(alloc);
+
+    return bl->next;
+}
+
+void linked_blocks_char_next_block(struct linked_blocks_char_iterator* it, void*(*alloc)(size_t s))
+{
+    linked_blocks_next(it->block, alloc);
+    it->block = it->block->next;
+    it->p = it->block->data;
+}
+
+void linked_blocks_char_put(struct linked_blocks_char_iterator* it, char c, void*(*alloc)(size_t s))
+{
+    if (it->p - it->block->data >= sizeof(it->block->data))
+        linked_blocks_char_next_block(it, alloc);
 
     *it->p = c;
     it->p++;
@@ -87,19 +110,20 @@ void linked_blocks_free(struct linked_blocks* lb)
 {
     struct linked_blocks* tmp;
 
-    for (tmp = lb; tmp != NULL; free(lb)) { tmp = lb->next; }
+    for (tmp = lb; tmp != NULL; free(lb)) { lb = tmp; tmp = lb->next; }
 }
 
+struct smtp_transaction {
+    char tx_r[RAND_LEN];
+    struct linked_blocks* tx_blocks;
+    struct linked_blocks_char_iterator tx_it_head;
+    char* tx_rev_path;
+    char* tx_fwd_path[MAX_RCPT];
+    int tx_fwd_path_len;
+};
 
 struct smtp_context {
-    /* Buffer */
-    int sfd;
-    char r[RAND_LEN];
-    struct linked_blocks* blocks;
-    struct linked_blocks_char_iterator it_head;
-    struct linked_blocks_char_iterator rev_path;
-    struct linked_blocks_char_iterator fwd_path[MAX_RCPT];
-    int fwd_path_len;
+    struct smtp_transaction smtp_tx;
 };
 
 char* read_some(int fd, char* b, size_t s)
@@ -172,35 +196,38 @@ void find(struct input_iterator* it, char c)
     for (char s = input_next(it); s != c; s = input_next(it)) { }
 }
 
-struct linked_blocks_char_iterator
-save_path(struct linked_blocks_char_iterator* dest, struct input_iterator* it, int n)
+char* save_path(struct linked_blocks_char_iterator* dest, struct input_iterator* it, int n)
 {
     char c;
-    struct linked_blocks_char_iterator d;
-    int i;
-
-    d = *dest;
-    linked_blocks_char_put(dest, '\0');
+    char* s;
 
     /* Find the start */
     for (c = input_next(it); c == '<' || c == ' '; c = input_next(it)) { }
 
-    for (i = 0; c != '\r' && c != '>'; c = input_next(it)) {
+    for (s = dest->p; c != '\r' && c != '>'; c = input_next(it)) {
 
-        if (i >= n) abort_cleanup(it->fd);
+        if (n < 0) abort_cleanup(it->fd);
 
         /* Forward slashes are illegal */
         if (c == '/')
             continue;
 
-        linked_blocks_char_put(dest, c);
-        i++;
+        if (dest->p - dest->block->data >= sizeof(dest->block->data) - PATH_EXTRA) {
+            int l;
+
+            l = dest->p - s;
+            linked_blocks_char_next_block(dest, malloc);
+            memcpy(dest->p, s, l);
+            s = dest->p;
+            dest->p += l;
+        }
+    
+        linked_blocks_char_put(dest, c, malloc);
     }
 
-    linked_blocks_char_put(dest, '\0');
-    d.p[0] = i;
+    linked_blocks_char_put(dest, '\0', malloc);
 
-    return d;
+    return s;
 }
 
 struct smtp_context* unknown_command(struct smtp_context* sc, struct input_iterator* it)
@@ -218,24 +245,27 @@ struct smtp_context* helo_command(struct smtp_context* sc, struct input_iterator
 struct smtp_context* mail_command(struct smtp_context* sc, struct input_iterator* it)
 {
     /* Ordering */
-    if (sc->it_head.p != sc->it_head.block->data)
+    if (sc->smtp_tx.tx_rev_path != NULL)
         return unknown_command(sc, it);
 
+    /* Create a transaction */
+    sc->smtp_tx.tx_blocks = linked_blocks_init(malloc);
+    sc->smtp_tx.tx_it_head.block = sc->smtp_tx.tx_blocks;
+    sc->smtp_tx.tx_it_head.p = sc->smtp_tx.tx_blocks->data;
+
     /* Save reverse path */
-    sc->rev_path = save_path(&sc->it_head, it, MAX_PATH_LEN);
-    sc->fwd_path_len = 0;
+    sc->smtp_tx.tx_rev_path = save_path(&sc->smtp_tx.tx_it_head, it, MAX_PATH_LEN);
 
     write_all(it->fd, "250 OK\r\n", 8);
 
-    {/* Setup Random */
-        for (char* e = sc->r; e - sc->r < sizeof(sc->r) - 1;)
-            e += read(rfd, e, sizeof(sc->r) - (e - sc->r));
 
-        /* Encode and terminate Random */
-        for (int j = 0; j < sizeof(sc->r) - 1; j++)
-            { sc->r[j] = (abs(sc->r[j]) % 26) + 97; }
-        sc->r[sizeof(sc->r) - 1] = '\0';
-    }
+    /* Setup Random */
+    for (char* e = sc->smtp_tx.tx_r; e - sc->smtp_tx.tx_r < sizeof(sc->smtp_tx.tx_r) - 1;)
+        e += read(rfd, e, sizeof(sc->smtp_tx.tx_r) - (e - sc->smtp_tx.tx_r));
+
+    for (int i = 0; i < sizeof(sc->smtp_tx.tx_r) - 1; i++)
+        sc->smtp_tx.tx_r[i] = (abs(sc->smtp_tx.tx_r[i]) % 26) + 97;
+    sc->smtp_tx.tx_r[sizeof(sc->smtp_tx.tx_r) - 1] = '\0';
 
     return sc;
 }
@@ -245,24 +275,25 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
 
     char *p;
     struct stat st;
-    char b[MAX_PATH_LEN];
 
     /* Ordering */
-    if (sc->it_head.p == sc->it_head.block->data)
+    if (sc->smtp_tx.tx_rev_path == NULL)
         return unknown_command(sc, it);
 
-    if (sc->fwd_path_len >= MAX_RCPT)
+    if (sc->smtp_tx.tx_fwd_path_len >= MAX_RCPT) // TODO Error message
         exit(-1);
 
     /* Save forward_path */
-    sc->fwd_path[sc->fwd_path_len] = save_path(&sc->it_head, it, MAX_PATH_LEN);
-    linked_blocks_str_print(b, sc->fwd_path[sc->fwd_path_len], sc->fwd_path[sc->fwd_path_len].p[0] + 2);
+    sc->smtp_tx.tx_fwd_path[sc->smtp_tx.tx_fwd_path_len] = save_path(&sc->smtp_tx.tx_it_head, it, MAX_PATH_LEN);
 
-    if (stat(b + 1, &st) == 0) {
+    if (stat(sc->smtp_tx.tx_fwd_path[sc->smtp_tx.tx_fwd_path_len], &st) == 0) {
+
+        memcpy(sc->smtp_tx.tx_it_head.p - 1, "/tmp/", 5);
+        memcpy(sc->smtp_tx.tx_it_head.p + 4, sc->smtp_tx.tx_r, sizeof(sc->smtp_tx.tx_r));
+        sc->smtp_tx.tx_it_head.p += sizeof(sc->smtp_tx.tx_r) + 5;
 
         /* Push forward rcpt */
-        sc->fwd_path_len++;
-
+        sc->smtp_tx.tx_fwd_path_len++;
         write_all(it->fd, "250 OK\r\n", 8);
         return sc;
     }
@@ -274,7 +305,7 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
     }
 
     /* Need to forward */
-    if (sc->sfd < 0) {
+    //if (sc->sfd < 0) {
         /* First remote path setup */
         /*memcpy(sc->fwd_path[sc->fwd_path_len], "spool/tmp/", 10);
         memcpy(sc->fwd_path[sc->fwd_path_len] + 10, sc->r, RAND_LEN);
@@ -287,7 +318,7 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
         /*memcpy(&l, sc->path_buf, sizeof(int));
         sc->path_buf[l + sizeof(int)] = ',';
         write_all(sc->sfd, sc->path_buf + sizeof(int), l);*/
-    }
+    //}
 
     /* Write remote path to spool file */
     /*sc->path_buf_head[0] = ',';
@@ -296,34 +327,25 @@ struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator
     return sc;
 }
 
+void smtp_reset(struct smtp_context* sc)
+{
+    /* Killing */
+}
+
+
 struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator* it)
 {
     int ffds[MAX_RCPT];
-    char b[MAX_PATH_BUF];
 
     /* Ordering */
-    if (sc->fwd_path_len < 1)
+    if (sc->smtp_tx.tx_fwd_path_len < 1)
         return unknown_command(sc, it);
 
-    if (sc->sfd != -1)
-        write_all(sc->sfd, "\r\n", 2);
-
-    memcpy(b + MAX_PATH_LEN + 5, sc->r, sizeof(sc->r));
-    memcpy(b + MAX_PATH_LEN, "/tmp/", 5);
-
     /* Open tmp files */
-    for (int i = 0; i < sc->fwd_path_len; i++) {
-        char* s = b + MAX_PATH_LEN - sc->fwd_path[i].p[0] - 1;
-
-        ffds[i] = sc->sfd;
-
-        linked_blocks_str_print(s, sc->fwd_path[i], sc->fwd_path[i].p[0] + 1);
-
-        if (!strncmp(s, "spool/", 6))
-            goto HEADERS;
+    for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++) {
 
         /* Open the temp file */
-        if ((ffds[i] = open(s + 1, O_CREAT /*| O_EXCL*/ | O_WRONLY, 0644)) < 0)
+        if ((ffds[i] = open(sc->smtp_tx.tx_fwd_path[i], O_CREAT /*| O_EXCL*/ | O_WRONLY, 0644)) < 0)
             abort_cleanup(it->fd);
 HEADERS:
         ; // TODO SMTP headers
@@ -353,7 +375,7 @@ HEADERS:
 
                 if (t != DATA_END_TOKEN) {
                     /* Make up for unwritten DATA_END_TOKEN pieces */
-                    for (int i = 0; i < sc->fwd_path_len; i++)
+                    for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
                         write_all(ffds[i], DATA_END_TOKEN, t - DATA_END_TOKEN);
                     end--;
                 }
@@ -364,7 +386,7 @@ HEADERS:
 
             /* Write to all files */
             if ((t - DATA_END_TOKEN) < (end - it->input_buffer))
-                for (int i = 0; i < sc->fwd_path_len; i++)
+                for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
                     write_all(ffds[i], it->input_buffer, end - it->input_buffer - (t - DATA_END_TOKEN));
 
             if (*t == '\0') break;
@@ -373,18 +395,18 @@ HEADERS:
     it->input_buffer[it->i] = '\0';
 
     /* Move all files from tmp to new */
-    for (int i = 0; i < sc->fwd_path_len; i++) {
-        int o = MAX_PATH_LEN - sc->fwd_path[i].p[0] - 1;
-        char nb[MAX_PATH_LEN - 1];
+    for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++) {
+        char nb[MAX_PATH_LEN + PATH_EXTRA];
 
-        linked_blocks_str_print(b + o++, sc->fwd_path[i], sc->fwd_path[i].p[0] + 1);
-        /* Copy tmp file path to nb */
-        memcpy(nb, b + o, sizeof(b) - o);
-        memcpy(nb + sc->fwd_path[i].p[0] + 1, "new", 3);
-
+        /* Copy to nb */
+        for (int j = 0;; j++) {
+            if (sc->smtp_tx.tx_fwd_path[i][j] == '\0') { nb[j] = '\0'; break; }
+            if (sc->smtp_tx.tx_fwd_path[i][j] == '/') { memcpy(nb + j, "/new/", 5); j += 4; continue; }
+            nb[j] = sc->smtp_tx.tx_fwd_path[i][j];
+        }
 
         /* Move file from tmp to new */
-        if (rename(b + o, nb) < 0)
+        if (rename(sc->smtp_tx.tx_fwd_path[i], nb) < 0)
             abort_cleanup(it->fd); // TODO rollback half commits
 
         /* Cleanup */
@@ -393,23 +415,16 @@ HEADERS:
 
     write_all(it->fd, "250 will deliver\r\n", 18);
 
-    if (sc->sfd != -1) close(sc->sfd);
-    sc->sfd = -1;
-
-    sc->it_head.block = sc->blocks;
-    sc->it_head.p = sc->blocks->data;
-    sc->fwd_path_len = 0;
+    linked_blocks_free(sc->smtp_tx.tx_blocks);
+    memset(&sc->smtp_tx, '\0', sizeof(sc->smtp_tx));
     return sc;
 }
 
 struct smtp_context* rset_command(struct smtp_context* sc, struct input_iterator* it)
 {
-    if (sc->sfd != -1) close(sc->sfd);
-    sc->sfd = -1;
+    linked_blocks_free(sc->smtp_tx.tx_blocks);
+    memset(&sc->smtp_tx, '\0', sizeof(sc->smtp_tx));
 
-    sc->it_head.block = sc->blocks;
-    sc->it_head.p = sc->blocks->data;
-    sc->fwd_path_len = 0;
     write_all(it->fd, "250 OK\r\n", 8);
     return sc;
 }
@@ -464,13 +479,9 @@ int smtp(int fd, struct sockaddr_in* pa)
     struct smtp_context sc;
     struct input_iterator it;
 
-    sc.sfd = -1;
-    sc.fwd_path_len = 0;
-    sc.it_head.block = malloc(sizeof(struct linked_blocks_char_iterator));
-    sc.it_head.block->next = NULL;
-    sc.it_head.p = sc.it_head.block->data;
-    it.fd = fd;
+    memset(&sc.smtp_tx, '\0', sizeof(sc.smtp_tx));
 
+    it.fd = fd;
     it.i = 0;
     it.input_buffer[0] = '\0';
 

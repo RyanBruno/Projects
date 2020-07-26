@@ -13,7 +13,7 @@
 
 #define READ_SOCKET() { \
     if (read_line() == -1) {\
-        fprintf(stderr, "Socket Closed!\n"); return -1; } \
+        close(fd);fprintf(stderr, "Socket Closed!\n"); return -1; } \
     printf("%s\n", buf); } 
 
 #define FORMAT(...) { \
