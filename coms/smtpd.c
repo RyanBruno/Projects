@@ -11,9 +11,11 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <pthread.h>
 
 #define BACKLOG  10
 #define MAX_RCPT 100
@@ -34,6 +36,8 @@ int rfd;
 
 char greeting[24] = "220 SMTP Service Ready\r\n";
 int greeting_len = 24;
+
+char spool_path[10 + RAND_LEN];
 const char* DATA_END_TOKEN = "\r\n.\r\n";
 
 struct input_iterator {
@@ -81,26 +85,14 @@ linked_blocks_init(void*(*alloc)(size_t s))
     return lb;
 }
 
-struct linked_blocks*
-linked_blocks_next(struct linked_blocks* bl, void*(*alloc)(size_t s))
-{
-    if (bl->next == NULL)
-        bl->next = linked_blocks_init(alloc);
-
-    return bl->next;
-}
-
-void linked_blocks_char_next_block(struct linked_blocks_char_iterator* it, void*(*alloc)(size_t s))
-{
-    linked_blocks_next(it->block, alloc);
-    it->block = it->block->next;
-    it->p = it->block->data;
-}
-
 void linked_blocks_char_put(struct linked_blocks_char_iterator* it, char c, void*(*alloc)(size_t s))
 {
-    if (it->p - it->block->data >= sizeof(it->block->data))
-        linked_blocks_char_next_block(it, alloc);
+    if (it->p - it->block->data >= sizeof(it->block->data)) {
+        if (it->block->next == NULL)
+            it->block->next = linked_blocks_init(alloc);
+        it->block = it->block->next;
+        it->p = it->block->data;
+    }
 
     *it->p = c;
     it->p++;
@@ -120,6 +112,8 @@ struct smtp_transaction {
     char* tx_rev_path;
     char* tx_fwd_path[MAX_RCPT];
     int tx_fwd_path_len;
+    struct iovec tx_rmt_path[MAX_RCPT];
+    int tx_rmt_path_len;
 };
 
 struct smtp_context {
@@ -216,10 +210,12 @@ char* save_path(struct linked_blocks_char_iterator* dest, struct input_iterator*
             int l;
 
             l = dest->p - s;
-            linked_blocks_char_next_block(dest, malloc);
-            memcpy(dest->p, s, l);
-            s = dest->p;
+            dest->p += PATH_EXTRA;
+            linked_blocks_char_put(dest, '\0', malloc);
+
             dest->p += l;
+            memcpy(dest->block->data, s, l);
+            s = dest->block->data;
         }
     
         linked_blocks_char_put(dest, c, malloc);
@@ -258,11 +254,11 @@ struct smtp_context* mail_command(struct smtp_context* sc, struct input_iterator
 
     write_all(it->fd, "250 OK\r\n", 8);
 
-
     /* Setup Random */
     for (char* e = sc->smtp_tx.tx_r; e - sc->smtp_tx.tx_r < sizeof(sc->smtp_tx.tx_r) - 1;)
         e += read(rfd, e, sizeof(sc->smtp_tx.tx_r) - (e - sc->smtp_tx.tx_r));
 
+    /* Encode Random */
     for (int i = 0; i < sizeof(sc->smtp_tx.tx_r) - 1; i++)
         sc->smtp_tx.tx_r[i] = (abs(sc->smtp_tx.tx_r[i]) % 26) + 97;
     sc->smtp_tx.tx_r[sizeof(sc->smtp_tx.tx_r) - 1] = '\0';
@@ -272,66 +268,59 @@ struct smtp_context* mail_command(struct smtp_context* sc, struct input_iterator
 
 struct smtp_context* rcpt_command(struct smtp_context* sc, struct input_iterator* it)
 {
-
-    char *p;
+    struct linked_blocks_char_iterator p;
     struct stat st;
 
     /* Ordering */
     if (sc->smtp_tx.tx_rev_path == NULL)
         return unknown_command(sc, it);
 
+    /* Too many rcpts */
     if (sc->smtp_tx.tx_fwd_path_len >= MAX_RCPT) // TODO Error message
         exit(-1);
 
     /* Save forward_path */
+    p = sc->smtp_tx.tx_it_head;
     sc->smtp_tx.tx_fwd_path[sc->smtp_tx.tx_fwd_path_len] = save_path(&sc->smtp_tx.tx_it_head, it, MAX_PATH_LEN);
 
     if (stat(sc->smtp_tx.tx_fwd_path[sc->smtp_tx.tx_fwd_path_len], &st) == 0) {
 
+        /* Print rest of /tmp/ path */
         memcpy(sc->smtp_tx.tx_it_head.p - 1, "/tmp/", 5);
         memcpy(sc->smtp_tx.tx_it_head.p + 4, sc->smtp_tx.tx_r, sizeof(sc->smtp_tx.tx_r));
         sc->smtp_tx.tx_it_head.p += sizeof(sc->smtp_tx.tx_r) + 5;
 
         /* Push forward rcpt */
         sc->smtp_tx.tx_fwd_path_len++;
+
         write_all(it->fd, "250 OK\r\n", 8);
         return sc;
     }
 
     if (!authorized) {
-        /* TODO Reset head */
+        /* Reset head */
+        sc->smtp_tx.tx_it_head = p;
+
         write_all(it->fd, "551 User not local\r\n", 20);
         return sc;
     }
 
+    /* Push fwd_path to rmt_path scatter/gather */
+    sc->smtp_tx.tx_it_head.p[-1] = ',';
+
     /* Need to forward */
-    //if (sc->sfd < 0) {
+    if (sc->smtp_tx.tx_rmt_path_len == 1) {
         /* First remote path setup */
-        /*memcpy(sc->fwd_path[sc->fwd_path_len], "spool/tmp/", 10);
-        memcpy(sc->fwd_path[sc->fwd_path_len] + 10, sc->r, RAND_LEN);
-        sc->fwd_path_len++;*/
+        memcpy(spool_path, "spool/tmp/", 10);
+        memcpy(spool_path + 10, sc->smtp_tx.tx_r, RAND_LEN);
+        sc->smtp_tx.tx_fwd_path[sc->smtp_tx.tx_fwd_path_len++] = spool_path;
 
-        /* Open spool file */
-        /*if ((sc->sfd = open(sc->fwd_path[sc->fwd_path_len], O_CREAT | O_WRONLY, 0644)) < 0)
-            abort_cleanup(it->fd);*/
+        /* Push rev_path to rmt_path scatter/gather */
+    }
 
-        /*memcpy(&l, sc->path_buf, sizeof(int));
-        sc->path_buf[l + sizeof(int)] = ',';
-        write_all(sc->sfd, sc->path_buf + sizeof(int), l);*/
-    //}
-
-    /* Write remote path to spool file */
-    /*sc->path_buf_head[0] = ',';
-    write_all(sc->sfd, h + sizeof(int), (sc->path_buf_head - h) + 1);*/
     write_all(it->fd, "251 User not local; will forward\r\n", 34);
     return sc;
 }
-
-void smtp_reset(struct smtp_context* sc)
-{
-    /* Killing */
-}
-
 
 struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator* it)
 {
@@ -345,52 +334,44 @@ struct smtp_context* data_command(struct smtp_context* sc, struct input_iterator
     for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++) {
 
         /* Open the temp file */
-        if ((ffds[i] = open(sc->smtp_tx.tx_fwd_path[i], O_CREAT /*| O_EXCL*/ | O_WRONLY, 0644)) < 0)
+        if ((ffds[i] = open(sc->smtp_tx.tx_fwd_path[i], O_CREAT | O_EXCL | O_WRONLY, 0644)) < 0)
             abort_cleanup(it->fd);
-HEADERS:
+
         ; // TODO SMTP headers
     }
 
     write_all(it->fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46);
 
-    {
-        const char* t;
+    for (const char* t = DATA_END_TOKEN;;) {
+        char* p;
 
-        t = DATA_END_TOKEN;
+        /* Read some */
+        if ((p = read_some(it->fd, it->input_buffer, sizeof(it->input_buffer))) == it->input_buffer)
+            cleanup(it->fd);
+        p = it->input_buffer;
 
-        for (;;) {
-            char* end;
+        /* Find the DATA_END_TOKEN */
+        for (; *p != '\0' && *t != '\0'; p++, t++) {
 
-            if ((end = read_some(it->fd, it->input_buffer, sizeof(it->input_buffer))) == it->input_buffer)
-                cleanup(it->fd);
+            if (*p == *t) continue;
 
-            end -= 5;
-            if (end < it->input_buffer)
-                end = it->input_buffer;
-
-            /* Find the DATA_END_TOKEN */
-            for (; *end != '\0' && *t != '\0'; end++, t++) {
-
-                if (*end == *t) continue;
-
-                if (t != DATA_END_TOKEN) {
-                    /* Make up for unwritten DATA_END_TOKEN pieces */
-                    for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
-                        write_all(ffds[i], DATA_END_TOKEN, t - DATA_END_TOKEN);
-                    end--;
-                }
-
-                /* Reset t */
-                t = DATA_END_TOKEN - 1;
+            if (t != DATA_END_TOKEN) {
+                /* Make up for unwritten DATA_END_TOKEN pieces */
+                for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
+                    write_all(ffds[i], DATA_END_TOKEN, t - DATA_END_TOKEN);
+                p--;
             }
 
-            /* Write to all files */
-            if ((t - DATA_END_TOKEN) < (end - it->input_buffer))
-                for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
-                    write_all(ffds[i], it->input_buffer, end - it->input_buffer - (t - DATA_END_TOKEN));
-
-            if (*t == '\0') break;
+            /* Reset t */
+            t = DATA_END_TOKEN - 1;
         }
+
+        /* Write to all files */
+        if ((t - DATA_END_TOKEN) < (p - it->input_buffer))
+            for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
+                write_all(ffds[i], it->input_buffer, p - it->input_buffer - (t - DATA_END_TOKEN));
+
+        if (*t == '\0') break;
     }
     it->input_buffer[it->i] = '\0';
 
@@ -453,23 +434,23 @@ int stritmatch(char* str, struct input_iterator* it, int n)
 struct smtp_context*(*command_mapper(struct input_iterator* it))(struct smtp_context*, struct input_iterator*)
 {
     switch (toupper(input_next(it))) {
-        case 'H':
-            if (stritmatch("ELO", it, 3))       return helo_command;
-        case 'M':
-            if (stritmatch("AIL FROM:", it, 9)) return mail_command;
-        case 'R':
-            switch (toupper(input_next(it))) {
-                case 'C':
-                    if (stritmatch("PT TO:", it, 6)) return rcpt_command;
-                case 'S':
-                    if (stritmatch("ET", it, 2))     return rset_command;
-            }
-        case 'D':
-            if (stritmatch("ATA", it, 3))       return data_command;
-        case 'N':
-            if (stritmatch("OOP", it, 3))       return noop_command;
-        case 'Q':
-            if (stritmatch("UIT", it, 3))       return quit_command;
+    case 'H':
+        if (stritmatch("ELO", it, 3))       return helo_command;
+    case 'M':
+        if (stritmatch("AIL FROM:", it, 9)) return mail_command;
+    case 'R':
+        switch (toupper(input_next(it))) {
+        case 'C':
+            if (stritmatch("PT TO:", it, 6)) return rcpt_command;
+        case 'S':
+            if (stritmatch("ET", it, 2))     return rset_command;
+        }
+    case 'D':
+        if (stritmatch("ATA", it, 3))       return data_command;
+    case 'N':
+        if (stritmatch("OOP", it, 3))       return noop_command;
+    case 'Q':
+        if (stritmatch("UIT", it, 3))       return quit_command;
     }
     return unknown_command;
 }
@@ -557,7 +538,7 @@ int main(int argc, char **argv)
         socklen_t pa_size = sizeof(pa);
 
         errno = 0;
-        if ((fd = accept(afd, (struct sockaddr*) &pa, &pa_size)) == -1)
+        if ((fd = accept(afd, (struct sockaddr*) &pa, &pa_size)) < 0)
             continue;
 
         if (fork() == 0) {
