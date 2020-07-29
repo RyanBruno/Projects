@@ -32,7 +32,7 @@ struct addrinfo ai_hints = {
 /* Random */
 int rfd;
 
-char* greeting = "220 SMTP Service Ready\r\n";
+char* greeting = "220 flappy.rbruno.com\r\n";
 int greeting_len;
 
 char spool_path[10 + RAND_LEN];
@@ -102,6 +102,20 @@ char input_next(struct input_iterator* it)
 
     it->i = 0;
     return it->input_buffer[it->i++];
+}
+
+int input_until(struct input_iterator* it, char c, char* b, size_t s)
+{
+    char* t = b;
+
+    for (; s > 1; b++, s--) {
+        *b = input_next(it);
+        if (*b == '\0') break;
+        if (*b == c) break;
+    }
+    *(++b) = '\0';
+    
+    return b - t;
 }
 
 void input_find(struct input_iterator* it, char c)
@@ -302,40 +316,22 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
         ; // TODO SMTP headers
     }
 
+    input_find(it, '\n');
     write_all(it->fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46);
 
-    for (const char* t = DATA_END_TOKEN;;) {
-        char* p;
+    for (;;) {
+        char b[1025];
+        int s;
 
-        /* Read some */
-        if ((p = read_some(it->fd, it->input_buffer, sizeof(it->input_buffer))) == it->input_buffer)
-            cleanup(it->fd);
-        p = it->input_buffer;
+        s = input_until(it, '\n', (char*) &b, sizeof(b));
 
-        /* Find the DATA_END_TOKEN */
-        for (; *p != '\0' && *t != '\0'; p++, t++) {
-
-            if (*p == *t) continue;
-
-            if (t != DATA_END_TOKEN) {
-                /* Make up for unwritten DATA_END_TOKEN pieces */
-                for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
-                    write_all(ffds[i], DATA_END_TOKEN, t - DATA_END_TOKEN);
-                p--;
-            }
-
-            /* Reset t */
-            t = DATA_END_TOKEN - 1;
-        }
+        if (!strcmp(".\r\n", b)) break;
 
         /* Write to all files */
-        if ((t - DATA_END_TOKEN) < (p - it->input_buffer))
-            for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
-                write_all(ffds[i], it->input_buffer, p - it->input_buffer - (t - DATA_END_TOKEN));
-
-        if (*t == '\0') break;
+        for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
+            write_all(ffds[i], b, s);
     }
-    it->input_buffer[it->i] = '\0';
+    it->input_buffer[it->i] = '\n';
 
     /* Move all files from tmp to new */
     for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++) {
