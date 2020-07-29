@@ -89,16 +89,13 @@ char* read_some(int fd, char* b, size_t s)
     return b;
 }
 
-/* Unwanted dep */
-void cleanup(int fd) { close(fd); exit(0); }
-
 char input_next(struct input_iterator* it)
 {
     if (it->input_buffer[it->i] != '\0')
         return it->input_buffer[it->i++];
 
     if (read_some(it->fd, it->input_buffer, sizeof(it->input_buffer)) == it->input_buffer)
-        cleanup(it->fd);
+        return '\0';
 
     it->i = 0;
     return it->input_buffer[it->i++];
@@ -120,10 +117,10 @@ int input_until(struct input_iterator* it, char c, char* b, size_t s)
 
 void input_find(struct input_iterator* it, char c)
 {
-    for (char s = input_next(it); s != c; s = input_next(it)) { }
+    for (char s = input_next(it); s != c && s != '\0'; s = input_next(it)) { }
 }
 
-void write_all(int fd, const char* b, size_t s)
+int write_all(int fd, const char* b, size_t s)
 {
     int w;
 
@@ -132,14 +129,15 @@ void write_all(int fd, const char* b, size_t s)
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
-            cleanup(fd);
+            return 1;
         }
 
         b += w;
         s -= w;
 
-        if (s == 0) return;
+        if (s == 0) break;
     }
+    return 0;
 }
 
 /* SMTP structs and helper functions */
@@ -167,6 +165,8 @@ char* smtp_off_to_str(struct smtp_context* sc, size_t o)
     return (char*) &sc->smtp_tx.tx_str_head.str->str_str + o;
 }
 
+void cleanup(int fd) { close(fd); exit(0); }
+
 void abort_cleanup(int fd)
 {
     write_all(fd, "451 Requested action aborted: local error in processing\r\n", 57);
@@ -183,7 +183,7 @@ size_t save_path(struct str_iterator* str_it, struct input_iterator* it, int n)
 
     for (s_it_r = str_it->str_offset; c != '\r' && c != '>'; c = input_next(it), str_it->str_offset++) {
 
-        if (n < 0) abort_cleanup(it->fd);
+        if (n < 0 || c == '\0') abort_cleanup(it->fd);
 
         /* Forward slashes are illegal */
         if (c == '/')
@@ -317,7 +317,8 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
     }
 
     input_find(it, '\n');
-    write_all(it->fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46);
+    if (write_all(it->fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46))
+        cleanup(it->fd);
 
     for (;;) {
         char b[1025];
@@ -329,7 +330,8 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
         /* Write to all files */
         for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
-            write_all(ffds[i], b, s);
+            if (write_all(ffds[i], b, s))
+                cleanup(it->fd);
     }
     it->input_buffer[it->i] = '\n';
 
@@ -428,13 +430,15 @@ int smtp(int fd, struct sockaddr_in* pa)
     it.input_buffer[0] = '\0';
 
     /* Greeting */
-    write_all(fd, greeting, greeting_len);
+    if (write_all(fd, greeting, greeting_len))
+        cleanup(fd);
     
     for (;;) {
         struct smtp_response sr;
 
         command_mapper(&it)(&sc, &it, &sr);
-        write_all(it.fd, sr.res, sr.res_len);
+        if (write_all(it.fd, sr.res, sr.res_len))
+            cleanup(fd);
 
         input_find(&it, '\n');
     }
