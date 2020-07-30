@@ -67,19 +67,25 @@ struct input_iterator {
     char it_buf[PAGE_SIZE - (2*sizeof(int))];
 };
 
+void input_cleanup(struct input_iterator* it)
+{
+    close(it->it_fd);
+}
+
 /* Similar to read but (1) handles EAGAIN and
  * EINTR and (2) will always null-terminate.
  * This function decrements s to always make
  * sure there is room for a null-termination.
  */
-char* read_some(int fd, char* b, size_t s)
+#define read_some(it, b, s) _read_some(it->it_fd, read, b, s)
+char* _read_some(int fd, ssize_t(*read_a)(int, void*, size_t), char* b, size_t s)
 {
     int r;
 
     for (s--;;) {
 
         errno = 0;
-        if ((r = read(fd, b, s)) == 0)
+        if ((r = read_a(fd, b, s)) == 0)
             /* Either EOF or socket closed */
             break;
 
@@ -107,7 +113,7 @@ char input_next(struct input_iterator* it)
         /* Next char is available */ 
         return it->it_buf[it->it_i++];
 
-    if (read_some(it->it_fd, it->it_buf, sizeof(it->it_buf)) == it->it_buf)
+    if (read_some(it, it->it_buf, sizeof(it->it_buf)) == it->it_buf)
         /* EOF has been reached */
         return '\0';
 
@@ -146,7 +152,7 @@ int input_until(struct input_iterator* it, char c)
             if (it->it_i >= sizeof(it->it_buf))
                 return -1;
 
-            read_some(it->it_fd, it->it_buf + it->it_i, sizeof(it->it_buf) - it->it_i);
+            read_some(it, it->it_buf + it->it_i, sizeof(it->it_buf) - it->it_i);
         }
 
         if (it->it_buf[it->it_i] == c) break;
@@ -161,12 +167,14 @@ int input_until(struct input_iterator* it, char c)
  * * By closed I mean do not try again;
  *   close(fd) should still be called. *
  */
-int write_all(int fd, const char* b, size_t s)
+#define write_all(it, b, s) _write_all(it->it_fd, write, b, s)
+#define write_all_f(f, b, s) _write_all(f, write, b, s)
+int _write_all(int fd, ssize_t(*write_a)(int, const void*, size_t), const char* b, size_t s)
 {
     int w;
 
     for (;;) {
-        w = write(fd, b, s);
+        w = write_a(fd, b, s);
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
@@ -210,12 +218,12 @@ char* smtp_off_to_str(struct smtp_context* sc, size_t o)
     return (char*) &sc->smtp_tx.tx_str_head.str->str_str + o;
 }
 
-void cleanup(int fd) { close(fd); exit(0); }
+void smtp_cleanup(struct input_iterator* it) { input_cleanup(it); exit(0); }
 
-void abort_cleanup(int fd)
+void smtp_abort_cleanup(struct input_iterator* it)
 {
-    write_all(fd, "451 Requested action aborted: local error in processing\r\n", 57);
-    cleanup(fd);
+    write_all(it, "451 Requested action aborted: local error in processing\r\n", 57);
+    smtp_cleanup(it);
 }
 
 size_t save_path(struct str_iterator* str_it, struct input_iterator* it, int n)
@@ -228,7 +236,7 @@ size_t save_path(struct str_iterator* str_it, struct input_iterator* it, int n)
 
     for (s_it_r = str_it->str_offset; c != '\r' && c != '>'; c = input_next(it), str_it->str_offset++) {
 
-        if (n < 0 || c == '\0') abort_cleanup(it->it_fd);
+        if (n < 0 || c == '\0') smtp_abort_cleanup(it);
 
         /* Forward slashes are illegal */
         if (c == '/')
@@ -237,7 +245,7 @@ size_t save_path(struct str_iterator* str_it, struct input_iterator* it, int n)
         /* Resize */
         if (str_it->str_offset >= str_it->str->str_size)
             if ((str_it->str = str_resize(str_it->str, str_it->str->str_size * 1.5)) == NULL)
-                abort_cleanup(it->it_fd);
+                smtp_abort_cleanup(it);
     
         ((char*) &str_it->str->str_str)[str_it->str_offset] = c;
     }
@@ -349,7 +357,7 @@ void rcpt_command(struct smtp_context* sc, struct input_iterator* it, struct smt
         /* Ensure there is enough room */
         if (sc->smtp_tx.tx_str_head.str_offset >= sc->smtp_tx.tx_str_head.str->str_size - RAND_LEN - 10)
             if ((sc->smtp_tx.tx_str_head.str = str_resize(sc->smtp_tx.tx_str_head.str, sc->smtp_tx.tx_str_head.str->str_size * 1.5)) == NULL)
-                abort_cleanup(it->it_fd);
+                smtp_abort_cleanup(it);
 
         memcpy(smtp_off_to_str(sc, sc->smtp_tx.tx_str_head.str_offset), "spool/tmp/", 10);
         memcpy(smtp_off_to_str(sc, sc->smtp_tx.tx_str_head.str_offset) + 10, sc->smtp_tx.tx_r, RAND_LEN);
@@ -374,13 +382,13 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
         /* Open the temp file */
         if ((ffds[i] = open(smtp_off_to_str(sc, sc->smtp_tx.tx_fwd_path[i]), O_CREAT | O_EXCL | O_WRONLY, 0644)) < 0)
-            abort_cleanup(it->it_fd);
+            smtp_abort_cleanup(it);
 
 
         if (!strncmp(smtp_off_to_str(sc, sc->smtp_tx.tx_fwd_path[i]), "spool/tmp/", 10)) {
             sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len].iov_base = "\r\n";
             sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len++].iov_len = 2;
-            writev(ffds[i], sc->smtp_tx.tx_rmt_path, sc->smtp_tx.tx_rmt_path_len);
+            writev(ffds[i], sc->smtp_tx.tx_rmt_path, sc->smtp_tx.tx_rmt_path_len); // TODO error checking
         };
 
         ; // TODO SMTP headers
@@ -388,21 +396,21 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
     }
 
     input_find(it, '\n');
-    if (write_all(it->it_fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46) < 0)
-        cleanup(it->it_fd);
+    if (write_all(it, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46) < 0)
+        smtp_cleanup(it);
 
     for (;;) {
         int i;
 
         if ((i = input_until(it, '\n')) < 0)
-            cleanup(it->it_fd);
+            smtp_abort_cleanup(it);
 
         if (!strcmp(".\r\n", it->it_buf + i)) break;
 
         /* Write to all files */
         for (int j = 0; j < sc->smtp_tx.tx_fwd_path_len; j++)
-            if (write_all(ffds[j], it->it_buf + i, it->it_i - i) < 0)
-                cleanup(it->it_fd);
+            if (write_all_f(ffds[j], it->it_buf + i, it->it_i - i) < 0)
+                smtp_abort_cleanup(it);
     }
     it->it_buf[it->it_i] = '\n';
 
@@ -419,7 +427,7 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
         /* Move file from tmp to new */
         if (rename(smtp_off_to_str(sc, sc->smtp_tx.tx_fwd_path[i]), nb) < 0)
-            abort_cleanup(it->it_fd); // TODO rollback half commits
+            smtp_abort_cleanup(it); // TODO rollback half commits
 
         /* Cleanup */
         close(ffds[i]);
@@ -450,8 +458,8 @@ void noop_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
 void quit_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
 {
-    write_all(it->it_fd, "250 OK\r\n", 8);
-    cleanup(it->it_fd);
+    write_all(it, "250 OK\r\n", 8);
+    smtp_cleanup(it);
 }
 
 int stritmatch(char* str, struct input_iterator* it, int n)
@@ -503,15 +511,15 @@ int smtp(int fd, struct sockaddr_in* pa)
     it.it_buf[0] = '\0';
 
     /* Greeting */
-    if (write_all(fd, greeting, greeting_len) < 0)
-        cleanup(fd);
+    if (write_all((&it), greeting, greeting_len) < 0)
+        smtp_cleanup(&it);
     
     for (;;) {
         struct smtp_response sr;
 
         command_mapper(&it)(&sc, &it, &sr);
-        if (write_all(it.it_fd, sr.res, sr.res_len) < 0)
-            cleanup(fd);
+        if (write_all((&it), sr.res, sr.res_len) < 0)
+            smtp_cleanup(&it);
 
         input_find(&it, '\n');
     }
