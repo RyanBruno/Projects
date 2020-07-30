@@ -22,7 +22,7 @@
 #define PAGE_SIZE 4096
 #define STR_OVERHEAD_SIZE (sizeof(struct string) - sizeof(void*))
 /* Coming soon */
-#define authorized 1
+#define authorized 0
 
 struct addrinfo ai_hints = {
     .ai_flags    = AI_NUMERICSERV,
@@ -260,6 +260,12 @@ void helo_command(struct smtp_context* sc, struct input_iterator* it, struct smt
     res_r->res_len = 22;
 }
 
+void ehlo_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
+{
+    res_r->res = "250-SMTPd greats you\r\n250 PIPELINING\r\n";
+    res_r->res_len = 38;
+}
+
 void mail_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
 {
     /* Ordering */
@@ -464,6 +470,8 @@ void(*command_mapper(struct input_iterator* it))(struct smtp_context*, struct in
     switch (toupper(input_next(it))) {
     case 'H':
         if (stritmatch("ELO", it, 3))       return helo_command;
+    case 'E':
+        if (stritmatch("HLO", it, 3))       return ehlo_command;
     case 'M':
         if (stritmatch("AIL FROM:", it, 9)) return mail_command;
     case 'R':
