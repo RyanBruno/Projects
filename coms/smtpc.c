@@ -147,7 +147,7 @@ int main()
     SEND("Gye\n")
     SEND("Gye\n")
     SEND("Gye\n")
-    SEND("\r\n.\r\n")
+    SEND(".\r\n")
     OK("Do main queue\n")
 
     close(fd);

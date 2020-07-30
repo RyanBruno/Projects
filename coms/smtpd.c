@@ -18,7 +18,7 @@
 #define MAX_PATH_LEN 256
 #define RAND_LEN 64
 #define PATH_EXTRA RAND_LEN + 5
-#define DEFAULT_STR_SIZE 4096
+#define PAGE_SIZE 4096
 #define STR_OVERHEAD_SIZE (sizeof(struct string) - sizeof(void*))
 /* Coming soon */
 #define authorized 0
@@ -58,9 +58,9 @@ struct string* str_resize(struct string* str, size_t new_size)
 
 /* I/O Abstraction */
 struct input_iterator {
-    int fd;
-    int i;
-    char input_buffer[1024];
+    int it_fd;
+    int it_i;
+    char it_buf[PAGE_SIZE - (2*sizeof(int))];
 };
 
 char* read_some(int fd, char* b, size_t s)
@@ -91,28 +91,61 @@ char* read_some(int fd, char* b, size_t s)
 
 char input_next(struct input_iterator* it)
 {
-    if (it->input_buffer[it->i] != '\0')
-        return it->input_buffer[it->i++];
+    if (it->it_buf[it->it_i] != '\0')
+        return it->it_buf[it->it_i++];
 
-    if (read_some(it->fd, it->input_buffer, sizeof(it->input_buffer)) == it->input_buffer)
+    if (read_some(it->it_fd, it->it_buf, sizeof(it->it_buf)) == it->it_buf)
         return '\0';
 
-    it->i = 0;
-    return it->input_buffer[it->i++];
+    it->it_i= 0;
+    return it->it_buf[it->it_i++];
 }
 
-int input_until(struct input_iterator* it, char c, char* b, size_t s)
+int input_until2(struct input_iterator* it, char c)
 {
-    char* t = b;
+    int i;
 
-    for (; s > 1; b++, s--) {
-        *b = input_next(it);
-        if (*b == '\0') break;
-        if (*b == c) break;
+    for (i = it->it_i;; it->it_i++) {
+        if (it->it_buf[it->it_i] == '\0') {
+            if (i != 0) {
+                it->it_i = i - it->it_i;
+                /* memcpy i to 0 */
+                for (int j = 0;;) {
+                    it->it_buf[j++] = it->it_buf[i];
+                    if (it->it_buf[i++] == '\0') break;
+                }
+                i = 0;
+            }
+
+            if (it->it_i >= sizeof(it->it_buf))
+                return -1;
+
+            read_some(it->it_fd, it->it_buf + it->it_i, sizeof(it->it_buf) - it->it_i);
+        }
+
+        if (it->it_buf[it->it_i] == c) break;
     }
-    *(++b) = '\0';
-    
-    return b - t;
+    it->it_i++;
+    return i;
+}
+
+int input_until(struct input_iterator* it, char c)
+{
+    for (int i = 0;;) {
+        it->it_buf[i++] = it->it_buf[it->it_i];
+        if (it->it_buf[it->it_i++] == '\0') break;
+    }
+
+    for (it->it_i= 0;; it->it_i++) {
+        if (it->it_i>= sizeof(it->it_buf))
+                return 1;
+        if (it->it_buf[it->it_i] == '\0')
+            read_some(it->it_fd, it->it_buf + it->it_i, sizeof(it->it_buf) - it->it_i);
+
+        if (it->it_buf[it->it_i] == c) break;
+    }
+    it->it_i++;
+    return 0;
 }
 
 void input_find(struct input_iterator* it, char c)
@@ -183,7 +216,7 @@ size_t save_path(struct str_iterator* str_it, struct input_iterator* it, int n)
 
     for (s_it_r = str_it->str_offset; c != '\r' && c != '>'; c = input_next(it), str_it->str_offset++) {
 
-        if (n < 0 || c == '\0') abort_cleanup(it->fd);
+        if (n < 0 || c == '\0') abort_cleanup(it->it_fd);
 
         /* Forward slashes are illegal */
         if (c == '/')
@@ -192,7 +225,7 @@ size_t save_path(struct str_iterator* str_it, struct input_iterator* it, int n)
         /* Resize */
         if (str_it->str_offset >= str_it->str->str_size)
             if ((str_it->str = str_resize(str_it->str, str_it->str->str_size * 1.5)) == NULL)
-                abort_cleanup(it->fd);
+                abort_cleanup(it->it_fd);
     
         ((char*) &str_it->str->str_str)[str_it->str_offset] = c;
     }
@@ -222,7 +255,7 @@ void mail_command(struct smtp_context* sc, struct input_iterator* it, struct smt
         return unknown_command(sc, it, res_r);
 
     /* Setup a transaction */
-    sc->smtp_tx.tx_str_head.str = str_resize(NULL, DEFAULT_STR_SIZE);
+    sc->smtp_tx.tx_str_head.str = str_resize(NULL, PAGE_SIZE);
 
     /* Save reverse path */
     sc->smtp_tx.tx_rev_path = save_path(&sc->smtp_tx.tx_str_head, it, MAX_PATH_LEN);
@@ -311,29 +344,29 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
         /* Open the temp file */
         if ((ffds[i] = open(smtp_off_to_str(sc, sc->smtp_tx.tx_fwd_path[i]), O_CREAT | O_EXCL | O_WRONLY, 0644)) < 0)
-            abort_cleanup(it->fd);
+            abort_cleanup(it->it_fd);
 
         ; // TODO SMTP headers
     }
 
     input_find(it, '\n');
-    if (write_all(it->fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46))
-        cleanup(it->fd);
+    if (write_all(it->it_fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46))
+        cleanup(it->it_fd);
 
     for (;;) {
-        char b[1025];
-        int s;
+        int i;
 
-        s = input_until(it, '\n', (char*) &b, sizeof(b));
+        if ((i = input_until2(it, '\n')) < 0)
+            cleanup(it->it_fd);
 
-        if (!strcmp(".\r\n", b)) break;
+        if (!strcmp(".\r\n", it->it_buf + i)) break;
 
         /* Write to all files */
-        for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++)
-            if (write_all(ffds[i], b, s))
-                cleanup(it->fd);
+        for (int j = 0; j < sc->smtp_tx.tx_fwd_path_len; j++)
+            if (write_all(ffds[j], it->it_buf + i, it->it_i - i))
+                cleanup(it->it_fd);
     }
-    it->input_buffer[it->i] = '\n';
+    it->it_buf[it->it_i] = '\n';
 
     /* Move all files from tmp to new */
     for (int i = 0; i < sc->smtp_tx.tx_fwd_path_len; i++) {
@@ -348,7 +381,7 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
         /* Move file from tmp to new */
         if (rename(smtp_off_to_str(sc, sc->smtp_tx.tx_fwd_path[i]), nb) < 0)
-            abort_cleanup(it->fd); // TODO rollback half commits
+            abort_cleanup(it->it_fd); // TODO rollback half commits
 
         /* Cleanup */
         close(ffds[i]);
@@ -379,8 +412,8 @@ void noop_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
 void quit_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
 {
-    write_all(it->fd, "250 OK\r\n", 8);
-    cleanup(it->fd);
+    write_all(it->it_fd, "250 OK\r\n", 8);
+        cleanup(it->it_fd);
 }
 
 int stritmatch(char* str, struct input_iterator* it, int n)
@@ -425,9 +458,9 @@ int smtp(int fd, struct sockaddr_in* pa)
 
     memset(&sc.smtp_tx, '\0', sizeof(sc.smtp_tx));
 
-    it.fd = fd;
-    it.i = 0;
-    it.input_buffer[0] = '\0';
+    it.it_fd = fd;
+    it.it_i = 0;
+    it.it_buf[0] = '\0';
 
     /* Greeting */
     if (write_all(fd, greeting, greeting_len))
@@ -437,7 +470,7 @@ int smtp(int fd, struct sockaddr_in* pa)
         struct smtp_response sr;
 
         command_mapper(&it)(&sc, &it, &sr);
-        if (write_all(it.fd, sr.res, sr.res_len))
+        if (write_all(it.it_fd, sr.res, sr.res_len))
             cleanup(fd);
 
         input_find(&it, '\n');
