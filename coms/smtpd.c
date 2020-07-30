@@ -101,7 +101,7 @@ char input_next(struct input_iterator* it)
     return it->it_buf[it->it_i++];
 }
 
-int input_until2(struct input_iterator* it, char c)
+int input_until(struct input_iterator* it, char c)
 {
     int i;
 
@@ -127,25 +127,6 @@ int input_until2(struct input_iterator* it, char c)
     }
     it->it_i++;
     return i;
-}
-
-int input_until(struct input_iterator* it, char c)
-{
-    for (int i = 0;;) {
-        it->it_buf[i++] = it->it_buf[it->it_i];
-        if (it->it_buf[it->it_i++] == '\0') break;
-    }
-
-    for (it->it_i= 0;; it->it_i++) {
-        if (it->it_i>= sizeof(it->it_buf))
-                return 1;
-        if (it->it_buf[it->it_i] == '\0')
-            read_some(it->it_fd, it->it_buf + it->it_i, sizeof(it->it_buf) - it->it_i);
-
-        if (it->it_buf[it->it_i] == c) break;
-    }
-    it->it_i++;
-    return 0;
 }
 
 void input_find(struct input_iterator* it, char c)
@@ -356,7 +337,7 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
     for (;;) {
         int i;
 
-        if ((i = input_until2(it, '\n')) < 0)
+        if ((i = input_until(it, '\n')) < 0)
             cleanup(it->it_fd);
 
         if (!strcmp(".\r\n", it->it_buf + i)) break;
