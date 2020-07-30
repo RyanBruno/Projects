@@ -1,0 +1,52 @@
+From 7f4aaace48859b04afe26a09ab11c5db20336d70 Mon Sep 17 00:00:00 2001
+From: Ryan Bruno <ryan@rbruno.com>
+Date: Wed, 24 Jun 2020 21:53:47 -0400
+Subject: [PATCH] Authorize local clients.
+
+---
+ coms/smtpd.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/coms/smtpd.c b/coms/smtpd.c
+index 4dff8d5..0cdf55c 100644
+--- a/coms/smtpd.c
++++ b/coms/smtpd.c
+@@ -40,8 +40,6 @@
+ #define BACKLOG  10
+ #define RAND_LEN 64
+ #define END_GUARD(b) b + sizeof(b) - RAND_LEN
+-/* Coming soon */
+-#define authorized 0
+ 
+ const char* DATA_END_TOKEN = "\r\n.\r\n";
+ 
+@@ -160,6 +158,7 @@ int smtp(int fd, struct sockaddr_in* pa)
+     char* rev_path;
+     char* fwd_path[MAX_RCPT];
+     unsigned short fwd_path_len;
++    short authenticated = 0;
+ 
+     /* Operational vars */
+     int ffds[MAX_RCPT];
+@@ -169,6 +168,9 @@ int smtp(int fd, struct sockaddr_in* pa)
+     char* head;
+     char buf[12992];
+ 
++    if (pa->sin_addr.s_addr == ntohl(INADDR_LOOPBACK))
++        authenticated = 1;
++
+     /* Reverse loopup addr */
+     if (getnameinfo((struct sockaddr*) pa, sizeof(struct sockaddr_in),
+                 buf, 64, NULL, 0, 0))
+@@ -235,7 +237,7 @@ RSET:
+                 continue;
+             }
+ 
+-            if (!authorized) {
++            if (!authenticated) {
+                 /* Will not forward, reset head */
+                 head = h;
+                 WRITE("551 User not local\r\n", 20);
+-- 
+2.27.0
+

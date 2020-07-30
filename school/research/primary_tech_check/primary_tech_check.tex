@@ -1,0 +1,36 @@
+\documentclass{beamer}
+
+\title{Primary Technical Check}
+\author{Ryan Bruno}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\frametitle{Outline}
+\begin{enumerate}
+    \item Problem Description
+    \item System Properties
+    \item CRDT Introduction
+    \item OR-Set
+    \item Problems
+    \item Possiable Expanded Research
+\end{enumerate}
+\tableofcontents
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Problem Description}
+
+Some systems require mulitple copys of the same data to be avilable in different nodes. The nodes are can be seperated by a high latency or may be disconnected for a period of time. In order to change the data we cannot wait for all nodes to be avilable inorder to commit changes. However, problems arise when distributing changes to all other nodes especially in the case of a syncronus change. 
+
+The most obvious example is a single integer. If node add makes an increments the integer, but a is temporarly partitioned from node b. If node b increments the integer a problem arised when merging those two nodes. A nieve soultion would lose one of the updates or leave one node in a defferent state as the other.
+
+\end{frame}
+
+\end{document}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<!--
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+- -->
+    <head>
+        <title>Ryan Bruno's Blog</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                font-size: 18px;
+                background-color: #f6f9fc;
+                color: #222222;
+                max-width: 100%;
+                margin: 0 0;
+            }
+
+            div {
+                background-color: white;
+                margin: 16px auto;
+                max-width: 1000px;
+                width: calc(100% - 32px);
+                padding: 20px 30px;
+            }
+
+            a {
+                color: darkgrey;
+            }
+
+            a:hover {
+                color: lightgrey;
+            }
+
+            h2 {
+                margin: 8px 0;
+            }
+
+            h6 {
+                margin: 0 0;
+                color: grey;
+            }
+
+            pre {
+                border: 1px solid #bbccdd;
+                background-color: #ebf1f5;
+                padding: 8px 8px;
+            }
+
+            code {
+                background-color: #ebf1f5;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+<h2 id="bootstrapping-blog">Bootstrapping Blog…</h2>
+<hr />
+<h6 id="ryan-bruno-more---perma-06-25-2020">[ <a href="https://rbruno.com/about">Ryan Bruno</a> ] [ <a href="https://blog.rbruno.com">more</a> - <a href="https://blog.rbruno.com/p/first-post">perma</a> ] [ 06-25-2020 ]</h6>
+<p>Welcome to <a href="https://blog.rbruno.com">blog.rbruno.com</a>. When the blog is fully operational you can expect posts about once a week. I, myself, am a software developer, Linux user, and open source fanboy. This blog serves as a place to share experiences, news, articles, tips, and tricks.</p>
+<h3 id="blog-setup">Blog setup</h3>
+<p>Naturally the first bit I can share is how I post to this blog. It all begins with an idea in my head… Once I talk myself in to believing that some bored soul will be interested in what I have to say I create a markdown document. Yes markdown. Markdown is fine for what I need currently. That may change. Example:</p>
+<pre><code>## An interesting title
+
+- ------
+
+### Section
+
+Test [Link](example.com).</code></pre>
+<p>There are some special styling to help get my point across such as the &lt;code&gt; tag (shown above). The styling is applied from a base HTML header file. So when I run:</p>
+<pre><code># pandoc -f markdown -t html &lt;post_id&gt;.md</code></pre>
+<p>It transforms the markdown document to a html chunk that then needs to be built with a header and footer file (see below). The base html and CSS is extremely simple; you can take a look by using “inspecting element” in your browser. The below script is all that is need to build the post page:</p>
+<pre><code>#!/bin/sh
+
+pandoc -f markdown -t html md/$1.md | cat header.html - footer.html &gt; p/$1.html </code></pre>
+<h3 id="hosting">Hosting</h3>
+<p>For now, the static files are served by a S3 compatible Linode bucket. Since one of the purposes of this blog is self-hosting a new setup and post to accompany may be on their way.</p>
+        </div>
+    </body>
+<!--
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEIJrnzC8BGlfXTTsb+B7WN6BCor4FAl8COncACgkQ+B7WN6BC
+or5crAf/UfWR75PUpC7RCO1nqDT9I/mvA+oLE5w88Qss3YZbZkav5z41GOCWHtQA
+4ggT0h97GavxuoyoB65rP0366gMHd+OnF9MbLBxjLb6pOh2YJCNuiEJk9xbu2nkI
+Ny7TwIfPAcIhEySXFzzhlC9wQ0m3cuXWr2UEVIwNFljnbwPEsrJohq4PAYXC4EJg
+nXdMo31Kak0AoKlIf6u+/sBcJgDEOqpWhwMNg6nDk1SpuK9moRHLW34BCCfDob7e
+TCzIXdP1ll0B1SyWUUnAaWuWOvH1kqmXYe1te+VUT+a8EjozUcduJEODdkXyCs4Z
+UKdKeJjek3XXCkd5XHymM4v8p+aUHw==
+=ndeB
+-----END PGP SIGNATURE-----
+-->
+</html>

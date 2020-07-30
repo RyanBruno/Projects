@@ -1,0 +1,12 @@
+make:
+ Fix missing $1 problem
+
+popd.c
+ Better job at returning errors instead of exit()
+
+smtpd.c
+ Half commit issue
+ cleanup on error
+ smtp headers
+
+smtpf.c

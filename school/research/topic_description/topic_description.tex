@@ -1,0 +1,36 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin={.95in,.75in}]{geometry}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage[default,scale=1]{opensans}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.5em}
+\renewcommand{\baselinestretch}{1.5}
+\pagenumbering{gobble}
+\setlength{\hyphenpenalty}{1000}
+\setlength{\exhyphenpenalty}{1000}
+
+\author{Ryan Bruno}
+\date{\today}
+
+\renewcommand{\maketitle}{
+\textbf{\underline{Name:}}
+\theauthor
+
+\textbf{\underline{Title:}}
+Senior Research Topic Description
+}
+
+\begin{document}
+
+\maketitle
+
+%\textbf{\underline{Analysis}}
+
+\setlength{\parindent}{10ex}
+The general area that I am interested in researching relates to distributed systems. There is a theorem in distributed systems called the CAP theorem. It states a distributed system cannot guarantee both Consistency and Availability in the event of a network Partition. Most systems today choose Availability and strive to be "eventually consistent." My research would target a technique of building "eventually consistent" systems by using Conflict-Free Replicated Data Types (CRDTs). These data types not only provide techniques for reloving conflicts and maintaining consistency but provide a quality abstraction to a developer who wishes to use the data type without having to worry about the underlying mechanisms.
+
+
+\end{document}
