@@ -14,6 +14,9 @@
 #include <netdb.h>
 //#include <pthread.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #define BACKLOG  10
 #define MAX_RCPT 100
 #define MAX_PATH_LEN 256
@@ -62,14 +65,74 @@ struct string* str_resize(struct string* str, size_t new_size)
 
 /* I/O Abstraction */
 struct input_iterator {
-    int it_fd;
+    int* it_f;
+    struct input_functions* it_if;
     int it_i;
     char it_buf[PAGE_SIZE - (2*sizeof(int))];
 };
 
-void input_cleanup(struct input_iterator* it)
+/* Abstracted Reading and Writing */
+struct input_functions {
+    ssize_t(*if_read_a)(int*, void*, size_t);
+    ssize_t(*if_write_a)(int*, const void*, size_t);
+    void(*if_cleanup_a)(struct input_iterator *it);
+};
+
+ssize_t read_r(int* f, void* b, size_t s) { read(*f, b, s); }
+ssize_t write_w(int* f, const void* b, size_t s) { write(*f, b, s); }
+void input_cleanup_f(struct input_iterator* it) { close(*it->it_f); }
+struct input_functions if_berkeley = {
+    .if_read_a = read_r,
+    .if_write_a = write_w,
+    .if_cleanup_a = input_cleanup_f,
+
+};
+
+ssize_t read_s(int* f, void* b, size_t s) { SSL_read((SSL*) f, b, s); }
+ssize_t write_s(int* f, const void* b, size_t s) { SSL_write((SSL*) f, b, s); }
+void input_cleanup_s(struct input_iterator* it)
 {
-    close(it->it_fd);
+    SSL* ssl = (SSL*) it->it_f;
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    EVP_cleanup();
+    close(SSL_get_fd(ssl));
+}
+struct input_functions if_ssl = {
+    .if_read_a = read_s,
+    .if_write_a = write_s,
+    .if_cleanup_a = input_cleanup_s,
+};
+
+int input_starttls(struct input_iterator* it)
+{
+    SSL_load_error_strings();
+    OpenSSL_add_ssl_algorithms();
+
+    SSL_CTX *ctx;
+    SSL *ssl;
+
+    if ((ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
+        ERR_print_errors_fp(stderr);
+        return -1;
+    }
+    SSL_CTX_set_ecdh_auto(ctx, 1);
+
+    /* Set the key and cert */
+    if (SSL_CTX_use_certificate_chain_file(ctx, "../fullchain.pem") <= 0 ||
+        SSL_CTX_use_PrivateKey_file(ctx, "../key.pem", SSL_FILETYPE_PEM) <= 0 )
+    {
+        ERR_print_errors_fp(stderr);
+        return -1;
+    }
+
+    ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, *it->it_f);
+    it->it_f = (int*) ssl;
+    it->it_if = &if_ssl;
+
+    /* Wait for client to initiate a handshake */
+    return SSL_accept(ssl); //<= 0 is bad
 }
 
 /* Similar to read but (1) handles EAGAIN and
@@ -77,15 +140,15 @@ void input_cleanup(struct input_iterator* it)
  * This function decrements s to always make
  * sure there is room for a null-termination.
  */
-#define read_some(it, b, s) _read_some(it->it_fd, read, b, s)
-char* _read_some(int fd, ssize_t(*read_a)(int, void*, size_t), char* b, size_t s)
+#define read_some(it, b, s) _read_some(it->it_f, it->it_if->if_read_a, b, s)
+char* _read_some(int* f, ssize_t(*read_a)(int*, void*, size_t), char* b, size_t s)
 {
     int r;
 
     for (s--;;) {
 
         errno = 0;
-        if ((r = read_a(fd, b, s)) == 0)
+        if ((r = read_a(f, b, s)) == 0)
             /* Either EOF or socket closed */
             break;
 
@@ -167,14 +230,14 @@ int input_until(struct input_iterator* it, char c)
  * * By closed I mean do not try again;
  *   close(fd) should still be called. *
  */
-#define write_all(it, b, s) _write_all(it->it_fd, write, b, s)
-#define write_all_f(f, b, s) _write_all(f, write, b, s)
-int _write_all(int fd, ssize_t(*write_a)(int, const void*, size_t), const char* b, size_t s)
+#define write_all(it, b, s) _write_all(it->it_f, it->it_if->if_write_a, b, s)
+#define write_all_f(f, b, s) _write_all(&f, write_w, b, s)
+int _write_all(int* f, ssize_t(*write_a)(int*, const void*, size_t), const char* b, size_t s)
 {
     int w;
 
     for (;;) {
-        w = write_a(fd, b, s);
+        w = write_a(f, b, s);
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
@@ -218,7 +281,7 @@ char* smtp_off_to_str(struct smtp_context* sc, size_t o)
     return (char*) &sc->smtp_tx.tx_str_head.str->str_str + o;
 }
 
-void smtp_cleanup(struct input_iterator* it) { input_cleanup(it); exit(0); }
+void smtp_cleanup(struct input_iterator* it) { it->it_if->if_cleanup_a(it); exit(0); }
 
 void smtp_abort_cleanup(struct input_iterator* it)
 {
@@ -270,8 +333,17 @@ void helo_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
 void ehlo_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
 {
-    res_r->res = "250-SMTPd greats you\r\n250 PIPELINING\r\n";
-    res_r->res_len = 38;
+    res_r->res = "250-SMTPd greats you\r\n250-STARTTLS\r\n250 PIPELINING\r\n";
+    res_r->res_len = 52;
+}
+
+void starttls_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
+{
+    if (write_all(it, "220 GO ahead\r\n", 14) < 0)
+        smtp_cleanup(it);
+
+    input_starttls(it);
+    res_r->res_len = 0;
 }
 
 void mail_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
@@ -480,6 +552,8 @@ void(*command_mapper(struct input_iterator* it))(struct smtp_context*, struct in
         if (stritmatch("ELO", it, 3))       return helo_command;
     case 'E':
         if (stritmatch("HLO", it, 3))       return ehlo_command;
+    case 'S':
+        if (stritmatch("TARTTLS", it, 7))   return starttls_command;
     case 'M':
         if (stritmatch("AIL FROM:", it, 9)) return mail_command;
     case 'R':
@@ -506,9 +580,10 @@ int smtp(int fd, struct sockaddr_in* pa)
 
     memset(&sc.smtp_tx, '\0', sizeof(sc.smtp_tx));
 
-    it.it_fd = fd;
+    it.it_f = &fd;
     it.it_i = 0;
     it.it_buf[0] = '\0';
+    it.it_if = &if_berkeley;
 
     /* Greeting */
     if (write_all((&it), greeting, greeting_len) < 0)
@@ -518,8 +593,10 @@ int smtp(int fd, struct sockaddr_in* pa)
         struct smtp_response sr;
 
         command_mapper(&it)(&sc, &it, &sr);
-        if (write_all((&it), sr.res, sr.res_len) < 0)
-            smtp_cleanup(&it);
+
+        if (sr.res_len)
+            if (write_all((&it), sr.res, sr.res_len) < 0)
+                smtp_cleanup(&it);
 
         input_find(&it, '\n');
     }

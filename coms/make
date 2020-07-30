@@ -17,6 +17,6 @@ FLAGS="-g -Wall -Werror"
 echo -e $ALL | while read -r line;
 do
     echo $line
-    gcc -lresolv $flags -o $line ${line}.c
+    gcc -lresolv -lssl -lcrypto $flags -o $line ${line}.c
 done
 

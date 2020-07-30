@@ -92,7 +92,7 @@ int main()
     SEND("MAIL FROM:ryan@localhost\r\n")
     OK("Reverse Path Not Accepted\n")
 
-    SEND("RCPT TO:<ryan@example.com>\r\n")
+    SEND("RCPT TO:<ryan@rbruno.com>\r\n")
     OK("Forward Path not accepted\n")
 
 
