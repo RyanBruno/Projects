@@ -8,6 +8,7 @@
 #include <ctype.h>
 
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -21,7 +22,7 @@
 #define PAGE_SIZE 4096
 #define STR_OVERHEAD_SIZE (sizeof(struct string) - sizeof(void*))
 /* Coming soon */
-#define authorized 0
+#define authorized 1
 
 struct addrinfo ai_hints = {
     .ai_flags    = AI_NUMERICSERV,
@@ -35,7 +36,6 @@ int rfd;
 char* greeting = "220 flappy.rbruno.com\r\n";
 int greeting_len;
 
-char spool_path[10 + RAND_LEN];
 const char* DATA_END_TOKEN = "\r\n.\r\n";
 
 /* String Abstraction */
@@ -49,6 +49,10 @@ struct str_iterator {
     size_t str_offset;
 };
 
+/* Calls realloc on str and updates str->str_size.
+ * Returns null on error or a resized string on
+ * success.
+ */
 struct string* str_resize(struct string* str, size_t new_size)
 {
     if ((str = realloc(str, new_size)) == NULL) return NULL;
@@ -63,6 +67,11 @@ struct input_iterator {
     char it_buf[PAGE_SIZE - (2*sizeof(int))];
 };
 
+/* Similar to read but (1) handles EAGAIN and
+ * EINTR and (2) will always null-terminate.
+ * This function decrements s to always make
+ * sure there is room for a null-termination.
+ */
 char* read_some(int fd, char* b, size_t s)
 {
     int r;
@@ -89,23 +98,40 @@ char* read_some(int fd, char* b, size_t s)
     return b;
 }
 
+/* Returns the next char in it, reading if
+ * necessary.
+ */
 char input_next(struct input_iterator* it)
 {
     if (it->it_buf[it->it_i] != '\0')
+        /* Next char is available */ 
         return it->it_buf[it->it_i++];
 
     if (read_some(it->it_fd, it->it_buf, sizeof(it->it_buf)) == it->it_buf)
+        /* EOF has been reached */
         return '\0';
 
-    it->it_i= 0;
+    it->it_i = 0;
     return it->it_buf[it->it_i++];
 }
 
+/* Calls input_next until c is found.
+ */
+void input_find(struct input_iterator* it, char c)
+{
+    for (char s = input_next(it); s != c && s != '\0'; s = input_next(it)) { }
+}
+
+/* Loads a string in it->it_buf ending with char c.
+ * The returned int is the starting offset and
+ * it->it_i is set to one past c.
+ */
 int input_until(struct input_iterator* it, char c)
 {
     int i;
 
     for (i = it->it_i;; it->it_i++) {
+
         if (it->it_buf[it->it_i] == '\0') {
             if (i != 0) {
                 it->it_i = i - it->it_i;
@@ -129,11 +155,12 @@ int input_until(struct input_iterator* it, char c)
     return i;
 }
 
-void input_find(struct input_iterator* it, char c)
-{
-    for (char s = input_next(it); s != c && s != '\0'; s = input_next(it)) { }
-}
-
+/* Ensures all s chars of b are written to fd.
+ * Returns -1 on error 0 on success. If -1 is
+ * returned assume fd is closed*.
+ * * By closed I mean do not try again;
+ *   close(fd) should still be called. *
+ */
 int write_all(int fd, const char* b, size_t s)
 {
     int w;
@@ -143,7 +170,7 @@ int write_all(int fd, const char* b, size_t s)
 
         if (w < 1) {
             if (errno == EAGAIN || errno == EINTR) continue;
-            return 1;
+            return -1;
         }
 
         b += w;
@@ -156,15 +183,19 @@ int write_all(int fd, const char* b, size_t s)
 
 /* SMTP structs and helper functions */
 struct smtp_transaction {
-    char tx_r[RAND_LEN];
-    struct str_iterator tx_str_head;
-    size_t tx_rev_path;
-    size_t tx_fwd_path[MAX_RCPT];
+    char tx_r[RAND_LEN];                /* Random bytes generated at construction */
+    char tx_spool_path[10 + RAND_LEN];
+    struct str_iterator tx_str_head;    /* A String to hold all the rev-paths, fwd-paths... */
+    size_t tx_rev_path;                 /* The reverse path (sender). */
+    size_t tx_fwd_path[MAX_RCPT];       /* The forward paths (recipients). */
     int tx_fwd_path_len;
-    size_t tx_rmt_path[MAX_RCPT];
+    struct iovec tx_rmt_path[MAX_RCPT]; /* The remote paths (non-local recipients). */
     int tx_rmt_path_len;
 };
 
+/* Pre-ESMTP a SMTP session was state-less
+ * except for a transaction.
+ */
 struct smtp_context {
     struct smtp_transaction smtp_tx;
 };
@@ -240,6 +271,11 @@ void mail_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
     /* Save reverse path */
     sc->smtp_tx.tx_rev_path = save_path(&sc->smtp_tx.tx_str_head, it, MAX_PATH_LEN);
+    sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len].iov_base = smtp_off_to_str(sc, sc->smtp_tx.tx_rev_path);
+    sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len++].iov_len = sc->smtp_tx.tx_str_head.str_offset - 1;
+
+    sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len].iov_base = ",";
+    sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len++].iov_len = 1;
 
     /* Setup Random */
     for (char* e = sc->smtp_tx.tx_r; e - sc->smtp_tx.tx_r < sizeof(sc->smtp_tx.tx_r) - 1;)
@@ -295,17 +331,24 @@ void rcpt_command(struct smtp_context* sc, struct input_iterator* it, struct smt
         return;
     }
 
-    /* Push fwd_path to rmt_path scatter/gather */
-    //sc->smtp_tx.tx_it_head.p[-1] = ',';
-
     /* Need to forward */
-    if (sc->smtp_tx.tx_rmt_path_len == 1) {
-        /* First remote path setup */
-        /*memcpy(spool_path, "spool/tmp/", 10);
-        memcpy(spool_path + 10, sc->smtp_tx.tx_r, RAND_LEN);
-        sc->smtp_tx.tx_fwd_path[sc->smtp_tx.tx_fwd_path_len++] = spool_path;*/
 
-        /* Push rev_path to rmt_path scatter/gather */
+    /* Push to rmt_path instead for scatter/gather */
+    sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len].iov_base = smtp_off_to_str(sc, o);
+    sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len++].iov_len = sc->smtp_tx.tx_str_head.str_offset - o;
+    smtp_off_to_str(sc, sc->smtp_tx.tx_str_head.str_offset)[-1] = ',';
+
+    if (sc->smtp_tx.tx_rmt_path_len == 3) {
+        /* First remote path setup */
+        /* Ensure there is enough room */
+        if (sc->smtp_tx.tx_str_head.str_offset >= sc->smtp_tx.tx_str_head.str->str_size - RAND_LEN - 10)
+            if ((sc->smtp_tx.tx_str_head.str = str_resize(sc->smtp_tx.tx_str_head.str, sc->smtp_tx.tx_str_head.str->str_size * 1.5)) == NULL)
+                abort_cleanup(it->it_fd);
+
+        memcpy(smtp_off_to_str(sc, sc->smtp_tx.tx_str_head.str_offset), "spool/tmp/", 10);
+        memcpy(smtp_off_to_str(sc, sc->smtp_tx.tx_str_head.str_offset) + 10, sc->smtp_tx.tx_r, RAND_LEN);
+        sc->smtp_tx.tx_fwd_path[sc->smtp_tx.tx_fwd_path_len++] = sc->smtp_tx.tx_str_head.str_offset;
+        sc->smtp_tx.tx_str_head.str_offset += RAND_LEN + 10;
     }
 
     res_r->res = "251 User not local; will forward\r\n";
@@ -327,11 +370,19 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
         if ((ffds[i] = open(smtp_off_to_str(sc, sc->smtp_tx.tx_fwd_path[i]), O_CREAT | O_EXCL | O_WRONLY, 0644)) < 0)
             abort_cleanup(it->it_fd);
 
+
+        if (!strncmp(smtp_off_to_str(sc, sc->smtp_tx.tx_fwd_path[i]), "spool/tmp/", 10)) {
+            sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len].iov_base = "\r\n";
+            sc->smtp_tx.tx_rmt_path[sc->smtp_tx.tx_rmt_path_len++].iov_len = 2;
+            writev(ffds[i], sc->smtp_tx.tx_rmt_path, sc->smtp_tx.tx_rmt_path_len);
+        };
+
         ; // TODO SMTP headers
+
     }
 
     input_find(it, '\n');
-    if (write_all(it->it_fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46))
+    if (write_all(it->it_fd, "354 Start mail input; end with <CRLF>.<CRLF>\r\n", 46) < 0)
         cleanup(it->it_fd);
 
     for (;;) {
@@ -344,7 +395,7 @@ void data_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 
         /* Write to all files */
         for (int j = 0; j < sc->smtp_tx.tx_fwd_path_len; j++)
-            if (write_all(ffds[j], it->it_buf + i, it->it_i - i))
+            if (write_all(ffds[j], it->it_buf + i, it->it_i - i) < 0)
                 cleanup(it->it_fd);
     }
     it->it_buf[it->it_i] = '\n';
@@ -394,7 +445,7 @@ void noop_command(struct smtp_context* sc, struct input_iterator* it, struct smt
 void quit_command(struct smtp_context* sc, struct input_iterator* it, struct smtp_response* res_r)
 {
     write_all(it->it_fd, "250 OK\r\n", 8);
-        cleanup(it->it_fd);
+    cleanup(it->it_fd);
 }
 
 int stritmatch(char* str, struct input_iterator* it, int n)
@@ -444,14 +495,14 @@ int smtp(int fd, struct sockaddr_in* pa)
     it.it_buf[0] = '\0';
 
     /* Greeting */
-    if (write_all(fd, greeting, greeting_len))
+    if (write_all(fd, greeting, greeting_len) < 0)
         cleanup(fd);
     
     for (;;) {
         struct smtp_response sr;
 
         command_mapper(&it)(&sc, &it, &sr);
-        if (write_all(it.it_fd, sr.res, sr.res_len))
+        if (write_all(it.it_fd, sr.res, sr.res_len) < 0)
             cleanup(fd);
 
         input_find(&it, '\n');
