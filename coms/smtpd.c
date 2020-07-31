@@ -68,10 +68,9 @@ struct input_iterator {
     int* it_f;
     struct input_functions* it_if;
     int it_i;
-    char it_buf[PAGE_SIZE - (2*sizeof(int))];
+    char it_buf[PAGE_SIZE - sizeof(int) - (2*sizeof(void*))];
 };
 
-/* Abstracted Reading and Writing */
 struct input_functions {
     ssize_t(*if_read_a)(int*, void*, size_t);
     ssize_t(*if_write_a)(int*, const void*, size_t);
@@ -132,7 +131,7 @@ int input_starttls(struct input_iterator* it)
     it->it_if = &if_ssl;
 
     /* Wait for client to initiate a handshake */
-    return SSL_accept(ssl); //<= 0 is bad
+    return SSL_accept(ssl);
 }
 
 /* Similar to read but (1) handles EAGAIN and
@@ -342,7 +341,9 @@ void starttls_command(struct smtp_context* sc, struct input_iterator* it, struct
     if (write_all(it, "220 GO ahead\r\n", 14) < 0)
         smtp_cleanup(it);
 
-    input_starttls(it);
+    if (input_starttls(it) <= 0)
+        smtp_abort_cleanup(it);
+
     res_r->res_len = 0;
 }
 
@@ -604,6 +605,8 @@ int smtp(int fd, struct sockaddr_in* pa)
 
 int main(int argc, char **argv)
 {
+    printf("%d\n", sizeof(struct input_iterator));
+    return -1;
     int afd;
     struct addrinfo *a;
 
