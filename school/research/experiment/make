@@ -1,0 +1,4 @@
+#!/bin/sh
+
+gcc -ltirpc -I/usr/include/tirpc/ -o server test_serv.c
+gcc -ltirpc -I/usr/include/tirpc/ -o client test_clint.c
