@@ -1,0 +1,51 @@
+---
+title: "Ryan Bruno"
+author: "Homework #8 - Stat2 - ex03.8 ex03.12"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+
+#load("Caterpillars.rda", verbose = TRUE)
+#ex0358Caterp %>% glimpse()
+```
+
+# EX03.8:
+
+### Part A:
+
+True. Every predictors added to a model will always increase the $R^{2}$ of the model but may decrease the adjusted $R^{2}$.
+
+### Part B:
+
+True. Building off the previous question when we have a model using $X_{1}$ that has a very high $R^{2}$ and then add $X_{2}$ to the model, no matter how good $X_{2}$'s $R^{2}$ is the resulting model will have a higher $R^{2}$ then the initial $R^{2}$.
+
+# EX03.12
+
+### Part A:
+
+Model -> $Mrate = \beta_{0} + \beta_{1} BodySize +  \beta_{2} I_{fg} + \beta_{3} (I_{fg} BodySize); I_{fg} = 1$ for free growth only.
+
+### Part B:
+
+Model -> $Mrate = \beta_{0} + \beta_{1} BodySize +  \beta_{2} I_{fg} ; I_{fg} = 1$ for free growth only.
+
+
+### Part C:
+
+Full Model -> $Mrate = \beta_{0} + \beta_{1} BodySize +  \beta_{2} I_{fg} + \beta_{3} (I_{fg} BodySize)$
+
+Reduced Models:
+
+$Mrate = \beta_{0} + \beta_{2} I_{fg}$
+
+$Mrate = \beta_{0} + \beta_{1} BodySize$
+
+$Mrate = \beta_{0} + \beta_{3} (I_{fg} BodySize)$
+
+```{r model1, echo=FALSE}
+#model_1 <- lm(ex0324LewyB2$MMSE~ex0324LewyB2$APC)
+#summary(model_1)
+```

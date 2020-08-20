@@ -1,0 +1,75 @@
+---
+output: pdf_document
+---
+
+## Stat2 -- Chapter 3 Review
+
+### Ryan Bruno
+
+```{r setup, echo=FALSE}
+
+#title: "Ryan Bruno"
+#author: "Chapter 3 Review - Stat2"
+library(ggplot2)
+library(dplyr)
+
+load("Pollster08.rda",  verbose = FALSE)
+data <- ex0343Poll08
+```
+
+### Question 1
+
+The trend of the below scatter plot seems to be corralated upwards after about 10 days after the Democratic Convention.
+
+```{r one, echo=FALSE, fig.height=3, fig.width=4}
+ggplot(data, aes(x = Days, y = Margin)) +
+    geom_point() # Describe trend
+```
+
+### Question 2
+
+Model: $Margin = 4.47796 - 0.604426 Days + 0.021129 Days^{2}$
+
+$r^{2} = 0.3495$
+
+SSE = 899.24
+
+```{r two, echo=FALSE, eval=FALSE}
+data <- data %>%
+    mutate(DaysSqred = Days * Days)
+model_1 <- lm(Margin~Days+DaysSqred, data=data)
+summary(model_1) # Model R^2 SSE
+sum(model_1$residuals**2)
+```
+
+### Question 3
+
+Model: $Margin = -0.31282 + 0.12222 Days + 0.6364 Charlie$
+
+$r^{2} = 0.1458$
+
+SSE = 1180.747
+
+```{r three, echo=FALSE, eval=FALSE}
+model_2 <- lm(Margin~Days+Charlie, data=data)
+summary(model_2) # Model R^2 SSE
+sum(model_2$residuals**2)
+```
+
+### Question 4
+
+Model: $Margin = 0.73533 + 0.001412 Days + 3.18718 Meltdown$
+
+$r^{2} = 0.1900$
+
+SSE = 1119.66
+
+```{r four, echo=FALSE, eval=FALSE}
+model_3 <- lm(Margin~Days+Meltdown, data=data)
+summary(model_3) # Model R^2 SSE
+sum(model_3$residuals**2)
+```
+
+### Question 5
+
+Looking at the $R^{2}$ and SSE values the model in question 2 is a better model to explain the data then the model in question 4. This tells us that a quadratic model of just days is better then a linear model with days and meltdown.

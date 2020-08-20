@@ -1,0 +1,28 @@
+From de4a4e1275b2e6b46959d5aac2850da4565f4272 Mon Sep 17 00:00:00 2001
+From: Ryan Bruno <ryan@rbruno.com>
+Date: Tue, 16 Jun 2020 14:30:40 -0400
+Subject: [PATCH] ESMTP
+
+---
+ coms/smtpd.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/coms/smtpd.c b/coms/smtpd.c
+index 4dff8d5..ef93743 100644
+--- a/coms/smtpd.c
++++ b/coms/smtpd.c
+@@ -192,6 +192,11 @@ RSET:
+             RUN_OFF(head + 4);
+             WRITE("250 SMTPd greats you\r\n", 22);
+ 
++        } else if (MATCH("EHLO")) {
++
++            RUN_OFF(head + 4);
++            WRITE("250 SMTPd greats you\r\n", 22);
++
+         } else if (rev_path == NULL && MATCH("MAIL FROM:")) {
+ 
+             char* p;
+-- 
+2.27.0
+

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ $1 = "clean" ]
+then
+	rm -f popc
+	rm -f popd
+	rm -f smtpc
+	rm -f smtpd
+	rm -f smtpf
+    exit
+fi
+
+ALL='popd\npopc\nsmtpd\nsmtpc\nsmtpf'
+
+FLAGS="-g -Wall -Werror"
+
+echo -e $ALL | while read -r line;
+do
+    echo $line
+    gcc -lresolv $flags -o $line ${line}.c
+done
+

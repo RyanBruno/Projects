@@ -1,0 +1,200 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+\usepackage[margin={.95in,.75in}]{geometry}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage{xcolor}
+
+\usepackage[T1]{fontenc}
+\usepackage[scale=0.95]{opensans}
+\usepackage{merriweather}
+
+\usepackage{parskip}
+
+\pagenumbering{gobble}
+\setlength{\textwidth}{9in}
+\setlength{\parindent}{0in}
+\hyphenpenalty=10000
+\setlength{\columnsep}{.5in}
+\definecolor{Strong-Blue}{RGB}{32, 131, 199}
+\definecolor{Dark-Grey}{RGB}{102, 102, 102}
+\title{Resume}
+\author{Ryan Bruno}
+\date{\today}
+
+\renewcommand{\maketitle}{\Huge\textbf{\theauthor}}
+
+\titleformat {\section} % command
+[display] % shape
+{\bfseries\color{Strong-Blue}} % format
+{\thesection} % label
+{0.5ex} % sep
+{\vspace{1ex}} % before-code
+[\vspace{.5ex}] % after-code
+
+\newenvironment{heading} {
+    \bfseries
+    \normalsize
+    \color{black}
+    \setlength{\parskip}{1em}
+    \renewcommand{\familydefault}{merriweather}
+} {\par}
+\newenvironment{subtext} {
+    \footnotesize
+    \color{Dark-Grey}
+    \setlength{\parskip}{0.75em}
+    \renewcommand{\familydefault}{opensans}
+} {\par}
+
+\newenvironment{ntext} {
+    \small
+    \color{Dark-Grey}
+    \setlength{\parskip}{0.75em}
+    \renewcommand{\familydefault}{merriweather}
+} {\par}
+
+\begin{document}
+
+\begin{multicols}{2}
+\maketitle
+
+    {
+        \footnotesize
+        \renewcommand{\familydefault}{opensans}
+        Current Computer Science student looking for a summer internship before my Senior year that will further develop my programming expertise, as I contribute to your firm’s mission and objectives.
+
+    }
+
+\columnbreak
+\section*{}
+
+    {
+        \footnotesize
+        \renewcommand{\familydefault}{opensans}
+        Github/RyanBruno \\*
+        \textbf{(215) 385-4920} \\*
+        \textbf{RB4359@ship.edu}
+
+    }
+\end{multicols}
+
+\begin{multicols}{2}
+
+\section*{EDUCATION}
+
+    \begin{heading}
+        Shippensburg University \mdseries — \textit{Computer Science Major}
+    \end{heading}
+
+    \begin{subtext}
+        Auguest 2017-PRESENT
+    \end{subtext}
+
+    \begin{ntext}
+        4 Semesters Completed \textbf{(3.5/4.0 GPA).}
+    \end{ntext}
+
+\section*{CORSE WORK}
+
+    \begin{heading}
+        Artificial Intelligence
+    \end{heading}
+
+    \begin{subtext}
+        August 2019 - PRESENT
+    \end{subtext}
+
+    \begin{ntext}
+        Overview of artificial intelligence with an emphasis on basic tools of AI, search and knowledge representation, and their application to a variety of AI problems.
+    \end{ntext}
+
+    \begin{heading}
+        Design and Analysis of Algorithms
+    \end{heading}
+
+    \begin{subtext}
+        Spring 2018
+    \end{subtext}
+
+    \begin{ntext}
+        Study of the theoretical foundations for the analysis of algorithms and the ramifications of design strategies on efficiency.
+    \end{ntext}
+
+    \begin{heading}
+        Design Patterns
+    \end{heading}
+
+    \begin{subtext}
+        Fall 2018
+    \end{subtext}
+
+    \begin{ntext}
+        An advanced study of the concepts of object-oriented programming, with an emphasis on applying those concepts to software development.
+    \end{ntext}
+
+    \begin{heading}
+       Computer Organization
+    \end{heading}
+
+    \begin{subtext}
+        Spring 2018
+    \end{subtext}
+
+    \begin{ntext}
+        Introduced organization and architecture of computer systems from the standard von Neumann model to more recent architectural concepts.
+    \end{ntext}
+
+    \begin{heading}
+        Computer Science II
+    \end{heading}
+
+    \begin{subtext}
+        Fall 2017
+    \end{subtext}
+
+    \begin{ntext}
+        The application of techniques such as pointers, structures, unions as well as various abstract data types to create advanced programs and solutions.
+    \end{ntext}
+
+\columnbreak
+\section*{SKILLS}
+
+    \begin{ntext}
+        Proficient in: Java, C/C++, \\
+        Javascript, and Node.js
+
+        Knowledge of cloud \\
+        technologies, Docker, AWS
+
+        Experience in NoSQL database \\
+        management
+
+        Cisco router and switch \\
+        configuration including IPv6
+    \end{ntext}
+
+\section*{AWARDS}
+    \begin{ntext}
+
+        \textbf{3 Semester Dean's List} at \\
+        Shippensburg University for \\
+        having a 3.5 GPA or higher.
+
+        \textbf{2 PSAC Scholar-Athlete} for \\
+        maintaining a 3.25 cumulative \\
+        GPA while in season.
+
+    \end{ntext}
+\section*{ACTIVITES}
+    \begin{ntext}
+
+        Shippensburg University \\
+        Football Player.
+
+        Hatboro-Horsham High \\
+        School Varsity Football Player.
+    \end{ntext}
+
+\end{multicols}
+\end{document}

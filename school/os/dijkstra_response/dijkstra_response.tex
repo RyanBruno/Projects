@@ -1,0 +1,44 @@
+\documentclass{article}
+
+\usepackage[margin={1.25in,1.25in}]{geometry}
+\usepackage{titling}
+\usepackage{setspace}
+
+\usepackage{librebaskerville}
+\usepackage[T1]{fontenc}
+
+\usepackage[
+    backend=biber,
+    style=ieee,
+]{biblatex}
+\addbibresource{bib.bib}
+
+\title{An Argument for Anthropomorphic Metaphors}
+\author{Ryan Bruno}
+
+\renewcommand{\maketitle}
+{
+    \setlength{\parindent}{0px}
+    \large\thetitle \\
+    \theauthor
+    \setlength{\parindent}{4em}
+    \normalsize
+}
+
+\setlength{\parskip}{1.5em}
+\linespread{2}
+
+\begin{document}
+
+\maketitle
+
+
+Modern computers are complex systems of connected devices that communicate with each other thousands of times a second. When teaching about computers or describing problems in the field many resort to anthropomorphic metaphors. This, however, caused a problem in early operating system design as described by Dijkstra in his paper "My Recollection of Operating System Design" \cite{10.1145/1055218.1055219} where he states that an anthropomorphic metaphor was not suitable for describing the problem of handling asynchronous communication with peripheral devices. Previously when describing computer systems the metaphor comparing them to the human body could be used but this caused problems for people as it was believed that the central processor (being related to the brain) should the single leader and not a follower to the other devices. Knowing what we know today I believe that while anthropomorphic metaphors are not helpful in every situation they still apply to computer systems and apply even more so due to the solution to the aforementioned problem.
+
+The metaphor usually starts by saying the CPU is the "brain of the computer". Before this problem, this was a good metaphor. If we strip away all other components from a CPU except accompanying main memory and power supply this alone can proform (as far as we know) the same physical tasks as a brain with accompanying heart and lungs. Both are only capable of abstract things such as moving memory around or dreaming about cake. The solution to the previously described problem only strengthened this metaphor with a way for the CPU to communicate with other devices. This solution, being interrupts, allows those devices to signal the CPU when an event has occurred. This may seem to breaks the metaphor because it appears that the CPU has to serve a peripheral device at its bidding but in reality, this does not break the metaphor. While a program is running on the CPU a device event could occur (network packet has arrived, keypress...). When this happens an interrupt is generated forcing the CPU to stop what it is doing and handle the interrupt with its interrupt handler, usually located in the operating system. Going back to our anthropomorphic metaphor, this behavior can be compared to our nervous system. When we feel pain, touch, movement or something changes in any of our five senses this change will imminently call the attention of a healthy human being's brain. The CPU can still issue commands to a device to reconfigure or perform a task similar to the way you issue a command for your fingers to move but this is not instantaneous nor guaranteed to work. The way we know it has worked is by receiving an interrupt back from the nervous system that the finger has moved or that your finger muscles are too sore to move. With interrupts, this is the same relationship as between the CPU and peripheral devices. One thing that confused people when interrupts were introduced is how it now seems the CPU has to serve the peripheral devices and can be slowed to a halt by a device who is generating too many interrupts. This is true but also only strengthens the metaphor as we know from experience that outside distractions or pain will decrease brain performance and in extreme cases, pain can be so bad it draws one hundred percent of the brain's attention similar to how a CPU can have periods of interrupt overload.
+
+Dijkstra did not directly say that the metaphor confused him but rather that it was not beneficial when describing the problem he was facing to colleagues and for this reason, the metaphor should not be used anymore. While in the end, they arrived at the solution of interrupts my objection is that not only does metaphor fit but it fits more so with interrupts in place than without. I believe the problems Dijkstra's colleagues had was not being able to see what computer would become. Computer clock speeds back then were slow so it seemed the speed at which a CPU could handle interrupts would never approach the speed at which your brain could interact with the environment. However, as we know clock speed increased exponentially. Then when speed plateaued core count increased until today where not only does a CPU communicate like the brain but some can argue it does it better than the brain.
+
+\printbibliography
+
+\end{document}

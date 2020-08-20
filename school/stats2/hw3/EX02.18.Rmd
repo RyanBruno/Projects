@@ -1,0 +1,45 @@
+---
+title: "Ryan Bruno"
+author: "Homework #3 - Stat2 - ex02.18"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+
+load("ex02-18Sparrow.Rda")
+
+```
+
+# Part A:
+
+We can use hypothesis test to check if the slope of the regression is nonzero:
+
+$H_{0}$: $\beta$ = 0 $H_{a}$: $\beta$ != 0
+
+$r^{2}$ = 0.6139
+
+t = $\displaystyle \frac{sqrt(r^{2} * 114)}{sqrt(1 - r^{2})}$ = 13.46
+
+With a t-statistic this high we know our p-value is going to be almost zero. This allows us to throw away our null hypothesis and we can conclude that the slope is significantly different then zero.
+
+# Part B:
+
+To construct a confidence interval we need a few variables listed below:
+
+$\beta$ = 0.467
+
+SE = 1.4
+
+$t_{n-2}$ = 1.658
+
+Putting it all together:
+
+0.467 +/- 1.658 * 1.4 = (2.788, -1.854)
+
+Interpretation: With a 95% confidence we can expect that for every millimeter increase in a sparrow's wing length its weight will increase by between 2.788 to -1.854 grams.
+
+# Part C:
+
+Zero is included in our confidence interval however in part a we rejected the null hypothesis as compared to the alternative hypothesis. This tells us that while the slope could be flat it is not due to the fact that data is scattered but there is a strong correlation. This is also shown in the r-value

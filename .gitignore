@@ -1,0 +1,16 @@
+# Latex & Biber
+**.pdf
+**.aux
+**.bbl
+**.xml
+**.log
+**.out
+**.nav
+**.toc
+**.bcf
+**.blg
+**.snm
+
+# R
+**.RData
+**.Rhistory

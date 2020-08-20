@@ -1,0 +1,139 @@
+---
+output: pdf_document
+---
+
+## Stat2 -- Chapter 10 Homework
+
+### Ryan Bruno
+
+```{r setup, echo=FALSE, message=FALSE}
+library(tidyverse)
+
+```
+
+### 10.2
+
+##### a
+
+--
+
+*Female:*
+
+Probability: 0.44
+
+Odds: $Odds=\pi/(1+\pi)=0.44/(1+0.44)=0.44/1.44=306/1000$
+
+*Male:*
+
+Probability: 0.18
+
+Odds: $Odds=\pi/(1+\pi)=0.18/(1+0.18)=0.18/1.18=153/1000$
+
+##### b
+
+--
+
+\<Odds for Female\>/\<Odds for Male\> = $0.306/0.153 = 2$
+
+#### c
+
+--
+
+The answer from part (b) is different from the ratio given in the problem because they use different models. The one from the problem adds Backpack wight and BodyWeight.
+
+### 10.4
+
+We want a model with $\beta_{0}$, X, and Group with no interaction term because of the parallel three-line relation relationship shown. This is all set to Log(odds) of yes.
+
+Model: $log(odds) = \beta_{0}+\beta_{1}X+\beta_{2}Group\_1+\beta_{3}Group\_2$
+
+
+### 10.10
+
+Model: $log(odds) = \beta_{0}+\beta_{1}X+\beta_{2}A+\beta_{3}XA$
+
+## 10.12b
+
+Yes because a model with $\log(Acceptance) = \beta_{0} + \beta_{1} GPA + \beta_{2}MCAT + \beta_{3}Sex$ fits to $\beta_{3}$ begin -1.258 while the model $\log(Acceptance) = \beta_{0} + \beta_{1} GPA + \beta_{2}MCAT$ has an almost identical $\beta_{2}$ but a changed $\beta_{1}$.
+
+```{r ten12CSV, echo=FALSE, eval=TRUE}
+medgpa <- read.csv("MedGPA.csv", header = TRUE)
+```
+```{r ten12MODEL, echo=FALSE, eval=FALSE}
+glm(Acceptance ~ GPA + MCAT + Sex, data = medgpa, family = "binomial") %>% summary()
+glm(Acceptance ~ GPA + MCAT, data = medgpa, family = "binomial") %>% summary()
+#glm(Acceptance ~ GPA + Sex, data = medgpa, family = "binomial") %>% summary()
+```
+
+## 10.14
+
+The output for the fitted model shows that when Sex\_F is 1 (when the applicant is Female) they are more likely to be accepted by 1.066 log(odds).
+
+## 10.18
+
+##### b
+
+--
+
+Reduced: $I = \beta_{0} + \beta_{1} DilateDiff$
+
+Deviance test: 113.70
+
+Full: $I = \beta_{0} + \beta_{1} DilateDiff + \beta_{2} Sex\_M$
+
+Deviance test: 106.38
+
+```{r ten18CSV, echo=FALSE, eval=FALSE}
+eyes <- read.csv("Eyes.csv", header = TRUE)
+
+eyes <- eyes %>%
+    mutate(Sex_M = ifelse(Sex == "M", 1, 0)) %>%
+    mutate(Sex_F = ifelse(Sex == "F", 1, 0)) %>%
+    mutate(DilDif_M = DilateDiff * Sex_M) %>%
+    mutate(DilDif_F = DilateDiff * Sex_F)
+
+#glm(Gay ~ DilDif_M + DilDif_F, data = eyes, family = "binomial") %>% summary()
+glm(Gay ~ DilateDiff, data = eyes, family = "binomial") %>% summary()
+glm(Gay ~ DilateDiff + Sex, data = eyes, family = "binomial") %>% summary()
+```
+
+## 10.22
+
+##### b
+
+--
+
+Reduced: $I = \beta_{0} + \beta_{1} MCAT$
+
+Deviance test: 64.697
+
+Full: $I = \beta_{0} + \beta_{1} MCAT + \beta_{2} Sex\_M$
+
+Deviance test: 67.711
+
+```{r ten22CSV, echo=FALSE, eval=FALSE}
+#glm(Gay ~ DilDif_M + DilDif_F, data = eyes, family = "binomial") %>% summary()
+glm(Acceptance ~ MCAT, data = medgpa, family = "binomial") %>% summary()
+glm(Acceptance ~ MCAT + Sex, data = medgpa, family = "binomial") %>% summary()
+```
+
+[//]: <> (MedGPA)
+
+## 10.34
+
+##### a
+
+--
+
+Model: $I = -0.22597 - 0.49708Seed + 1.52755Izzo$
+
+```{r ten34CSV, echo=FALSE, eval=FALSE}
+izzo <- read.csv("FinalFourIzzo17.csv", header = TRUE)
+glm(Final4 ~ Seed + Izzo, data = izzo, family = "binomial") %>% summary()
+```
+
+##### b
+
+--
+
+Yes because $\beta_{2}$ is large and the p-value is small.

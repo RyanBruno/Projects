@@ -1,0 +1,25 @@
+set realname = "Ryan Bruno"
+set from = "ryan@rbruno.com"
+set hostname = "rbruno.com"
+
+set mbox_type=Maildir
+set folder=~/Maildir/
+set spoolfile=+/ryan@rbruno.com
+#set spoolfile=pop://ryan@testing.rbruno.com:password@127.0.0.1:9595
+set message_cachedir = "~/.cache/mutt"
+set edit_headers=yes
+set sort=reverse-threads
+
+unset crypt_use_gpgme
+source /usr/share/doc/mutt/samples/gpg.rc
+
+#mailboxes = +/sent +/postponed
+
+set record=+/sent
+set postponed=+/postponed
+
+set sendmail="/bin/msmtp"
+
+# Sidebar mappings
+#set sidebar_visible = yes
+#set sidebar_width = 20

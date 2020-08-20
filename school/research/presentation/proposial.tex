@@ -1,0 +1,61 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[final]{pdfpages}
+
+%\usetheme{Default}
+%\usecolortheme{beetle}
+
+\setbeamercolor{background canvas}{bg=black}
+\setbeamercolor{block title}{bg=white}
+\setbeamercolor{fine separation line}{}
+\setbeamercolor{frametitle}{fg=white}
+\setbeamercolor{normal text}{bg=black,fg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{titlelike}{fg=white}
+
+%Information to be included in the title page:
+\title{Memory Efficience and Conflict-free Replicated Data Types}
+\author{Ryan Bruno \and Dr. Armstrong}
+\date{}
+
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+\frametitle{Problem Description}
+Conflict-free Replicated Data Types (CRDTs) use extra metadata to allow for concurrent modifications of data without consensus. How can we reduce the this overhead?
+\end{frame}
+
+\begin{frame}
+\frametitle{Primary Objective}
+To measure the memory reduction of using garbage collection in combination with an OR-Set while keeping the properties of a Conflict-free Replicated Data Type. Limited to 1.5 person weeks over 12 weeks.
+\end{frame}
+
+\begin{frame}
+\frametitle{Solution Description}
+
+Environment:
+
+\begin{itemize}
+\item Must have $> 2$ nodes.
+\item Connected via artifical network.
+\item Ability to enduce network delays.
+\end{itemize}
+
+Software:
+
+\begin{itemize}
+\item Node software
+\item Administrator software
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Hypothesis}
+The sum of the total data set size of each node will be significantly less while using garbage collection then without.
+\end{frame}
+
+\end{document}
