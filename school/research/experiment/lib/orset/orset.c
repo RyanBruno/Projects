@@ -1,8 +1,19 @@
 #include "unordered_map.h"
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 typedef unordered_map orset;
+int rfd = -1;
 
-#define orset_create unordered_map_create
+orset orset_create()
+{
+    if (rfd == -1)
+        rfd = open("/dev/random", O_RDONLY);
+
+    return unordered_map_create();
+}
 
 /*
  * Adds a pointer 'i' to any item into the orset 'os'.
@@ -12,7 +23,10 @@ typedef unordered_map orset;
  */
 unsigned long orset_add(orset os, void* i)
 {
-    unsigned long k = 1L; // Random long [0, LONG MAX)
+    unsigned long k; // Random long [0, LONG MAX)
+
+    for (int p = 0; p < sizeof(k);)
+        p += read(rfd, &k + p, sizeof(k) - p);
 
     unordered_map_add((unordered_map) os, k, i);
 
@@ -44,5 +58,3 @@ void orset_merge(orset local, orset rmt)
 
 #define orset_get unordered_map_get
 #define orset_is_tombstone(os, v) os == v
-
-int main() { orset_get(orset_create(), 1); orset_collect(orset_create(), 1);}
