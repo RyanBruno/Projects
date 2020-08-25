@@ -3,15 +3,26 @@
 
 char* res = "World!";
 
-char* helo(char* req)
+void helo(struct svc_req *request, SVCXPRT *xprt)
 {
-    printf("%s\n", *(char**) req);
-    return (char*) &res;
+    char msg[64];
+
+    svc_getargs(xprt, (xdrproc_t) xdr_string, &msg);
+
+    printf("%s\n", *(char**) msg);
+    svc_sendreply(xprt, (xdrproc_t) xdr_string, (char*) &res);
 }
 
 int main()
 {
-    registerrpc(1, 1, 1, helo, (xdrproc_t) xdr_string, (xdrproc_t) xdr_string);
+    int rc; 
+    SVCXPRT* xprt;
+
+    xprt = svctcp_create(RPC_ANYSOCK, 1024, 1024);
+    pmap_unset(100600, 1);
+    rc = svc_register(xprt, 100600, 1, helo, IPPROTO_TCP);
+
+    printf("%d\n", rc);
 
     svc_run();
 }

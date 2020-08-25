@@ -1,4 +1,8 @@
 #!/bin/bash
 
-tar czvf /home/object/Objects/Backups/$(date +%Y.%m.%d).tar.gz /home/ryan/.gnupg/ /home/vault/.gnupg/ /home/vault/Private/ /home/ryan/TheRepository/ /home/ryan/.ssh/
+
+cd /home/ryan/TheRepository
+git bundle create /home/object/Objects/Backups/public-$(date +%Y.%m.%d).bundle --all
+cd /home/vault/Private
+git bundle create /home/object/Objects/Backups/private-$(date +%Y.%m.%d).bundle --all
 chown -R object:object /home/object/
