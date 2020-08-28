@@ -1,10 +1,9 @@
-#include "unordered_map.h"
+#include "orset.h"
+/* For random */
 #include <unistd.h>
-#include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-typedef unordered_map orset;
 int rfd = -1;
 
 orset orset_create()
@@ -51,6 +50,15 @@ void orset_merge(orset local, orset rmt)
 
     while (unordered_map_next(rmt, &ump)) {
 
+        if (orset_is_tombstone(rmt, ump.i)) {
+            orset_remove(local, ump.k);
+            continue;
+        }
+
+        if (orset_get(local, ump.k) == NULL) {
+            unordered_map_add(local, ump.k, ump.v);
+            continue;
+        }
     }
 }
 

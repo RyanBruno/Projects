@@ -1,12 +1,14 @@
 #include <unordered_map>
 #include <stdexcept>
 
-typedef void* unordered_map;
 typename std::unordered_map<unsigned long, void*>::iterator unordered_map_it;
+
 struct unordered_map_pair {
     unsigned long k;
     void* i;
 };
+
+typedef void* unordered_map;
 
 extern "C" unordered_map unordered_map_create()
 {
