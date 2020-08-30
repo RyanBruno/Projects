@@ -1,6 +1,0 @@
-#!/bin/sh
-
-gcc -c orset.c
-g++ -c unordered_map.cpp
-gcc -c test_orset.c
-g++ -o test test_orset.o orset.o unordered_map.o

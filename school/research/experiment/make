@@ -1,4 +1,13 @@
 #!/bin/sh
 
-gcc -ltirpc -I/usr/include/tirpc/ -o server test_serv.c
-gcc -ltirpc -I/usr/include/tirpc/ -o client test_clint.c
+#gcc -ltirpc -I/usr/include/tirpc/ -o server test_serv.c
+#gcc -ltirpc -I/usr/include/tirpc/ -o client test_clint.c
+
+cd src/
+
+#gcc -ltirpc -I/usr/include/tirpc/ -c io/xdr_orset.c
+#gcc -ltirpc -I/usr/include/tirpc/ -c orset/orset.c
+g++ -ltirpc -I/usr/include/tirpc/ orset/unordered_map.cpp orset/orset.c
+#g++ -ltirpc -I/usr/include/tirpc/ -c orset/unordered_map.cpp
+#g++ -ltirpc -I/usr/include/tirpc/ -o test_xdr_orset orset/orset.c io/test_xdr_orset.c orset/unordered_map.cpp
+

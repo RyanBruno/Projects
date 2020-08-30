@@ -1,0 +1,11 @@
+#!/bin/sh
+
+gcc -c orset.c
+g++ -c unordered_map.cpp
+gcc -c test_orset.c
+gcc -I/usr/include/tirpc -c xdr_orset.c
+gcc -I/usr/include/tirpc -c test_xdr_orset.c
+gcc -I/usr/include/tirpc -c node.c
+g++ -o test_orset test_orset.o orset.o unordered_map.o
+g++ -ltirpc -o test_xdr_orset orset.o unordered_map.o test_xdr_orset.o
+g++ -ltirpc -pthread -o node orset.o unordered_map.o node.o
