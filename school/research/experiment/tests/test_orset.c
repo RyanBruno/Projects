@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include "orset.h"
-
-const char* hi = "Hello ";
-const char* wrld = "world ";
-const char* fb = "foobar ";
 
 int test_orset_baseline()
 {
@@ -50,7 +44,8 @@ int test_orset_delete()
 int test_orset_large()
 {
     struct orset os;
-    struct unordered_map_pair ump;
+    unsigned long k;
+    void* i;
 
     orset_create(&os, 1);
 
@@ -62,8 +57,8 @@ int test_orset_large()
 
     unordered_map_reset(os.os_map);
 
-    while (unordered_map_next(os.os_map, &ump)) {
-        if (ump.i == hi || ump.i == wrld || ump.i == fb)
+    while (unordered_map_next(os.os_map, &k, &i)) {
+        if (i == hi || i == wrld || i == fb)
             continue;
         return -1;
     }
@@ -75,8 +70,9 @@ int test_orset_merge()
 {
     struct orset os;
     struct orset other;
-    struct unordered_map_pair ump;
-    long int k;
+    unsigned long k;
+    void* i;
+    long int t;
 
     orset_create(&os, 1);
     orset_create(&other, 2);
@@ -98,54 +94,36 @@ int test_orset_merge()
      *  fb
      */
 
-    k = orset_add(&os, (void*) hi);
-    unordered_map_add(os.os_map, k, (void*) hi);
+    t = orset_add(&os, (void*) hi);
+    unordered_map_add(os.os_map, t, (void*) hi);
 
-    k = orset_add(&os, (void*) hi);
-    orset_remove(&os, k);
-    unordered_map_add(other.os_map, k, (void*) wrld);
+    t = orset_add(&os, (void*) hi);
+    orset_remove(&os, t);
+    unordered_map_add(other.os_map, t, (void*) wrld);
 
-    k = orset_add(&os, (void*) fb);
-    orset_remove(&other, k);
+    t = orset_add(&os, (void*) fb);
+    orset_remove(&other, t);
 
     orset_add(&other, (void*) fb);
 
     orset_merge(&os, &other);
 
-    k = 2;
+    t = 2;
     unordered_map_reset(os.os_map);
 
-    while (unordered_map_next(os.os_map, &ump)) {
+    while (unordered_map_next(os.os_map, &k, &i)) {
             
-        if (orset_is_tombstone(&os, ump.i))
-            if (k-- > 0)
+        if (orset_is_tombstone(&os, i))
+            if (t-- > 0)
                 continue;
 
-        if (ump.i == hi || ump.i == fb)
+        if (i == hi || i == fb)
             continue;
 
         return -1;
     }
-    if (k != 0) return -1;
+    if (t != 0) return -1;
 
     return 0;
-
 }
 
-void run_test(int(*fn)(), char* name)
-{
-    printf("[ ] Running \"%s\"...\n", name);
-
-    if (!fn())
-        printf("\033[F[P] Passed Test: %s\n", name);
-    else
-        printf("\033[F[F] Failed Test: %s\n", name);
-}
-
-int main()
-{
-    run_test(test_orset_baseline, "[orset.c] Baseline Test");
-    run_test(test_orset_delete, "[orset.c] Delete Test");
-    run_test(test_orset_large, "[orset.c] Large Dataset Test");
-    run_test(test_orset_merge, "[orset.c] Merge Test");
-}
