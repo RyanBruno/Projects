@@ -7,8 +7,7 @@
 void orset_create(struct orset* os, unsigned short node_id)
 {
     os->os_map = unordered_map_create();
-    os->os_node_id = node_id;
-    os->os_cur_id = 0;
+    os->os_cur_id = (unsigned long) node_id << NODE_ID_OFFSET;
 }
 
 /*
@@ -21,9 +20,7 @@ unsigned long orset_add(struct orset* os, void* i)
 {
     unsigned long k;
 
-    k = (unsigned long) os->os_node_id << (((sizeof(unsigned long) - sizeof(unsigned short)) * 8));
-    k += os->os_cur_id++;
-
+    k = os->os_cur_id++;
     unordered_map_add(os->os_map, k, i);
 
     return k;
@@ -60,19 +57,20 @@ void* orset_get(struct orset* os, unsigned long k)
  */
 void orset_merge(struct orset* os, struct orset* other)
 {
-    struct unordered_map_pair ump;
+    unsigned long k;
+    void* i;
 
     unordered_map_reset(other->os_map);
 
-    while (unordered_map_next(other->os_map, &ump)) {
+    while (unordered_map_next(other->os_map, &k, &i)) {
 
-        if (orset_is_tombstone(other, ump.i)) {
-            orset_remove(os, ump.k);
+        if (orset_is_tombstone(other, i)) {
+            orset_remove(os, k);
             continue;
         }
 
-        if (orset_get(os, ump.k) == NULL) {
-            unordered_map_add(os->os_map, ump.k, ump.i);
+        if (orset_get(os, k) == NULL) {
+            unordered_map_add(os->os_map, k, i);
             continue;
         }
     }

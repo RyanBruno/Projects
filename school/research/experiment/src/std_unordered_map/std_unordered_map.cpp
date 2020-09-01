@@ -1,12 +1,14 @@
+/* A unordered_map implementation as
+ * a proxy for the STL's unordered_map
+ * with C bindings.
+ */
 #include <unordered_map>
 #include <stdexcept>
 
-typename std::unordered_map<unsigned long, void*>::iterator unordered_map_it;
-
-struct unordered_map_pair {
-    unsigned long k;
-    void* i;
-};
+/* The interal iterator needed for the
+ * unordered_map_(reset,next) to work.
+ */
+static typename std::unordered_map<unsigned long, void*>::iterator unordered_map_it;
 
 typedef void* unordered_map;
 
@@ -36,23 +38,15 @@ extern "C" void unordered_map_reset(unordered_map um)
     unordered_map_it = ((std::unordered_map<unsigned long, void*>*) um)->begin();
 }
 
-extern "C" int unordered_map_next(unordered_map um, struct unordered_map_pair* ump)
+extern "C" int unordered_map_next(unordered_map um, unsigned long* k, void** i)
 {
     if (unordered_map_it == ((std::unordered_map<unsigned long, void*>*) um)->end()) return 0;
 
-    ump->k = unordered_map_it->first;
-    ump->i = unordered_map_it->second;
+    *k = unordered_map_it->first;
+    *i = unordered_map_it->second;
 
     ++unordered_map_it;
     return 1;
-}
-
-extern "C" void unordered_map_for_each(unordered_map um, void(*fn)(unsigned long, void*))
-{
-    auto um_c = (std::unordered_map<unsigned long, void*>*) um;
-
-    for (auto it = um_c->begin(); it != um_c->end(); ++it)
-        fn(it->first, it->second);
 }
 
 extern "C" void unordered_map_erase(unordered_map um, unsigned long k)
