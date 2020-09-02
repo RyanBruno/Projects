@@ -95,7 +95,7 @@ int test_orset_merge()
      */
 
     t = orset_add(&os, (void*) hi);
-    unordered_map_add(os.os_map, t, (void*) hi);
+    unordered_map_add(other.os_map, t, (void*) hi);
 
     t = orset_add(&os, (void*) hi);
     orset_remove(&os, t);

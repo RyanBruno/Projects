@@ -1,3 +1,5 @@
+#ifndef ORSET_H
+#define ORSET_H
 /* The OrSet abstract data type. A type of
  * Conflict-free abstract data type, the
  * OrSet sits on top of an unordered_map
@@ -16,9 +18,10 @@
  */
 struct orset {
     unordered_map os_map;       // The underlying unordered_map.
+    unsigned short os_node_id;  // Used for the first two octets of
+                                // every locally added key.
     unsigned long os_cur_id;    // Starts at node_id << NODE_ID_OFFSET
                                 // and incremented every addition.
-    //unsigned short os_node_id;  // Used for the first two octets of every locally added key.
 };
 
 /* Initializes the OrSet setting os_cur_id
@@ -63,3 +66,4 @@ void* orset_get(struct orset* os, unsigned long k);
  */
 void orset_merge(struct orset* os, struct orset* other);
 
+#endif

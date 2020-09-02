@@ -19,9 +19,9 @@ extern "C" unordered_map unordered_map_create()
 
 extern "C" void unordered_map_add(unordered_map um, unsigned long k, void* i)
 {
-    ((std::unordered_map<unsigned long, void*>*) um)->insert(std::make_pair(k, i));
-    /*if (!rc.second)
-        printf("DID NOT INSERT\n");*/
+    auto rc = ((std::unordered_map<unsigned long, void*>*) um)->insert(std::make_pair(k, i));
+    if (!rc.second)
+        printf("DID NOT INSERT\n");
 }
 
 extern "C" void* unordered_map_get(unordered_map um, unsigned long k)

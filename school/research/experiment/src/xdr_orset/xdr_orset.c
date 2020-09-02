@@ -85,10 +85,9 @@ bool_t xdr_orset(XDR *xdr, void* os)
     /*if (xdr->x_op == XDR_FREE) {
     }*/
 
-    /*return xdr_u_short(xdr,
-            &(*os_c)->os_node_id)
-        && */
-    return xdr_array(xdr,
+    return xdr_u_short(xdr,
+            &os_c->os_node_id)
+        && xdr_array(xdr,
             (char**) os_c,
             &l,
             999999999,
