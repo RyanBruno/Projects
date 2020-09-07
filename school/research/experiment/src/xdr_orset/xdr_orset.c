@@ -1,4 +1,11 @@
+/* xdr routines transform C data into data
+ * that can be sent as RPC parameters or
+ * returns. xdr_orset is for OrSets. See
+ * orset.h.
+ */
 #include "xdr_orset.h"
+#include "../node.h"
+#include "../orset/orset.h"
 
 static char* NULL_STRING = "\0";
 
@@ -25,7 +32,7 @@ bool_t xdr_orset_item(XDR *xdr, void* os)
         if (!xdr_string(xdr, &i, 1024))
             printf("xdr_string():\n");
 
-        if (((char*) i)[0] == '\0') {
+        if ((i)[0] == '\0') {
             free(i);
             orset_remove(os_c, k);
             return 1;

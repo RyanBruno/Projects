@@ -1,13 +1,12 @@
-/* Represents a logic to bring together all
- * modules into a full functioning node. Its
- * job is to handle incoming merge requests
- * and occasionally send merge request to
- * peers.
+/* Represents some logic to bring together
+ * all modules into a full functioning mode.
+ * Its job is to handle incoming merge
+ * requests and occasionally send merge
+ * request to peers.
  */
 #include <rpc/rpc.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <semaphore.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -15,27 +14,14 @@
 #include <unistd.h>
 
 #include "node.h"
-#include "ospc/ospc.h"
-#include "xdr_orset/xdr_orset.h"
+#include "utils.h"
+#include "../config.h"
 
-#define VERSION_NUMBER 1
-
-/* Used to build the baseline network
- * information about a single peer.
- */
-struct peer_node {
-    unsigned short peer_id;     // The node's peer id (right now unused).
-    char* peer_host;            // The node's host name (passed in to clnt_create()).
-    unsigned long peer_prognum; // The RPC prognum (see man rpc(3)).
-};
-
-/* Global OrSet variables */
+/* Global Node variables */
+int node_id;
 struct orset os;
 struct ospc_context oc;
 sem_t os_sem;
-struct peer_node peers[10];
-int peer_len;
-int node_id;
 
 /* Is called by the RPC library when ever a
  * merge request comes in. All it does so
@@ -47,39 +33,37 @@ int node_id;
 void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
 {
     struct orset rmt_os;
-    int rc;
 
     /* Parse incoming information */
     if (!svc_getargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
         printf("rpc_merge_request: Invalid arguments.\n");
 
-        /* Send an error reply code */
-        rc = -1;
-        svc_sendreply(xprt, (xdrproc_t) xdr_int, &rc);
+        /* Send an reply */
+        svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);
         return;
     }
 
     /* Merge */
     sem_wait(&os_sem);
     ospc_merge(&oc, &rmt_os);
+    if (node_id == 0) print_set(&os);
     sem_post(&os_sem);
 
     /* Cleanup */
-    if (!svc_freeargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
-        printf("rpc_merge_request: free\n");
+    /* TODO for some reason this function spins for along time */
+    /*if (!svc_freeargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
+        printf("rpc_merge_request: free\n");*/
 
-        /* Send an error reply code */
-        rc = -1;
-        svc_sendreply(xprt, (xdrproc_t) xdr_int, &rc);
+        /* Send an reply */
+        /*svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);*/
 
         /* Exit */
-        exit(-1);
-        return;
-    }
+        //exit(-1);
+        //return;
+    //}
 
-    /* Send a reply code */
-    rc = 0;
-    svc_sendreply(xprt, (xdrproc_t) xdr_int, &rc);
+    /* Send a reply */
+    svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);
 }
 
 /* Creates an RPC service and registers
@@ -113,100 +97,69 @@ int register_procedure(long int prognum)
     return 0;
 }
 
+/* The client thread occasionally sends
+ * merge requests to other peers. It makes
+ * sure it does not try to merge with
+ * itself based on node_id.
+ */
 void* client_thread_fn(void* v)
 {
     int n = 0;
 
-    sleep(5);
-    while (1) {
-        int rc;
+    /* Grace period */
+    sleep(GRACE_PERIOD);
+
+    for (;;) {
         struct timeval to;
         CLIENT* client;
 
-        to.tv_sec = 20;
+        /* Setup timeout */
+        to.tv_sec = MERGE_TIMEOUT;
 
+        /* Wrap and skip node_id */
         if (n == node_id) n++;
-        if (n >= peer_len) n = 0;
+        if (n >= peers_len) n = 0;
+        if (n == node_id) n++;
 
-
+        /* Create a client to our peer */
         client = clnt_create(peers[n].peer_host,
                              peers[n].peer_prognum,
                              VERSION_NUMBER,
                              "tcp");
 
+        /* If client creation fails our peer
+         * is not registered with rpcbind(1)
+         * or otherwise unavailable.
+         */
         if (client == NULL) {
             printf("client_thread_fn: clnt_create(3) has failed!\n");
             n++;
+            sleep(5);
             continue;
-            exit(-1);
         }
 
+        /* Actually call the procedure. Right
+         * now there is only 1 procedure so
+         * the second parameter is unused.
+         */
         clnt_call(client, 1,
                  /* Params */
                  (xdrproc_t) xdr_orset, oc.oc_orset,
                  /* Response */
-                 (xdrproc_t) xdr_int, &rc,
+                 (xdrproc_t) xdr_void, NULL,
                  to);
 
+        /* Wait a little */
         n++;
-        sleep(5);
+        sleep(MERGE_PERIOD);
     }
-}
-
-int parse_node_list(char* path, struct peer_node* peer_array, int peer_array_max_len)
-{
-    int fd;
-    char buf[1024];
-    int i;
-    int p;
-    int n;
-
-    if ((fd = open(path, O_RDONLY)) < 0)
-        return -1;
-
-    { // Read the entire file
-        int red = 0;
-        int r;
-        while ((r = read(fd, buf + red, 1024 - red))) {
-            red += r;
-            if (red >= 1024)
-                return -4;
-        }
-    }
-
-    peer_array[0].peer_host = buf;
-    for (i = 0, p = 0, n = 0; ; i++) {
-        if (buf[i] == '\0')
-            break;
-        if (buf[i] == ' ') {
-            char* endptr;
-
-            if (n++ >= peer_array_max_len)
-                return -3;
-
-            buf[i] = '\0';
-            peer_array[p].peer_host = strdup(peer_array->peer_host);
-            peer_array[p].peer_id = p;
-            peer_array[p].peer_prognum = strtol(buf + i + 1, &endptr, 10);
-
-            i += (endptr - (buf + i));
-            if (buf[i] != '\n')
-                return -2;
-            p++; i++;
-            if (p > peer_array_max_len)
-                return -5;
-            peer_array[p].peer_host = buf + i;
-        }
-    }
-    return n;
-
 }
 
 int main(int argc, char* argv[])
 {
     int n;
 
-    pthread_t client_thread;
+    pthread_t thread;
 
     /* Check args */
     if (argc < 2) {
@@ -217,13 +170,7 @@ int main(int argc, char* argv[])
     /* Parse NODEID */
     node_id = strtol(argv[1], NULL, 10);
 
-    /* Parse the node_list.txt file */
-    if ((peer_len = parse_node_list("node_list.txt", peers, 10)) < 0) {
-        printf("Error parsing node list (%d)\n", peer_len);
-        return -1;
-    }
-
-    if (node_id >= peer_len) {
+    if (node_id >= peers_len) {
         /* TODO */
     }
 
@@ -240,7 +187,7 @@ int main(int argc, char* argv[])
     }
 
     /* Create a thread to send merge messages */
-    if (pthread_create(&client_thread,
+    if (pthread_create(&thread,
                 NULL,
                 client_thread_fn,
                 NULL))
@@ -250,12 +197,32 @@ int main(int argc, char* argv[])
     }
 
 
+    /* Creates all the threads in 'threads' */
+    for (int i = (sizeof(threads) / sizeof(threads[0]));
+         i > 0; i--)
+    {
+        /* Create a thread to adding and removing items */
+        if (pthread_create(&thread,
+                    NULL,
+                    threads[i - 1],
+                    NULL))
+        {
+            printf("pthread_create():\n");
+            exit(-1);
+        }
+    }
+
+
     /* Register our service */
     if (register_procedure(peers[node_id].peer_prognum)) {
         printf("register_procedure():\n");
         exit(-1);
     }
 
+    /* This function never returns. It
+     * waits for requests then runs
+     * rpc_merge_request.
+     */
     svc_run();
 
     return -1;
