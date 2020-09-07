@@ -53,3 +53,8 @@ extern "C" void unordered_map_erase(unordered_map um, unsigned long k)
 {
     ((std::unordered_map<unsigned long, void*>*) um)->erase(k);
 }
+
+extern "C" size_t unordered_map_size(unordered_map um)
+{
+    return (size_t) ((std::unordered_map<unsigned long, void*>*) um)->size();
+}

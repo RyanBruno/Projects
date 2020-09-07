@@ -1,6 +1,7 @@
 /* A public interface for an unordered_map
  * implementation.
  */
+#include <stddef.h>
 
 /* The unordered_map handle is usually a
  * pointer to underlying unordered_map
@@ -51,4 +52,9 @@ void unordered_map_reset(unordered_map um);
  * when the end has been reached.
  */
 int unordered_map_next(unordered_map um, unsigned long* k, void** i);
+
+/* Returns the number of elements in the
+ * map.
+ */
+size_t unordered_map_size(unordered_map um);
 

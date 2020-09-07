@@ -8,7 +8,7 @@ void orset_create(struct orset* os, unsigned short node_id)
 {
     os->os_map = unordered_map_create();
     os->os_node_id = node_id;
-    os->os_cur_id = (unsigned long) node_id << NODE_ID_OFFSET;
+    os->os_cur_id = ((unsigned long) node_id << NODE_ID_OFFSET) + 1;
 }
 
 /*
