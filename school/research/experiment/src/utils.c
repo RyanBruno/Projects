@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include "demo.h"
 
 
 /* Prints all items in an OrSet */
@@ -12,6 +13,7 @@ void print_set(struct orset* o)
     unsigned long k;
     void* i;
     pid_t pid;
+    int active_items = 0;
 
     /* Cheat and clear the screen */
     if (!(pid = fork()))
@@ -25,8 +27,12 @@ void print_set(struct orset* o)
             printf("%16lx => (Tombstone)\n", k);
             continue;
         }
+        active_items++;
         printf("%16lx => %s\n", k, i);
-        printf("%16lx => %d\n", k, i);
     }
-    printf("              == END ==\n");
+    printf("           == stats ==\n");
+
+    printf("     active_items %d\n", active_items);
+    printf("  items_collected %d\n", items_collected);
+    printf("             == END ==\n");
 }

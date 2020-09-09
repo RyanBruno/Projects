@@ -9,3 +9,5 @@
  * removing items.
  */
 void* demo_thread_fn(void* v);
+
+extern int items_collected;

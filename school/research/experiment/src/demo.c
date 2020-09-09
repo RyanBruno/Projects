@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+int items_collected;
+
 /* Just some sample string so in a demo we
  * can easily identify corrupted data.
  */
@@ -35,8 +37,10 @@ void* demo_thread_fn(void* v)
 
     /* Grace period */
     sleep(5);
+    srand(node_id);
 
     for (;;) {
+
         if (add) {
             unsigned long k;
             char* s;
@@ -52,14 +56,16 @@ void* demo_thread_fn(void* v)
 
             sem_wait(&os_sem);
             l = unordered_map_size(os.os_map);
+            l = rand() % l;
             unordered_map_reset(os.os_map);
-            unordered_map_next(os.os_map, &k, &i);
+            for (; l > 0; l--)
+                unordered_map_next(os.os_map, &k, &i);
             orset_remove(&os, k);
             sem_post(&os_sem);
         }
 
         sleep(2);
-        if (n > 5)
+        if (n > 2)
             add = !add;
         else
             n++;

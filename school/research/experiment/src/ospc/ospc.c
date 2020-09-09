@@ -1,4 +1,5 @@
 #include "ospc.h"
+#include "../demo.h"
 
 /* Wraps the orset into an ospc_context.
  */
@@ -77,8 +78,10 @@ void ospc_merge(struct ospc_context* oc, struct orset* other)
              * longer needed. All keys > old_latest_key
              * are needed for the merge.
              */
-            if (k < old_latest_key)
+            if (k < old_latest_key) {
                 unordered_map_erase(oc->oc_orset->os_map, k);
+                items_collected++;
+            }
         }
 
         /* If old_latest_key is zero, the node is new */

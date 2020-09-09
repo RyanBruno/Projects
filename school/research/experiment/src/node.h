@@ -28,4 +28,6 @@ extern struct ospc_context oc;
  */
 extern sem_t os_sem;
 
+extern int node_id;
+
 #endif
