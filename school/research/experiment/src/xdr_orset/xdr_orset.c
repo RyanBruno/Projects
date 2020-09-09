@@ -32,13 +32,13 @@ bool_t xdr_orset_item(XDR *xdr, void* os)
         if (!xdr_string(xdr, &i, 1024))
             printf("xdr_string():\n");
 
-        if ((i)[0] == '\0') {
+        if (i[0] == '\0') {
             free(i);
             orset_remove(os_c, k);
             return 1;
         }
 
-        unordered_map_add(os_c, k, (void*) i);
+        unordered_map_add(os_c->os_map, k, (void*) i);
     }
 
     if (xdr->x_op == XDR_ENCODE) {
@@ -52,6 +52,7 @@ bool_t xdr_orset_item(XDR *xdr, void* os)
             printf("xdr_u_long():\n");
 
         /* Write '\0' if item is a tombstone. */
+
         if (orset_is_tombstone(os_c, i)) {
             if (!xdr_string(xdr, &NULL_STRING, 1024))
                 printf("xdr_string():\n");
@@ -97,7 +98,7 @@ bool_t xdr_orset(XDR *xdr, void* os)
     rc = xdr_u_short(xdr,
             &os_c->os_node_id)
         && xdr_array(xdr,
-            (char**) os_c,
+            (char**) &os_c,
             (u_int*) &l,
             999999999,
             0,
