@@ -4,6 +4,7 @@
 #include "node.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 int items_collected;
 
@@ -47,7 +48,7 @@ void* demo_thread_fn(void* v)
 
             s = strings[rand() % (sizeof(strings) / sizeof(char*))];
             sem_wait(&os_sem);
-            k = orset_add(&os, s);
+            k = orset_add(&os, strdup(s));
             sem_post(&os_sem);
         } else {
             size_t l;

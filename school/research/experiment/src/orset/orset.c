@@ -1,5 +1,6 @@
 #include "orset.h"
 #include <stddef.h>
+#include <stdlib.h>
 
 /*
  * Initializes the orset pointed to by 'os'.
@@ -55,6 +56,8 @@ void* orset_get(struct orset* os, unsigned long k)
  *     removed in 'os'.
  *  2. All item in 'other' not in 'os' will
  *     be added to 'os'.
+ * NOTE: This function frees a token when it
+ *       removed.
  */
 void orset_merge(struct orset* os, struct orset* other)
 {
@@ -66,6 +69,14 @@ void orset_merge(struct orset* os, struct orset* other)
     while (unordered_map_next(other->os_map, &k, &i)) {
 
         if (orset_is_tombstone(other, i)) {
+            void* f;
+
+            f = orset_get(os, k);
+
+            /* Free all non-tombstones */
+            if (!orset_is_tombstone(os, f))
+                free(f);
+
             orset_remove(os, k);
             continue;
         }
