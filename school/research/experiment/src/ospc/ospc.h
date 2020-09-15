@@ -40,7 +40,7 @@ void ospc_wrap(struct orset* os, struct ospc_context* oc);
  * Returns: The greatest items from 'other'
  * from other->os_node_id.
  */
-unsigned long ospc_merge(struct ospc_context* oc, struct orset* other);
+uint64_t ospc_merge(struct ospc_context* oc, struct orset* other);
 
 /* Call this function just after a merge
  * with another node has been completed.
@@ -48,7 +48,7 @@ unsigned long ospc_merge(struct ospc_context* oc, struct orset* other);
  * ('greatest_id' is greater then greatest_id
  * in the in 'oc'), 0 if not.
  */
-int ospc_touch(struct ospc_context* oc, unsigned long node_id, unsigned long item_id);
+int ospc_touch(struct ospc_context* oc, uint64_t node_id, uint64_t item_id);
 
 /* The other half of the garbage collection
  * algorithm removes tombstones locally when

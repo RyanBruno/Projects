@@ -9,6 +9,16 @@ void *(*threads[]) (void*) = {
     demo_thread_fn,
 };
 
+/* General Configuration */
+
+/* This defines how big the node id should
+ * be. Your only reasionable choices are
+ * uint16_t or uint8_t.
+ * uint8_t => max value = 256
+ * uint16_t => max value = 65,536
+ */
+#define node_t uint8_t
+
 /* RPC configuration points */
 
 /* Passed directly to svc_register and

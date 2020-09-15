@@ -8,8 +8,6 @@
 #define NODE_H
 
 #include <semaphore.h>
-#include "ospc/ospc.h"
-#include "xdr_orset/xdr_orset.h"
 
 /* Used to build the baseline network
  * information about a single peer.
@@ -19,6 +17,8 @@ struct peer_node {
     char* peer_host;            // The node's host name (passed in to clnt_create()).
     unsigned long peer_prognum; // The RPC prognum (see man rpc(3)).
 };
+
+#include "ospc/ospc.h"
 
 /* Global orset and ospc_context */
 extern struct orset os;

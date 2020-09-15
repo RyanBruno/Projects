@@ -5,11 +5,11 @@
 /*
  * Initializes the orset pointed to by 'os'.
  */
-void orset_create(struct orset* os, unsigned short node_id)
+void orset_create(struct orset* os, node_t node_id)
 {
     os->os_map = unordered_map_create();
     os->os_node_id = node_id;
-    os->os_cur_id = ((unsigned long) node_id << NODE_ID_OFFSET) + 1;
+    os->os_cur_id = ((uint64_t) node_id << NODE_ID_OFFSET) + 1;
 }
 
 /*
@@ -18,9 +18,9 @@ void orset_create(struct orset* os, unsigned short node_id)
  * a value of a random key. That key is then returned.
  * DO NOT try to add the orset into itself.
  */
-unsigned long orset_add(struct orset* os, void* i)
+uint64_t orset_add(struct orset* os, void* i)
 {
-    unsigned long k;
+    uint64_t k;
 
     k = os->os_cur_id++;
     unordered_map_add(os->os_map, k, i);
@@ -33,7 +33,7 @@ unsigned long orset_add(struct orset* os, void* i)
  * that the item has been removed.
  * DOES NOT free the pointer associated with 'k'.
  */
-void orset_remove(struct orset* os, unsigned long k)
+void orset_remove(struct orset* os, uint64_t k)
 {
     unordered_map_erase(os->os_map, k);
     unordered_map_add(os->os_map, k, (void*) os);
@@ -44,7 +44,7 @@ void orset_remove(struct orset* os, unsigned long k)
  * given key 'k'. Use orset_is_tombstone to check
  * if the item has been removed.
  */
-void* orset_get(struct orset* os, unsigned long k)
+void* orset_get(struct orset* os, uint64_t k)
 {
     unordered_map_get(os->os_map, k);
 }
@@ -61,7 +61,7 @@ void* orset_get(struct orset* os, unsigned long k)
  */
 void orset_merge(struct orset* os, struct orset* other)
 {
-    unsigned long k;
+    uint64_t k;
     void* i;
 
     unordered_map_reset(other->os_map);

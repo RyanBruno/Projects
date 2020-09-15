@@ -21,17 +21,17 @@ void ospc_wrap(struct orset* os, struct ospc_context* oc)
  * Returns: The greatest items from 'other'
  * from other->os_node_id.
  */
-unsigned long ospc_merge(struct ospc_context* oc, struct orset* other)
+uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
 {
-    unsigned long old_latest_key = 0;
-    unsigned long new_latest_key = 0;
-    unsigned long k;
+    uint64_t old_latest_key = 0;
+    uint64_t new_latest_key = 0;
+    uint64_t k;
     void* i;
 
     unordered_map_reset(other->os_map);
 
     while (unordered_map_next(other->os_map, &k, &i)) {
-        unsigned long item_node;
+        uint64_t item_node;
 
         /* Get the originating node for this item */
         item_node = k >> NODE_ID_OFFSET;
@@ -41,7 +41,7 @@ unsigned long ospc_merge(struct ospc_context* oc, struct orset* other)
          * of our items...
          */
         if (item_node == oc->oc_orset->os_node_id ||
-            (unsigned long) unordered_map_get(oc->oc_latest_key_map, item_node) >= k)
+            (uint64_t) unordered_map_get(oc->oc_latest_key_map, item_node) >= k)
         {
             /* Ignore it */
             unordered_map_erase(other->os_map, k);
@@ -58,7 +58,7 @@ unsigned long ospc_merge(struct ospc_context* oc, struct orset* other)
         }
     }
 
-    old_latest_key = (unsigned long) unordered_map_get(oc->oc_latest_key_map, other->os_node_id);
+    old_latest_key = (uint64_t) unordered_map_get(oc->oc_latest_key_map, other->os_node_id);
 
     /* If we have actually seen a newer item
      * from this node.
@@ -68,7 +68,7 @@ unsigned long ospc_merge(struct ospc_context* oc, struct orset* other)
         unordered_map_reset(oc->oc_orset->os_map);
 
         while (unordered_map_next(oc->oc_orset->os_map, &k, &i)) {
-            unsigned long item_node;
+            uint64_t item_node;
 
             /* We on only collect tombstones */
             if (!orset_is_tombstone(oc->oc_orset, i))
@@ -111,10 +111,10 @@ unsigned long ospc_merge(struct ospc_context* oc, struct orset* other)
  * ('greatest_id' is greater then greatest_id
  * in the in 'oc'), 0 if not.
  */
-int ospc_touch(struct ospc_context* oc, unsigned long node_id,
-                unsigned long greatest_item)
+int ospc_touch(struct ospc_context* oc, uint64_t node_id,
+                uint64_t greatest_item)
 {
-    if ((unsigned long) unordered_map_get(oc->oc_sent_map, node_id) < greatest_item) {
+    if ((uint64_t) unordered_map_get(oc->oc_sent_map, node_id) < greatest_item) {
         unordered_map_erase(oc->oc_sent_map, node_id);
         unordered_map_add(oc->oc_sent_map, node_id, (void*) greatest_item);
         return 1;
@@ -128,23 +128,23 @@ int ospc_touch(struct ospc_context* oc, unsigned long node_id,
  */
 void ospc_collect(struct ospc_context* oc)
 {
-    unsigned long least_key;
-    unsigned long k;
+    uint64_t least_key;
+    uint64_t k;
     void* i;
 
     unordered_map_reset(oc->oc_sent_map);
 
     /* Find the least_key in the oc_sent_map. */
     while (unordered_map_next(oc->oc_sent_map, &k, &i)) {
-        if ((unsigned long) i < least_key)
-            least_key = (unsigned long) i;
+        if ((uint64_t) i < least_key)
+            least_key = (uint64_t) i;
     }
 
     unordered_map_reset(oc->oc_orset->os_map);
 
     /* Find some tombstones to collect. */
     while (unordered_map_next(oc->oc_orset->os_map, &k, &i)) {
-        unsigned long item_node;
+        uint64_t item_node;
 
         /* We only collect tombstones */
         if (!orset_is_tombstone(oc->oc_orset, i))

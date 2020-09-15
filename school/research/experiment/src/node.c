@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "node.h"
+#include "xdr_orset/xdr_orset.h"
 #include "utils.h"
 #include "../config.h"
 
@@ -33,7 +34,7 @@ sem_t os_sem;
 void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
 {
     struct orset rmt_os;
-    unsigned long greatest_item;
+    uint64_t greatest_item;
 
     /* Parse incoming information */
     if (!svc_getargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
@@ -67,7 +68,7 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
  * rpc_merge_request with the port mapper
  * on 'prognum'.
  */
-int register_procedure(long int prognum)
+int register_procedure(unsigned long prognum)
 {
     int rc;
     SVCXPRT* xprt;

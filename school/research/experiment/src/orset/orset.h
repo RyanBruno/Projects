@@ -11,7 +11,8 @@
  */
 
 #include "../unordered_map/unordered_map.h"
-#define NODE_ID_OFFSET (sizeof(unsigned long) - sizeof(unsigned short)) * 8
+#define node_t uint8_t
+#define NODE_ID_OFFSET (sizeof(uint64_t) - sizeof(node_t)) * 8
 /* The OrSet structure holds the underlying
  * unordered_map and some additional
  * information.
@@ -20,36 +21,35 @@ struct orset {
     unordered_map os_map;       // The underlying unordered_map.
     unsigned short os_node_id;  // Used for the first two octets of
                                 // every locally added key.
-    unsigned long os_cur_id;    // Starts at node_id << NODE_ID_OFFSET
+    uint64_t os_cur_id;         // Starts at node_id << NODE_ID_OFFSET
                                 // and incremented every addition.
 };
 
 /* Initializes the OrSet setting os_cur_id
  * to 'node_id' << NODE_ID_OFFSET.
  */
-void orset_create(struct orset* os, unsigned short node_id);
+void orset_create(struct orset* os, node_t node_id);
 
 /* Locally adds and item (pointer) 'i' to
  * the set. This function returns the
- * unsigned long key now associated with
- * the item.
+ * uint64_t key now associated with the item.
  * NOTE: The key's 2 most significant bytes
  * will always be the node_id.
  */
-unsigned long orset_add(struct orset* os, void* i);
+uint64_t orset_add(struct orset* os, void* i);
 
 /* Replaces the pointer associated with 'k'
  * with a TOMBSTONE. During a merge
  * tombstones overwrite items.
  * SEE ALSO: orset_is_tombstone macro
  */
-void orset_remove(struct orset* os, unsigned long k);
+void orset_remove(struct orset* os, uint64_t k);
 
 /* Gets the item (pointer) associated with
  * 'k'. Returns NULL the key was never added.
  * SEE ALSO orset_is_tombstone macro
  */
-void* orset_get(struct orset* os, unsigned long k);
+void* orset_get(struct orset* os, uint64_t k);
 
 /* If an item from orset_get has been removed
  * with orset_remove this macro will expand
