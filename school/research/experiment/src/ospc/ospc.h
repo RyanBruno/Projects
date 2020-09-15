@@ -22,6 +22,7 @@
 struct ospc_context {
     struct orset* oc_orset;
     unordered_map oc_latest_key_map;
+    unordered_map oc_sent_map;
 };
 
 /* Initializes ospc_context 'oc'
@@ -36,7 +37,23 @@ void ospc_wrap(struct orset* os, struct ospc_context* oc);
  * if necessary. If necessary removes all
  * tombstones in 'os' from other's node_id
  * before new_latest_key.
+ * Returns: The greatest items from 'other'
+ * from other->os_node_id.
  */
-void ospc_merge(struct ospc_context* oc, struct orset* other);
+unsigned long ospc_merge(struct ospc_context* oc, struct orset* other);
+
+/* Call this function just after a merge
+ * with another node has been completed.
+ * Return 1 if an update was made
+ * ('greatest_id' is greater then greatest_id
+ * in the in 'oc'), 0 if not.
+ */
+int ospc_touch(struct ospc_context* oc, unsigned long node_id, unsigned long item_id);
+
+/* The other half of the garbage collection
+ * algorithm removes tombstones locally when
+ * all nodes have been sent it directly.
+ */
+void ospc_collect(struct ospc_context* oc);
 
 #endif

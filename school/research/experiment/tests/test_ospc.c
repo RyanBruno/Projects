@@ -1,4 +1,6 @@
+#include "../src/utils.h"
 
+int items_collected = 0;
 int test_ospc_baseline()
 {
 
@@ -36,16 +38,16 @@ int test_ospc_baseline()
 
     t = orset_add(&other, (void*) hi);
     orset_remove(&other, t);
-    unordered_map_add(os.os_map, t, (void*) hi);
+    unordered_map_add(os.os_map, t, (void*) strdup(hi));
 
     t = orset_add(&other, (void*) wrld);
     orset_remove(&other, t);
-    unordered_map_add(os.os_map, t, (void*) wrld);
+    unordered_map_add(os.os_map, t, (void*) strdup(wrld));
     unordered_map_add(oc.oc_latest_key_map, 2L, (void*) t);
 
     t = orset_add(&other, (void*) fb);
     orset_remove(&other, t);
-    unordered_map_add(os.os_map, t, (void*) fb);
+    unordered_map_add(os.os_map, t, (void*) strdup(fb));
 
     ospc_merge(&oc, &other);
 
@@ -58,7 +60,7 @@ int test_ospc_baseline()
             if (t-- > 0)
                 continue;
 
-        if (i == hi || i == wrld)
+        if (!strcmp(i, hi) || !strcmp(i, wrld))
             continue;
 
         return -1;

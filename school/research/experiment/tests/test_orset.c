@@ -1,4 +1,6 @@
+#include <semaphore.h>
 
+sem_t os_sem;
 int test_orset_baseline()
 {
     struct orset os;
@@ -6,6 +8,10 @@ int test_orset_baseline()
     unsigned long wrld_k;
     unsigned long fb_k;
 
+    if (sem_init(&os_sem, 0, 1)) {
+        printf("sem_init():\n");
+        exit(-1);
+    }
     orset_create(&os, 1);
 
     hi_k = orset_add(&os, (void*) hi);
@@ -99,9 +105,9 @@ int test_orset_merge()
 
     t = orset_add(&os, (void*) hi);
     orset_remove(&os, t);
-    unordered_map_add(other.os_map, t, (void*) wrld);
+    unordered_map_add(other.os_map, t, (void*) strdup(wrld));
 
-    t = orset_add(&os, (void*) fb);
+    t = orset_add(&os, (void*) strdup(fb));
     orset_remove(&other, t);
 
     orset_add(&other, (void*) fb);

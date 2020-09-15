@@ -18,12 +18,6 @@ void *(*threads[]) (void*) = {
 
 /* Client thread configuration points */
 
-/* The amount of time (in seconds) to wait
- * before we start trying to merge with
- * peers.
- */
-#define GRACE_PERIOD 5
-
 /* The amount of time between merge
  * requests.
  */
@@ -42,5 +36,5 @@ struct peer_node peers[10] = {
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100602L },
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100603L },
 };
-int peers_len = 2;
+int peers_len = 4;
 

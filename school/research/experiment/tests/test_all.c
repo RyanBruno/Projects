@@ -1,5 +1,7 @@
 #include <stdio.h>
-#include "../src/xdr_orset/xdr_orset.c"
+#include <string.h>
+
+#include "../src/xdr_orset/xdr_orset.h"
 #include "../src/ospc/ospc.h"
 
 const char* hi = "Hello ";

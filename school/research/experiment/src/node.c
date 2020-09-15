@@ -33,37 +33,34 @@ sem_t os_sem;
 void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
 {
     struct orset rmt_os;
+    unsigned long greatest_item;
 
     /* Parse incoming information */
     if (!svc_getargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
         printf("rpc_merge_request: Invalid arguments.\n");
 
         /* Send an reply */
-        svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);
+        greatest_item = 0;
+        svc_sendreply(xprt, (xdrproc_t) xdr_u_longlong_t, &greatest_item);
+
         return;
     }
 
     /* Merge */
     sem_wait(&os_sem);
-    ospc_merge(&oc, &rmt_os);
-    if (node_id == 0) print_set(&os);
+    greatest_item = ospc_merge(&oc, &rmt_os);
     sem_post(&os_sem);
 
     /* Cleanup */
-    /* TODO for some reason this function spins for along time */
-    /*if (!svc_freeargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
-        printf("rpc_merge_request: free\n");*/
-
-        /* Send an reply */
-        /*svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);*/
+    if (!svc_freeargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
+        printf("rpc_merge_request: free\n");
 
         /* Exit */
-        //exit(-1);
-        //return;
-    //}
+        exit(-1);
+    }
 
     /* Send a reply */
-    svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);
+    svc_sendreply(xprt, (xdrproc_t) xdr_u_longlong_t, &greatest_item);
 }
 
 /* Creates an RPC service and registers
@@ -104,17 +101,20 @@ int register_procedure(long int prognum)
  */
 void* client_thread_fn(void* v)
 {
-    int n = 0;
-
-    /* Grace period */
-    sleep(GRACE_PERIOD);
+    int n = -1;
 
     for (;;) {
         struct timeval to;
         CLIENT* client;
+        unsigned long greatest_item;
+
+        /* Wait a little */
+        n++;
+        sleep(MERGE_PERIOD);
 
         /* Setup timeout */
         to.tv_sec = MERGE_TIMEOUT;
+        to.tv_usec = 0;
 
         /* Wrap and skip node_id */
         if (n == node_id) n++;
@@ -133,8 +133,6 @@ void* client_thread_fn(void* v)
          */
         if (client == NULL) {
             printf("client_thread_fn: clnt_create(3) has failed!\n");
-            n++;
-            sleep(5);
             continue;
         }
 
@@ -146,12 +144,15 @@ void* client_thread_fn(void* v)
                  /* Params */
                  (xdrproc_t) xdr_orset, oc.oc_orset,
                  /* Response */
-                 (xdrproc_t) xdr_void, NULL,
+                 (xdrproc_t) xdr_u_longlong_t, &greatest_item,
                  to);
 
-        /* Wait a little */
-        n++;
-        sleep(MERGE_PERIOD);
+        /* Runs the OrSet garbage collector */
+        sem_wait(&os_sem);
+        if (ospc_touch(&oc, n, greatest_item))
+            ospc_collect(&oc);
+        sem_post(&os_sem);
+
     }
 }
 

@@ -39,6 +39,7 @@ bool_t xdr_orset_item(XDR *xdr, void* os)
         }
 
         unordered_map_add(os_c->os_map, k, (void*) i);
+        return 1;
     }
 
     if (xdr->x_op == XDR_ENCODE) {
@@ -65,9 +66,9 @@ bool_t xdr_orset_item(XDR *xdr, void* os)
         return 1;
     }
 
-    /*if (xdr->x_op == XDR_FREE) { */
+    if (xdr->x_op == XDR_FREE) {
         return 1;
-    /*}*/
+    }
     return 0;
 }
 
@@ -85,14 +86,16 @@ bool_t xdr_orset(XDR *xdr, void* os)
     if (xdr->x_op == XDR_DECODE)
         orset_create(os_c, 1);
 
+    l = unordered_map_size(os_c->os_map);
+
     if (xdr->x_op == XDR_ENCODE) {
         sem_wait(&os_sem);
         unordered_map_reset(os_c->os_map);
-        l = unordered_map_size(os_c->os_map);
     }
 
     if (xdr->x_op == XDR_FREE) {
-        // TODO unordered_map_free
+        unordered_map_free(os_c->os_map);
+        return 1;
     }
 
     rc = xdr_u_short(xdr,
