@@ -1,5 +1,4 @@
-/* Represents some logic to bring together
- * all modules into a full functioning mode.
+/* Represents some logic to bring together * all modules into a full functioning mode.
  * Its job is to handle incoming merge
  * requests and occasionally send merge
  * request to peers.
@@ -17,12 +16,14 @@
 #include "xdr_orset/xdr_orset.h"
 #include "utils.h"
 #include "../config.h"
+#include "osec/osec.h"
 
 /* Global Node variables */
 int node_id;
 struct orset os;
 struct ospc_context oc;
 sem_t os_sem;
+
 
 /* Is called by the RPC library when ever a
  * merge request comes in. All it does so
@@ -34,22 +35,23 @@ sem_t os_sem;
 void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
 {
     struct orset rmt_os;
-    uint64_t greatest_item;
+    uint64_t latest_item;
 
     /* Parse incoming information */
     if (!svc_getargs(xprt, (xdrproc_t) xdr_orset, &rmt_os)) {
         printf("rpc_merge_request: Invalid arguments.\n");
 
         /* Send an reply */
-        greatest_item = 0;
-        svc_sendreply(xprt, (xdrproc_t) xdr_u_longlong_t, &greatest_item);
+        latest_item = 0;
+        svc_sendreply(xprt, (xdrproc_t) xdr_uint64_t, &latest_item);
 
         return;
     }
 
     /* Merge */
     sem_wait(&os_sem);
-    greatest_item = ospc_merge(&oc, &rmt_os);
+    latest_item = ospc_merge(&oc, &rmt_os);
+    print_set_stats(&os, node_id);
     sem_post(&os_sem);
 
     /* Cleanup */
@@ -61,8 +63,55 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
     }
 
     /* Send a reply */
-    svc_sendreply(xprt, (xdrproc_t) xdr_u_longlong_t, &greatest_item);
+    svc_sendreply(xprt, (xdrproc_t) xdr_uint64_t, &latest_item);
 }
+
+/* This is sent from a node when it has
+ * received confirmation from every node
+ * that a tombstone has been received. The
+ * algorithm here is to update
+ * oc_latest_key_map then collect all
+ * tombstones below.
+ */
+void rpc_eager_request(struct svc_req *req, SVCXPRT* xprt)
+{
+    uint64_t latest_item;
+
+    /* Parse incoming information */
+    if (!svc_getargs(xprt, (xdrproc_t) xdr_uint64_t, &latest_item)) {
+        printf("rpc_merge_request: Invalid arguments.\n");
+
+        svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);
+        return;
+    }
+
+    /* Merge */
+    sem_wait(&os_sem);
+    osec_eager_collect(&oc, latest_item);
+    sem_post(&os_sem);
+
+    /* Send a reply */
+    svc_sendreply(xprt, (xdrproc_t) xdr_void, NULL);
+}
+
+/* A simple router that calls the right
+ * function based on procedure number.
+ */
+void rpc_request(struct svc_req *req, SVCXPRT *xprt)
+{
+    switch (req->rq_proc) {
+    case 1:
+        rpc_merge_request(req, xprt);
+        break;
+    case 2:
+        rpc_eager_request(req, xprt);
+        break;
+    default:
+        printf("Invalid prognum\n");
+        break;
+    }
+}
+
 
 /* Creates an RPC service and registers
  * rpc_merge_request with the port mapper
@@ -86,7 +135,7 @@ int register_procedure(unsigned long prognum)
 
     /* Register rpc_merge_request procedure */
     if (!svc_register(xprt, prognum, VERSION_NUMBER,
-                rpc_merge_request, IPPROTO_TCP))
+                rpc_request, IPPROTO_TCP))
     {
         printf("register_procedure: Could not register.\n");
         return -1;
@@ -102,16 +151,18 @@ int register_procedure(unsigned long prognum)
  */
 void* client_thread_fn(void* v)
 {
-    int n = -1;
+    int n = node_id + 1;
 
     for (;;) {
+        enum clnt_stat stat;
         struct timeval to;
         CLIENT* client;
-        unsigned long greatest_item;
+        uint64_t latest_item;
+        uint64_t stable_item;
 
         /* Wait a little */
         n++;
-        sleep(MERGE_PERIOD);
+        sleep(MERGE_RATE);
 
         /* Setup timeout */
         to.tv_sec = MERGE_TIMEOUT;
@@ -137,45 +188,98 @@ void* client_thread_fn(void* v)
             continue;
         }
 
-        /* Actually call the procedure. Right
-         * now there is only 1 procedure so
-         * the second parameter is unused.
+        /* Actually call the procedure. We
+         * want to merge with our peer so we
+         * call procedure number 1.
          */
-        clnt_call(client, 1,
+        stat = clnt_call(client, 1,
                  /* Params */
                  (xdrproc_t) xdr_orset, oc.oc_orset,
                  /* Response */
-                 (xdrproc_t) xdr_u_longlong_t, &greatest_item,
+                 (xdrproc_t) xdr_uint64_t, &latest_item,
                  to);
+
+        if (stat != RPC_SUCCESS) {
+            printf("1 client_thread_fn(): clnt_call(%d)\n", stat);
+            continue;
+        }
+
+        /* Close the connection to our peer */
+        clnt_destroy(client);
 
         /* Runs the OrSet garbage collector */
         sem_wait(&os_sem);
-        if (ospc_touch(&oc, n, greatest_item))
-            ospc_collect(&oc);
+
+        /* Updates the latest_key_map for
+         * this current peer. If not updated
+         * continue.
+         */
+        if (!ospc_touch(&oc, n, latest_item)) {
+            sem_post(&os_sem);
+            continue;
+        }
+
+        /* If updated try to collect some
+         * tombstones and get the greatest
+         * stable item (or least 
+         */
+        stable_item = ospc_collect(&oc);
+
         sem_post(&os_sem);
 
+        if (!stable_item) continue;
+
+        for (int j = 0; j < peers_len; j++) {
+
+            /* Do not send to self */
+            if (j == node_id) continue;
+
+            /* Setup timeout */
+            to.tv_sec = MERGE_TIMEOUT;
+            to.tv_usec = 0;
+
+            /* Create a client to our peer */
+            client = clnt_create(peers[j].peer_host,
+                                 peers[j].peer_prognum,
+                                 VERSION_NUMBER,
+                                 "tcp");
+
+            /* If client creation fails our peer
+             * is not registered with rpcbind(1)
+             * or otherwise unavailable.
+             */
+            if (client == NULL) {
+                printf("client_thread_fn: clnt_create(3) has failed!\n");
+                continue;
+            }
+
+            /*
+             */
+            stat = clnt_call(client, 2,
+                     /* Params */
+                     (xdrproc_t) xdr_uint64_t, &latest_item,
+                     /* Response */
+                     (xdrproc_t) xdr_void, NULL,
+                     to);
+
+            if (stat != RPC_SUCCESS) {
+                printf("client_thread_fn(): clnt_call(%d)\n", stat);
+                continue;
+            }
+
+            /* Close the connection to our peer */
+            clnt_destroy(client);
+        }
     }
 }
 
-int main(int argc, char* argv[])
+/* This function is great for stating a
+ * node without using the main() function
+ * below. It creates the global OrSet and
+ * semaphore.
+ */
+int node_init()
 {
-    int n;
-
-    pthread_t thread;
-
-    /* Check args */
-    if (argc < 2) {
-        printf("USAGE: ./node NODEID\n");
-        return -1;
-    }
-
-    /* Parse NODEID */
-    node_id = strtol(argv[1], NULL, 10);
-
-    if (node_id >= peers_len) {
-        /* TODO */
-    }
-
     /* Create our OrSet */
     orset_create(&os, node_id);
     ospc_wrap(&os, &oc);
@@ -185,8 +289,48 @@ int main(int argc, char* argv[])
      */
     if (sem_init(&os_sem, 0, 1)) {
         printf("sem_init():\n");
-        exit(-1);
+        return -1;
     }
+
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    int n;
+
+    pthread_t thread;
+
+    utils_start();
+
+    /* Check args */
+    if (argc < 2) {
+        printf("USAGE: ./node NODEID MERGE_RATE OPERATION_RATE ADD_TO_REM_RATIO\n");
+        return -1;
+    }
+
+    /* Parse NODEID */
+    node_id = strtol(argv[1], NULL, 10);
+
+    /* Parse command line params */
+    if (argc > 2) {
+        MERGE_RATE = strtol(argv[2], NULL, 10);
+        if (argc > 3) {
+            OPERATION_RATE = strtol(argv[3], NULL, 10);
+            if (argc > 4) {
+                ADD_TO_REM_RATIO = strtol(argv[4], NULL, 10);
+            }
+        }
+    }
+
+    if (node_id >= peers_len) {
+        printf("main(): NODEID is our of range\n");
+        return -1;
+    }
+
+    /* Create our node's OrSet */
+    if (node_init() < 0)
+        return -1;
 
     /* Create a thread to send merge messages */
     if (pthread_create(&thread,
@@ -197,7 +341,6 @@ int main(int argc, char* argv[])
         printf("pthread_create():\n");
         exit(-1);
     }
-
 
     /* Creates all the threads in 'threads' */
     for (int i = (sizeof(threads) / sizeof(threads[0]));
@@ -213,7 +356,6 @@ int main(int argc, char* argv[])
             exit(-1);
         }
     }
-
 
     /* Register our service */
     if (register_procedure(peers[node_id].peer_prognum)) {

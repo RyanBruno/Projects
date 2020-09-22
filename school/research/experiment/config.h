@@ -12,10 +12,11 @@ void *(*threads[]) (void*) = {
 /* General Configuration */
 
 /* This defines how big the node id should
- * be. Your only reasionable choices are
+ * be. Your only reasonable choices are
  * uint16_t or uint8_t.
  * uint8_t => max value = 256
  * uint16_t => max value = 65,536
+ * TODO: Unused.
  */
 #define node_t uint8_t
 
@@ -24,17 +25,40 @@ void *(*threads[]) (void*) = {
 /* Passed directly to svc_register and
  * clnt_create.
  */
-#define VERSION_NUMBER 1
+unsigned long VERSION_NUMBER = 1;
+//#define VERSION_NUMBER 1
 
 /* Client thread configuration points */
 
 /* The amount of time between merge
  * requests.
  */
-#define MERGE_PERIOD 5
+unsigned int MERGE_RATE = 1;
+//#define MERGE_PERIOD 1
 
 /* The timeout for a single merge request */
-#define MERGE_TIMEOUT 20
+time_t MERGE_TIMEOUT = 20;
+//#define MERGE_TIMEOUT 20
+
+/* DEMO configuration points */
+
+/* The ratio of add to removes for each demo
+ * operation.
+ */
+unsigned int ADD_TO_REM_RATIO = 2;
+
+/* The amount of seconds between each demo
+ * operation. May also be represented as
+ * seconds per operation.
+ */
+time_t OPERATION_RATE = 2;
+
+/* Eager Collection */
+
+/* How many collected local nodes before
+ * initiating eager collection.
+ */
+#define EAGER_COLLECTION_TRIGGER 10
 
 /* Describes the network of peers. This
  * array contains the current node_id.

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+./node 0 &
+./node 1 &
+./node 2 &
+./node 3 &

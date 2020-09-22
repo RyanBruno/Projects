@@ -9,6 +9,26 @@
 
 #include <semaphore.h>
 
+/* Creates an RPC service and registers
+ * rpc_merge_request with the port mapper
+ * on 'prognum'.
+ */
+int register_procedure(unsigned long prognum);
+
+/* The client thread occasionally sends
+ * merge requests to other peers. It makes
+ * sure it does not try to merge with
+ * itself based on node_id.
+ */
+void* client_thread_fn(void* v);
+
+/* This function is great for stating a
+ * node without using the main() function
+ * below. It creates the global OrSet and
+ * semaphore.
+ */
+int node_init();
+
 /* Used to build the baseline network
  * information about a single peer.
  */
@@ -23,11 +43,10 @@ struct peer_node {
 /* Global orset and ospc_context */
 extern struct orset os;
 extern struct ospc_context oc;
+
 /* A global lock to make edits and reads to
  * the OrSet.
  */
 extern sem_t os_sem;
-
-extern int node_id;
 
 #endif

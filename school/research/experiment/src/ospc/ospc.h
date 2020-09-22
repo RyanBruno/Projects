@@ -54,6 +54,6 @@ int ospc_touch(struct ospc_context* oc, uint64_t node_id, uint64_t item_id);
  * algorithm removes tombstones locally when
  * all nodes have been sent it directly.
  */
-void ospc_collect(struct ospc_context* oc);
+uint64_t ospc_collect(struct ospc_context* oc);
 
 #endif

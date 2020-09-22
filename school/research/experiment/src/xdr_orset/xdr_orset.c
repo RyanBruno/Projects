@@ -26,7 +26,7 @@ bool_t xdr_orset_item(XDR *xdr, void* os)
         if ((i = malloc(1024)) == NULL)
             printf("Malloc():\n");
 
-        if (!xdr_u_longlong_t(xdr, &k))
+        if (!xdr_uint64_t(xdr, &k))
             printf("xdr_u_long():\n");
 
         if (!xdr_string(xdr, &i, 1024))
@@ -49,7 +49,7 @@ bool_t xdr_orset_item(XDR *xdr, void* os)
         unordered_map_next(os_c->os_map, &k, &i);
 
         /* Write the key */
-        if (!xdr_u_longlong_t(xdr, &k))
+        if (!xdr_uint64_t(xdr, &k))
             printf("xdr_u_long():\n");
 
         /* Write '\0' if item is a tombstone. */

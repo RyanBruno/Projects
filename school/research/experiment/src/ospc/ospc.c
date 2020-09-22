@@ -108,15 +108,15 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
 /* Call this function just after a merge
  * with another node has been completed.
  * Return 1 if an update was made
- * ('greatest_id' is greater then greatest_id
+ * ('latest_id' is greater then latest_id
  * in the in 'oc'), 0 if not.
  */
 int ospc_touch(struct ospc_context* oc, uint64_t node_id,
-                uint64_t greatest_item)
+                uint64_t latest_item)
 {
-    if ((uint64_t) unordered_map_get(oc->oc_sent_map, node_id) < greatest_item) {
+    if ((uint64_t) unordered_map_get(oc->oc_sent_map, node_id) < latest_item) {
         unordered_map_erase(oc->oc_sent_map, node_id);
-        unordered_map_add(oc->oc_sent_map, node_id, (void*) greatest_item);
+        unordered_map_add(oc->oc_sent_map, node_id, (void*) latest_item);
         return 1;
     }
     return 0;
@@ -126,7 +126,7 @@ int ospc_touch(struct ospc_context* oc, uint64_t node_id,
  * algorithm removes tombstones locally when
  * all nodes have been sent it directly.
  */
-void ospc_collect(struct ospc_context* oc)
+uint64_t ospc_collect(struct ospc_context* oc)
 {
     uint64_t least_key;
     uint64_t k;
@@ -166,4 +166,5 @@ void ospc_collect(struct ospc_context* oc)
             items_collected++;
         }
     }
+    return least_key;
 }
