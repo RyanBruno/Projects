@@ -3,20 +3,25 @@
 #include <stdio.h>
 
 
-void osec_eager_collect(struct ospc_context* oc, int node_id, uint64_t latest_id)
+void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
 {
     uint64_t k;
     void* i;
     uint64_t old_latest_id;
+    uint64_t item_node;
 
-    old_latest_id = (uint64_t) unordered_map_get(oc->oc_sent_map, node_id);
+    item_node = latest_id >> NODE_ID_OFFSET;
+
+    old_latest_id = (uint64_t) unordered_map_get(oc->oc_latest_key_map, item_node);
 
     if (old_latest_id > latest_id) {
         printf("osec_eager_collect(): old > new %lx > %lx\n", old_latest_id, latest_id);
         return;
     }
 
-    unordered_map_add(oc->oc_sent_map, node_id, (void*) latest_id);
+    unordered_map_erase(oc->oc_latest_key_map, item_node);
+    unordered_map_add(oc->oc_latest_key_map, item_node, (void*) latest_id);
+
     unordered_map_reset(oc->oc_orset->os_map);
 
     while (unordered_map_next(oc->oc_orset->os_map, &k, &i)) {
@@ -30,7 +35,7 @@ void osec_eager_collect(struct ospc_context* oc, int node_id, uint64_t latest_id
         cur_item_node = k >> NODE_ID_OFFSET;
 
         /* Only applies to originating items */
-        if (cur_item_node != node_id)
+        if (cur_item_node != item_node)
             continue;
 
         /* All tombstones (< old_latest_key) are no
