@@ -64,10 +64,12 @@ void orset_merge(struct orset* os, struct orset* other)
     uint64_t k;
     void* i;
 
-    unordered_map_reset(other->os_map);
+    /* Start loop (return if empty) */
+    if (!unordered_map_first(other->os_map, &k, &i))
+        return;
 
-    while (unordered_map_next(other->os_map, &k, &i)) {
-
+    do {
+        /* Step 1 */
         if (orset_is_tombstone(other, i)) {
             void* f;
 
@@ -81,10 +83,12 @@ void orset_merge(struct orset* os, struct orset* other)
             continue;
         }
 
+        /* Step 2 */
         if (orset_get(os, k) == NULL) {
             unordered_map_add(os->os_map, k, i);
             continue;
         }
-    }
+
+    } while (unordered_map_next(other->os_map, &k, &i));
 }
 

@@ -5,11 +5,6 @@
 #include <unordered_map>
 #include <stdexcept>
 
-/* The interal iterator needed for the
- * unordered_map_(reset,next) to work.
- */
-static typename std::unordered_map<uint64_t, void*>::iterator unordered_map_it;
-
 typedef void* unordered_map;
 
 extern "C" unordered_map unordered_map_create()
@@ -38,19 +33,46 @@ extern "C" void* unordered_map_get(unordered_map um, uint64_t k)
     }
 }
 
-extern "C" void unordered_map_reset(unordered_map um)
+/* Used to start a loop across all items in
+ * the unordered_map. Sets 'k' and 'i' to
+ * the first key and value (respectively) in
+ * 'um'. Return 1 on success and 0 if the map
+ * is empty.
+ */
+extern "C" int unordered_map_first(unordered_map um, uint64_t* k, void** i)
 {
-    unordered_map_it = ((std::unordered_map<uint64_t, void*>*) um)->begin();
+    auto it = ((std::unordered_map<uint64_t, void*>*) um)->begin();
+
+    if (it == ((std::unordered_map<uint64_t, void*>*) um)->end())
+        return 0;
+
+    *k = it->first;
+    *i = it->second;
+
+    return 1;
 }
 
+/* After unordered_map_begin is called this
+ * function returns the first item in the
+ * unordered_map_it 'um_it' and returns it in
+ * 'k' and 'i'. Will return 1 on success and 0
+ * when the end has been reached.
+ */
 extern "C" int unordered_map_next(unordered_map um, uint64_t* k, void** i)
 {
-    if (unordered_map_it == ((std::unordered_map<uint64_t, void*>*) um)->end()) return 0;
+    auto it = ((std::unordered_map<uint64_t, void*>*) um)->find(*k);
 
-    *k = unordered_map_it->first;
-    *i = unordered_map_it->second;
+    if (it == ((std::unordered_map<uint64_t, void*>*) um)->end()) {
+        return 0;
+    }
 
-    ++unordered_map_it;
+    if (++it == ((std::unordered_map<uint64_t, void*>*) um)->end()) {
+        return 0;
+    }
+
+    *k = it->first;
+    *i = it->second;
+
     return 1;
 }
 

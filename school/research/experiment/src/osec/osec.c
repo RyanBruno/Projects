@@ -1,5 +1,5 @@
 #include "osec.h"
-#include "../node.h"
+#include "../demo.h"
 #include <stdio.h>
 
 
@@ -9,6 +9,7 @@ void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
     void* i;
     uint64_t old_latest_id;
     uint64_t item_node;
+    uint64_t erase = 0;
 
     item_node = latest_id >> NODE_ID_OFFSET;
 
@@ -22,10 +23,16 @@ void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
     unordered_map_erase(oc->oc_latest_key_map, item_node);
     unordered_map_add(oc->oc_latest_key_map, item_node, (void*) latest_id);
 
-    unordered_map_reset(oc->oc_orset->os_map);
+    if (!unordered_map_first(oc->oc_orset->os_map, &k, &i))
+        return;
 
-    while (unordered_map_next(oc->oc_orset->os_map, &k, &i)) {
+    do {
         uint64_t cur_item_node;
+
+        if (erase) {
+            unordered_map_erase(oc->oc_orset->os_map, erase);
+            erase = 0;
+        }
 
         /* We on only collect tombstones */
         if (!orset_is_tombstone(oc->oc_orset, i))
@@ -38,14 +45,14 @@ void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
         if (cur_item_node != item_node)
             continue;
 
-        /* All tombstones (< old_latest_key) are no
-         * longer needed. All keys > old_latest_key
+        /* All tombstones (< latest_key) are no
+         * longer needed. All keys > latest_key
          * are needed for the merge.
          */
-        if (k < old_latest_id) {
-            unordered_map_erase(oc->oc_orset->os_map, k);
-            //items_collected++;
+        if (k < latest_id) {
+            erase = k;
+            items_collected++;
         }
-    }
+    } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
 
 }

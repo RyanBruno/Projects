@@ -19,13 +19,16 @@ void print_set(struct orset* o)
     int total_items = 0;
 
     /* Cheat and clear the screen */
-    if (!(pid = fork()))
+    /*if (!(pid = fork()))
         execlp("clear", "clear", NULL);
-    wait(NULL);
+    wait(NULL);*/
 
     printf("        == Current OrSet ==\n");
-    unordered_map_reset(o->os_map);
-    while (unordered_map_next(o->os_map, &k, &i)) {
+
+    if (!unordered_map_first(o->os_map, &k, &i))
+        return;
+
+    do {
         total_items++;
         if (orset_is_tombstone(o, i)) {
             printf("%16lx => (Tombstone)\n", k);
@@ -33,7 +36,7 @@ void print_set(struct orset* o)
         }
         active_items++;
         printf("%16lx => %s\n", k, i);
-    }
+    } while (unordered_map_next(o->os_map, &k, &i));
     printf("            == stats ==\n");
     printf("      total_items %d\n", total_items);
     printf("     active_items %d\n", active_items);

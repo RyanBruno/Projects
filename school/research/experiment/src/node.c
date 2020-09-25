@@ -1,4 +1,5 @@
-/* Represents some logic to bring together * all modules into a full functioning mode.
+/* Represents some logic to bring together
+ * all modules into a full functioning mode.
  * Its job is to handle incoming merge
  * requests and occasionally send merge
  * request to peers.
@@ -51,7 +52,8 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
     /* Merge */
     sem_wait(&os_sem);
     latest_item = ospc_merge(&oc, &rmt_os);
-    print_set_stats(&os, node_id);
+    //print_set_stats(&os, node_id);
+    //print_set(&os);
     sem_post(&os_sem);
 
     /* Cleanup */
@@ -200,7 +202,7 @@ void* client_thread_fn(void* v)
                  to);
 
         if (stat != RPC_SUCCESS) {
-            printf("1 client_thread_fn(): clnt_call(%d)\n", stat);
+            printf("client_thread_fn(): clnt_call(%d)\n", stat);
             continue;
         }
 

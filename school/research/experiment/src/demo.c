@@ -7801,6 +7801,8 @@ char* strings[] = {
  * additions it alternates adding and
  * removing items.
  */
+extern time_t start_time;
+extern int node_id;
 void* demo_thread_fn(void* v)
 {
     unsigned char add = 0;
@@ -7817,6 +7819,12 @@ void* demo_thread_fn(void* v)
     sleep(1);
 
     for (;;) {
+
+        if (time(NULL) - start_time > 15) {
+            sleep(3 + node_id);
+            print_set(&os);
+            exit(0);
+        }
 
         sleep(OPERATION_RATE);
         add++;
@@ -7840,8 +7848,9 @@ void* demo_thread_fn(void* v)
             sem_wait(&os_sem);
             l = unordered_map_size(os.os_map);
             l = rand() % l;
-            unordered_map_reset(os.os_map);
-            for (; l > 0; l--)
+            if (!unordered_map_first(os.os_map, &k, &i))
+                continue;
+            for (; l > 1; l--)
                 unordered_map_next(os.os_map, &k, &i);
             orset_remove(&os, k);
             sem_post(&os_sem);

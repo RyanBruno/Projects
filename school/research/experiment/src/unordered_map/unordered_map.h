@@ -38,19 +38,17 @@ void unordered_map_erase(unordered_map um, uint64_t k);
 void* unordered_map_get(unordered_map um, uint64_t k);
 
 /* Used to start a loop across all items in
- * the unordered_map. Calling this first will
- * reset an internal variable to allow
- * unordered_map_next to return the first
- * item in the unordered_map, the next on the
- * next call ...
+ * the unordered_map. Sets 'k' and 'i' to
+ * the first key and value (respectively) in
+ * 'um'. Return 1 on success and 0 if the map
+ * is empty.
  */
-void unordered_map_reset(unordered_map um);
+int unordered_map_first(unordered_map um, uint64_t* k, void** i);
 
-/* After unordered_map_reset is called this
- * function returns the first item in the
- * unordered_map 'um' and returns it in 'k'
- * and 'i'. Will return 1 on success and 0
- * when the end has been reached.
+/* After unordered_map_first is called this
+ * function can be used to get the next item
+ * in the map 'um'. Will return 1 on success
+ * and 0 when the end has been reached.
  */
 int unordered_map_next(unordered_map um, uint64_t* k, void** i);
 
