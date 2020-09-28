@@ -47,15 +47,17 @@ bool_t xdr_orset_item(XDR *xdr, void* v)
         if (!xdr_uint64_t(xdr, &k))
             printf("xdr_u_long():\n");
 
-        /* The String value */
-        if (!xdr_string(xdr, &i, 1024))
-            printf("xdr_string():\n");
-
-        /* Empty strings = Tombstones */
-        if (i[0] == '\0') {
+        if (orset_is_tombstone(k)) {
             free(i);
-            orset_remove(os_c, k);
-            return 1;
+
+            /* The Tombstone value */
+            if (!xdr_uint64_t(xdr, (uint64_t*) &i))
+                printf("xdr_u_long():\n");
+
+        } else {
+            /* The String value */
+            if (!xdr_string(xdr, &i, 1024))
+                printf("xdr_string():\n");
         }
 
         unordered_map_add(os_c->os_map, k, (void*) i);
@@ -75,19 +77,18 @@ bool_t xdr_orset_item(XDR *xdr, void* v)
         if (!xdr_uint64_t(xdr, &(xic->k)))
             printf("xdr_u_long():\n");
 
-        if (orset_is_tombstone(xic->os, xic->i)) {
-            /* Write '\0' if item is a tombstone. */
-            if (!xdr_string(xdr, &NULL_STRING, 1024))
+        if (orset_is_tombstone(xic->k)) {
+
+            /* The Tombstone value */
+            if (!xdr_uint64_t(xdr, (uint64_t*) &(xic->i)))
+                printf("xdr_u_long():\n");
+
+        } else {
+
+            /* Write the string item */
+            if (!xdr_string(xdr, (char**) &xic->i, 1024))
                 printf("xdr_string():\n");
-
-            /* Advance the iterator */
-            unordered_map_next(xic->os->os_map, &xic->k, &xic->i);
-            return 1;
         }
-
-        /* Write the string item */
-        if (!xdr_string(xdr, (char**) &xic->i, 1024))
-            printf("xdr_string():\n");
 
         /* Advance the iterator */
         unordered_map_next(xic->os->os_map, &xic->k, &xic->i);

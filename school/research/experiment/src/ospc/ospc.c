@@ -17,7 +17,7 @@ void ospc_wrap(struct orset* os, struct ospc_context* oc)
  * latest_key_map. (2) Update latest key in
  * latest_key_map if necessary. If necessary
  * removes all tombstones in 'os' from other's
- * node_id before new_latest_key.
+ * node_id before old_latest_key.
  * Returns: The greatest items from 'other'
  * from other->os_node_id.
  */
@@ -45,8 +45,8 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
              * directly from the node or is one
              * of our items...
              */
-            if (orset_is_tombstone(other, i) &&
-                (item_node == oc->oc_orset->os_node_id ||
+            if (item_node == oc->oc_orset->os_node_id ||
+                (!orset_is_tombstone(k) &&
                 (uint64_t) unordered_map_get(oc->oc_latest_key_map, item_node) >= k))
             {
                 /* Ignore it */
@@ -62,6 +62,11 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
                 new_latest_key = k;
             }
         } while (unordered_map_next(other->os_map, &k, &i));
+
+        if (erase) {
+            unordered_map_erase(oc->oc_orset->os_map, erase);
+            erase = 0;
+        }
     }
 
     /* Merge the two sets */
@@ -72,40 +77,44 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
     /* If we have actually seen a newer item
      * from this node.
      */
-    if (old_latest_key < new_latest_key) {
-        if (unordered_map_first(oc->oc_orset->os_map, &k, &i)) {
-            uint64_t erase = 0;
-            do {
-                uint64_t item_node;
+    if (unordered_map_first(oc->oc_orset->os_map, &k, &i)) {
+        uint64_t erase = 0;
+        do {
+            uint64_t item_node;
 
-                if (erase) {
-                    unordered_map_erase(oc->oc_orset->os_map, erase);
-                    erase = 0;
-                }
+            if (erase) {
+                unordered_map_erase(oc->oc_orset->os_map, erase);
+                erase = 0;
+            }
 
-                /* We on only collect tombstones */
-                if (!orset_is_tombstone(oc->oc_orset, i))
-                    continue;
+            /* We on only collect tombstones */
+            if (!orset_is_tombstone(k))
+                continue;
 
-                /* Get the originating node for this item */
-                item_node = k >> NODE_ID_OFFSET;
+            /* Get the originating node for this item */
+            item_node = k >> NODE_ID_OFFSET;
 
-                /* Only applies to originating items */
-                if (item_node != other->os_node_id)
-                    continue;
+            /* Only applies to originating items */
+            if (item_node != other->os_node_id)
+                continue;
 
-                /* All tombstones (< old_latest_key) are no
-                 * longer needed. All keys > old_latest_key
-                 * are needed for the merge.
-                 */
-                if (k < old_latest_key) {
-                    erase = k;
-                    items_collected++;
-                }
-            } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
-            // TODO erase
+            /* All tombstones (< old_latest_key) are no
+             * longer needed. All keys > old_latest_key
+             * are needed for the merge.
+             */
+            if (k < old_latest_key) {
+                erase = k;
+                items_collected++;
+            }
+        } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
+
+        if (erase) {
+            unordered_map_erase(oc->oc_orset->os_map, erase);
+            erase = 0;
         }
+    }
 
+    if (old_latest_key < new_latest_key) {
         /* If old_latest_key is zero, the node is new */
         if (old_latest_key)
             unordered_map_erase(oc->oc_latest_key_map, other->os_node_id);
@@ -142,6 +151,7 @@ uint64_t ospc_collect(struct ospc_context* oc)
 {
     uint64_t least_key;
     uint64_t k;
+    uint64_t erase = 0;
     void* i;
 
     /* Set 'least_key' to uint64_t MAX_VALUE */
@@ -163,8 +173,13 @@ uint64_t ospc_collect(struct ospc_context* oc)
     do {
         uint64_t item_node;
 
+        if (erase) {
+            unordered_map_erase(oc->oc_orset->os_map, erase);
+            erase = 0;
+        }
+
         /* We only collect tombstones */
-        if (!orset_is_tombstone(oc->oc_orset, i))
+        if (!orset_is_tombstone(k))
             continue;
 
         /* Get the originating node for this item */
@@ -179,10 +194,15 @@ uint64_t ospc_collect(struct ospc_context* oc)
          * needed.
          */
         if (k < least_key) {
-            unordered_map_erase(oc->oc_orset->os_map, k);
+            erase = k;
             items_collected++;
         }
     } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
+
+    if (erase) {
+        unordered_map_erase(oc->oc_orset->os_map, erase);
+        erase = 0;
+    }
 
     return least_key;
 }

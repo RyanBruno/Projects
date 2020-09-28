@@ -51,7 +51,7 @@ unsigned int ADD_TO_REM_RATIO = 2;
  * operation. May also be represented as
  * seconds per operation.
  */
-time_t OPERATION_RATE = 2;
+time_t OPERATION_RATE = 1;
 
 /* Eager Collection */
 

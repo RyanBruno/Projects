@@ -7820,8 +7820,8 @@ void* demo_thread_fn(void* v)
 
     for (;;) {
 
-        if (time(NULL) - start_time > 15) {
-            sleep(3 + node_id);
+        if (time(NULL) - start_time > 120) {
+            sleep(60 + node_id);
             print_set(&os);
             exit(0);
         }
@@ -7852,7 +7852,11 @@ void* demo_thread_fn(void* v)
                 continue;
             for (; l > 1; l--)
                 unordered_map_next(os.os_map, &k, &i);
-            orset_remove(&os, k);
+            if (!(orset_is_tombstone(k))) {
+                void* t = orset_get(&os, k);
+                free(t);
+                orset_remove(&os, k);
+            }
             sem_post(&os_sem);
         }
     }

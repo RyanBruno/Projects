@@ -7,7 +7,7 @@ LDLIBS = -ltirpc -pthread
 all: orset.o xdr_orset.o std_unordered_map.o ospc.o node.o utils.o demo.o sequence.o osec.o
 
 node : node.o orset.o std_unordered_map.o ospc.o xdr_orset.o utils.o demo.o osec.o
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+	$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 test : test_all.o orset.o std_unordered_map.o ospc.o xdr_orset.o
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)

@@ -30,7 +30,7 @@ void print_set(struct orset* o)
 
     do {
         total_items++;
-        if (orset_is_tombstone(o, i)) {
+        if (orset_is_tombstone(k)) {
             printf("%16lx => (Tombstone)\n", k);
             continue;
         }

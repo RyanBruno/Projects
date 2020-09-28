@@ -22,27 +22,31 @@ uint64_t orset_add(struct orset* os, void* i)
 {
     uint64_t k;
 
-    k = os->os_cur_id++;
+    k = os->os_cur_id;
+    os->os_cur_id += 2;
     unordered_map_add(os->os_map, k, i);
 
     return k;
 }
 
-/*
- * Replaces the item with a tombstone signifying
- * that the item has been removed.
- * DOES NOT free the pointer associated with 'k'.
- */
-void orset_remove(struct orset* os, uint64_t k)
+uint64_t orset_remove(struct orset* os, uint64_t k)
 {
+
+    uint64_t kt;
+
+    kt = os->os_cur_id + 1;
+    os->os_cur_id += 2;
+
+    unordered_map_add(os->os_map, kt, (void*) k);
     unordered_map_erase(os->os_map, k);
-    unordered_map_add(os->os_map, k, (void*) os);
+
+    return kt;
 }
 
 /*
  * Gets the pointer value associated with the
  * given key 'k'. Use orset_is_tombstone to check
- * if the item has been removed.
+ * if the item has is a tombstone
  */
 void* orset_get(struct orset* os, uint64_t k)
 {
@@ -70,16 +74,17 @@ void orset_merge(struct orset* os, struct orset* other)
 
     do {
         /* Step 1 */
-        if (orset_is_tombstone(other, i)) {
+        if (orset_is_tombstone(k)) {
             void* f;
 
-            f = orset_get(os, k);
+            f = orset_get(os, (uint64_t) i);
 
-            /* Free all non-tombstones */
-            if (!orset_is_tombstone(os, f))
+            /* Free item if found. */
+            if (f)
                 free(f);
 
-            orset_remove(os, k);
+            unordered_map_add(os->os_map, k, i);
+            unordered_map_erase(os->os_map, (uint64_t) i);
             continue;
         }
 

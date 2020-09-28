@@ -38,12 +38,7 @@ void orset_create(struct orset* os, node_t node_id);
  */
 uint64_t orset_add(struct orset* os, void* i);
 
-/* Replaces the pointer associated with 'k'
- * with a TOMBSTONE. During a merge
- * tombstones overwrite items.
- * SEE ALSO: orset_is_tombstone macro
- */
-void orset_remove(struct orset* os, uint64_t k);
+uint64_t orset_remove(struct orset* os, uint64_t k);
 
 /* Gets the item (pointer) associated with
  * 'k'. Returns NULL the key was never added.
@@ -51,11 +46,7 @@ void orset_remove(struct orset* os, uint64_t k);
  */
 void* orset_get(struct orset* os, uint64_t k);
 
-/* If an item from orset_get has been removed
- * with orset_remove this macro will expand
- * to true (1).
- */
-#define orset_is_tombstone(os, v) (os == v)
+#define orset_is_tombstone(v) ((v & 1) == 0)
 
 /* Merges items in OrSet 'other' in to OrSet
  * 'os'. The merge algorithm goes as follows:

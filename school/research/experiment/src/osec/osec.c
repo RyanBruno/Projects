@@ -35,7 +35,7 @@ void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
         }
 
         /* We on only collect tombstones */
-        if (!orset_is_tombstone(oc->oc_orset, i))
+        if (!orset_is_tombstone(k))
             continue;
 
         /* Get the originating node for this item */
@@ -55,4 +55,8 @@ void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
         }
     } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
 
+    if (erase) {
+        unordered_map_erase(oc->oc_orset->os_map, erase);
+        erase = 0;
+    }
 }
