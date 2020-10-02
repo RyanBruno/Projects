@@ -35,7 +35,7 @@ void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
         }
 
         /* We on only collect tombstones */
-        if (!orset_is_tombstone(k))
+        if (!orset_is_tombstone(k) && !orset_is_rockstone(oc->oc_orset, i))
             continue;
 
         /* Get the originating node for this item */

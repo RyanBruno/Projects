@@ -52,7 +52,7 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
     /* Merge */
     sem_wait(&os_sem);
     latest_item = ospc_merge(&oc, &rmt_os);
-    //print_set_stats(&os, node_id);
+    print_set_stats(&os, node_id);
     //print_set(&os);
     sem_post(&os_sem);
 
@@ -228,6 +228,7 @@ void* client_thread_fn(void* v)
         stable_item = ospc_collect(&oc);
 
         sem_post(&os_sem);
+        continue;
 
         if (!stable_item) continue;
 
@@ -255,7 +256,8 @@ void* client_thread_fn(void* v)
                 continue;
             }
 
-            /*
+            /* Tells the peer it should eager
+             * collect.
              */
             stat = clnt_call(client, 2,
                      /* Params */

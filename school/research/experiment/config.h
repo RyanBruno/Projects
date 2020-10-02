@@ -45,7 +45,7 @@ time_t MERGE_TIMEOUT = 20;
 /* The ratio of add to removes for each demo
  * operation.
  */
-unsigned int ADD_TO_REM_RATIO = 2;
+unsigned int ADD_TO_REM_RATIO = 5;
 
 /* The amount of seconds between each demo
  * operation. May also be represented as

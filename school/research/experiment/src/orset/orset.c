@@ -12,8 +12,7 @@ void orset_create(struct orset* os, node_t node_id)
     os->os_cur_id = ((uint64_t) node_id << NODE_ID_OFFSET) + 1;
 }
 
-/*
- * Adds a pointer 'i' to any item into the orset 'os'.
+/* Adds a pointer 'i' to any item into the orset 'os'.
  * The underlying data structure stores that pointer as
  * a value of a random key. That key is then returned.
  * DO NOT try to add the orset into itself.
@@ -29,6 +28,12 @@ uint64_t orset_add(struct orset* os, void* i)
     return k;
 }
 
+/* orset_remove does two things. It removes
+ * the item given by 'k' from the OrSet and
+ * adds a tombstone pointing to the removed
+ * item. Returns the id of the newly created
+ * tombstone.
+ */
 uint64_t orset_remove(struct orset* os, uint64_t k)
 {
 
@@ -39,6 +44,7 @@ uint64_t orset_remove(struct orset* os, uint64_t k)
 
     unordered_map_add(os->os_map, kt, (void*) k);
     unordered_map_erase(os->os_map, k);
+    unordered_map_add(os->os_map, k, (void*) os);
 
     return kt;
 }
@@ -53,8 +59,7 @@ void* orset_get(struct orset* os, uint64_t k)
     unordered_map_get(os->os_map, k);
 }
 
-/*
- * Merges orset 'other' into an orset 'os'.
+/* Merges orset 'other' into an orset 'os'.
  * The merge algorithm goes as follows:
  *  1. All tombstones in 'other' will be
  *     removed in 'os'.
@@ -73,18 +78,25 @@ void orset_merge(struct orset* os, struct orset* other)
         return;
 
     do {
+        if (orset_is_rockstone(other, i)) continue;
+
         /* Step 1 */
         if (orset_is_tombstone(k)) {
             void* f;
 
             f = orset_get(os, (uint64_t) i);
 
-            /* Free item if found. */
-            if (f)
+            /* Free item if found and replace
+             * with a rockstone.
+             */
+            if (f && !orset_is_rockstone(os, f)) {
                 free(f);
+                unordered_map_erase(os->os_map, (uint64_t) i);
+                unordered_map_add(os->os_map, (uint64_t) i, (void*) os);
+            }
 
-            unordered_map_add(os->os_map, k, i);
-            unordered_map_erase(os->os_map, (uint64_t) i);
+            if (!unordered_map_get(os->os_map, k))
+                unordered_map_add(os->os_map, k, i);
             continue;
         }
 

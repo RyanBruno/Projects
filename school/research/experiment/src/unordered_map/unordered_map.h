@@ -47,8 +47,9 @@ int unordered_map_first(unordered_map um, uint64_t* k, void** i);
 
 /* After unordered_map_first is called this
  * function can be used to get the next item
- * in the map 'um'. Will return 1 on success
- * and 0 when the end has been reached.
+ * in the map 'um' based on 'k'. Will return
+ * 1 on success and 0 when the end has been
+ * reached.
  */
 int unordered_map_next(unordered_map um, uint64_t* k, void** i);
 

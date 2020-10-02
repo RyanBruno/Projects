@@ -38,6 +38,12 @@ void orset_create(struct orset* os, node_t node_id);
  */
 uint64_t orset_add(struct orset* os, void* i);
 
+/* orset_remove does two things. It removes
+ * the item given by 'k' from the OrSet and
+ * adds a tombstone pointing to the removed
+ * item. Returns the id of the newly created
+ * tombstone.
+ */
 uint64_t orset_remove(struct orset* os, uint64_t k);
 
 /* Gets the item (pointer) associated with
@@ -46,7 +52,15 @@ uint64_t orset_remove(struct orset* os, uint64_t k);
  */
 void* orset_get(struct orset* os, uint64_t k);
 
+/* Use this to tell if a key id is a tombstone
+ * or not.
+ */
 #define orset_is_tombstone(v) ((v & 1) == 0)
+
+/* Use this to tell if a key id is a rockstone
+ * or not.
+ */
+#define orset_is_rockstone(o, v) (o == v)
 
 /* Merges items in OrSet 'other' in to OrSet
  * 'os'. The merge algorithm goes as follows:

@@ -7820,9 +7820,8 @@ void* demo_thread_fn(void* v)
 
     for (;;) {
 
-        if (time(NULL) - start_time > 120) {
-            sleep(60 + node_id);
-            print_set(&os);
+        if (time(NULL) - start_time > 300) {
+            sleep(60);
             exit(0);
         }
 
@@ -7852,7 +7851,7 @@ void* demo_thread_fn(void* v)
                 continue;
             for (; l > 1; l--)
                 unordered_map_next(os.os_map, &k, &i);
-            if (!(orset_is_tombstone(k))) {
+            if (!orset_is_tombstone(k) && !orset_is_rockstone(&os, i)) {
                 void* t = orset_get(&os, k);
                 free(t);
                 orset_remove(&os, k);

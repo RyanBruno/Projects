@@ -46,8 +46,7 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
              * of our items...
              */
             if (item_node == oc->oc_orset->os_node_id ||
-                (!orset_is_tombstone(k) &&
-                (uint64_t) unordered_map_get(oc->oc_latest_key_map, item_node) >= k))
+                (uint64_t) unordered_map_get(oc->oc_latest_key_map, item_node) >= k)
             {
                 /* Ignore it */
                 erase = k;
@@ -88,7 +87,7 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
             }
 
             /* We on only collect tombstones */
-            if (!orset_is_tombstone(k))
+            if (!orset_is_tombstone(k) && !orset_is_rockstone(oc->oc_orset, i))
                 continue;
 
             /* Get the originating node for this item */
@@ -179,7 +178,7 @@ uint64_t ospc_collect(struct ospc_context* oc)
         }
 
         /* We only collect tombstones */
-        if (!orset_is_tombstone(k))
+        if (!orset_is_tombstone(k) && !orset_is_rockstone(oc->oc_orset, i))
             continue;
 
         /* Get the originating node for this item */
