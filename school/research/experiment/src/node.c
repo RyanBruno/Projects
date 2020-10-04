@@ -21,6 +21,7 @@
 
 /* Global Node variables */
 int node_id;
+uint64_t last_stable_item = 0;
 struct orset os;
 struct ospc_context oc;
 sem_t os_sem;
@@ -53,7 +54,6 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
     sem_wait(&os_sem);
     latest_item = ospc_merge(&oc, &rmt_os);
     print_set_stats(&os, node_id);
-    //print_set(&os);
     sem_post(&os_sem);
 
     /* Cleanup */
@@ -172,7 +172,7 @@ void* client_thread_fn(void* v)
 
         /* Wrap and skip node_id */
         if (n == node_id) n++;
-        if (n >= peers_len) n = 0;
+        if (n >= PEERS_LEN) n = 0;
         if (n == node_id) n++;
 
         /* Create a client to our peer */
@@ -228,11 +228,12 @@ void* client_thread_fn(void* v)
         stable_item = ospc_collect(&oc);
 
         sem_post(&os_sem);
-        continue;
 
-        if (!stable_item) continue;
+        if (!stable_item ||
+            last_stable_item + EAGER_RATE > stable_item)
+            continue;
 
-        for (int j = 0; j < peers_len; j++) {
+        for (int j = 0; j < PEERS_LEN; j++) {
 
             /* Do not send to self */
             if (j == node_id) continue;
@@ -261,7 +262,7 @@ void* client_thread_fn(void* v)
              */
             stat = clnt_call(client, 2,
                      /* Params */
-                     (xdrproc_t) xdr_uint64_t, &latest_item,
+                     (xdrproc_t) xdr_uint64_t, &stable_item,
                      /* Response */
                      (xdrproc_t) xdr_void, NULL,
                      to);
@@ -274,6 +275,7 @@ void* client_thread_fn(void* v)
             /* Close the connection to our peer */
             clnt_destroy(client);
         }
+        last_stable_item = stable_item;
     }
 }
 
@@ -309,7 +311,7 @@ int main(int argc, char* argv[])
 
     /* Check args */
     if (argc < 2) {
-        printf("USAGE: ./node NODEID MERGE_RATE OPERATION_RATE ADD_TO_REM_RATIO\n");
+        printf("USAGE: ./node NODEID MERGE_RATE OPERATION_RATE ADD_TO_REM_RATIO PEERS_LEN DURATION EAGER_RATE\n");
         return -1;
     }
 
@@ -323,11 +325,20 @@ int main(int argc, char* argv[])
             OPERATION_RATE = strtol(argv[3], NULL, 10);
             if (argc > 4) {
                 ADD_TO_REM_RATIO = strtol(argv[4], NULL, 10);
+                if (argc > 5) {
+                    PEERS_LEN = strtol(argv[5], NULL, 10);
+                    if (argc > 6) {
+                        DURATION = strtol(argv[6], NULL, 10);
+                        if (argc > 6) {
+                            EAGER_RATE = strtol(argv[7], NULL, 10);
+                        }
+                    }
+                }
             }
         }
     }
 
-    if (node_id >= peers_len) {
+    if (node_id >= PEERS_LEN) {
         printf("main(): NODEID is our of range\n");
         return -1;
     }

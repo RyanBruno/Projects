@@ -16,7 +16,7 @@ void osec_eager_collect(struct ospc_context* oc, uint64_t latest_id)
     old_latest_id = (uint64_t) unordered_map_get(oc->oc_latest_key_map, item_node);
 
     if (old_latest_id > latest_id) {
-        printf("osec_eager_collect(): old > new %lx > %lx\n", old_latest_id, latest_id);
+        //printf("osec_eager_collect(): old > new %lx > %lx\n", old_latest_id, latest_id);
         return;
     }
 

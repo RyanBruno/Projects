@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/random.h>
+#include <time.h>
+
 
 int items_collected;
 
@@ -7803,6 +7805,7 @@ char* strings[] = {
  */
 extern time_t start_time;
 extern int node_id;
+extern time_t DURATION;
 void* demo_thread_fn(void* v)
 {
     unsigned char add = 0;
@@ -7820,7 +7823,7 @@ void* demo_thread_fn(void* v)
 
     for (;;) {
 
-        if (time(NULL) - start_time > 300) {
+        if (time(NULL) - start_time > DURATION) {
             sleep(60);
             exit(0);
         }

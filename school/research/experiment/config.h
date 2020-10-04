@@ -53,12 +53,16 @@ unsigned int ADD_TO_REM_RATIO = 5;
  */
 time_t OPERATION_RATE = 1;
 
+/* The amount of seconds between the demo
+ * should run for.
+ */
+time_t DURATION = 300;
+
 /* Eager Collection */
 
-/* How many collected local nodes before
- * initiating eager collection.
+/*
  */
-#define EAGER_COLLECTION_TRIGGER 10
+uint64_t EAGER_RATE = 10;
 
 /* Describes the network of peers. This
  * array contains the current node_id.
@@ -69,6 +73,12 @@ struct peer_node peers[10] = {
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100601L },
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100602L },
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100603L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100604L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100605L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100606L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100607L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100608L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100609L },
 };
-int peers_len = 4;
+int PEERS_LEN = 4;
 
