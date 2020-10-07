@@ -30,7 +30,7 @@ extern "C" void unordered_map_add(unordered_map um, uint64_t k, void* i)
     auto rc = ((std::unordered_map<uint64_t, void*>*) um)->insert(std::make_pair(k, i));
     if (!rc.second) {
         printf("DID NOT INSERT %lx\n", k);
-        int p = *((int*) NULL);
+        //int p = *((int*) NULL);
     }
 }
 

@@ -1,0 +1,33 @@
+---
+output: pdf_document
+classoption: landscape
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = FALSE)
+knitr::opts_chunk$set(fig.height = 6)
+knitr::opts_chunk$set(fig.width = 10)
+
+library("tidyverse");theme_set(theme_bw())
+```
+
+```{r data, include=TRUE}
+
+data <- list.files(path = "data/", pattern = "*.csv$")
+
+for (i in 1:length(data)) { 
+
+    csv <- read.csv(paste("data/", data[i], sep=""))
+    csv$node_id <- as.factor(csv$node_id)
+    print(ggplot(csv, aes(x = duration, y = items, color = node_id)) +
+        geom_point() +
+        geom_path() +
+        ggtitle(paste(data[i], read_file(paste("data/", substr(data[i], 0,nchar(data[i]) - 4), ".txt", sep="")))))
+
+}
+
+```
+
