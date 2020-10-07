@@ -6,6 +6,7 @@
  * Theses threads are creates on startup.
  */
 void *(*threads[]) (void*) = {
+    client_thread_fn,
     demo_thread_fn,
 };
 

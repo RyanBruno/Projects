@@ -7810,13 +7810,6 @@ void* demo_thread_fn(void* v)
 {
     unsigned char add = 0;
     int n = 0;
-    unsigned long seed;
-
-    if (getentropy(&seed, sizeof(unsigned long)) < 0) {
-        printf("getentropy():\n");
-        exit(-1);
-    }
-    srand(seed);
 
     /* Grace period */
     sleep(1);

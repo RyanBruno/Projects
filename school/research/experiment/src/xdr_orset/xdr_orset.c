@@ -83,17 +83,17 @@ bool_t xdr_orset_item(XDR *xdr, void* v)
         if (!xdr_uint64_t(xdr, &(xic->k)))
             printf("xdr_u_long():\n");
 
-        if (orset_is_rockstone(xic->os, xic->i)) {
-
-            /* Write the string item */
-            if (!xdr_string(xdr, &NULL_STRING, 1024))
-                printf("xdr_string():\n");
-
-        } else if (orset_is_tombstone(xic->k)) {
+        if (orset_is_tombstone(xic->k)) {
 
             /* The Tombstone value */
             if (!xdr_uint64_t(xdr, (uint64_t*) &(xic->i)))
                 printf("xdr_u_long():\n");
+
+        } else if (orset_is_rockstone(xic->os, xic->i)) {
+
+            /* Write the string item */
+            if (!xdr_string(xdr, &NULL_STRING, 1024))
+                printf("xdr_string():\n");
 
         } else {
 

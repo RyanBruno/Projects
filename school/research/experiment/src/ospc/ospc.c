@@ -1,6 +1,7 @@
 #include "ospc.h"
 #include "../demo.h"
 #include <string.h>
+#include <stdlib.h>
 
 /* Wraps the orset into an ospc_context.
  */
@@ -49,6 +50,8 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
                 (uint64_t) unordered_map_get(oc->oc_latest_key_map, item_node) >= k)
             {
                 /* Ignore it */
+                if (!orset_is_tombstone(k) && !orset_is_rockstone(other, i))
+                    free(i);
                 erase = k;
             }
 
@@ -63,7 +66,7 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
         } while (unordered_map_next(other->os_map, &k, &i));
 
         if (erase) {
-            unordered_map_erase(oc->oc_orset->os_map, erase);
+            unordered_map_erase(other->os_map, erase);
             erase = 0;
         }
     }

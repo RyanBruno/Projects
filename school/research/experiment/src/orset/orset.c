@@ -95,8 +95,7 @@ void orset_merge(struct orset* os, struct orset* other)
                 unordered_map_add(os->os_map, (uint64_t) i, (void*) os);
             }
 
-            if (!unordered_map_get(os->os_map, k))
-                unordered_map_add(os->os_map, k, i);
+            unordered_map_add(os->os_map, k, i);
             continue;
         }
 
@@ -105,6 +104,7 @@ void orset_merge(struct orset* os, struct orset* other)
             unordered_map_add(os->os_map, k, i);
             continue;
         }
+        free(i);
 
     } while (unordered_map_next(other->os_map, &k, &i));
 }
