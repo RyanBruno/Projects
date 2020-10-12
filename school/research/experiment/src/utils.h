@@ -2,8 +2,12 @@
 #include "orset/orset.h"
 
 /* Prints all items in an OrSet */
-void print_set(struct orset* o);
+void utils_print_set(struct orset* o);
 
-void utils_start();
+/* Call this before calling
+ * utils_print_stats.
+ */
+void utils_init();
 
-void print_set_stats(struct orset* o, int node_id);
+/* Prints node_id,duration,items */
+void utils_print_stats(struct orset* o, int node_id);

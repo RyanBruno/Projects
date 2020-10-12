@@ -1,5 +1,4 @@
 #include "ospc.h"
-#include "../demo.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -106,7 +105,6 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
              */
             if (k < old_latest_key) {
                 erase = k;
-                items_collected++;
             }
         } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
 
@@ -197,7 +195,6 @@ uint64_t ospc_collect(struct ospc_context* oc)
          */
         if (k < least_key) {
             erase = k;
-            items_collected++;
         }
     } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
 

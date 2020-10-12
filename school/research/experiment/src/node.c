@@ -25,7 +25,6 @@ struct orset os;
 struct ospc_context oc;
 sem_t os_sem;
 
-
 /* Is called by the RPC library when ever a
  * merge request comes in. All it does so
  * far is parse with xdr_orset, merge the
@@ -52,7 +51,7 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
     /* Merge */
     sem_wait(&os_sem);
     latest_item = ospc_merge(&oc, &rmt_os);
-    print_set_stats(&os, node_id);
+    utils_print_stats(&os, node_id);
     sem_post(&os_sem);
 
     /* Cleanup */
@@ -86,7 +85,7 @@ void rpc_eager_request(struct svc_req *req, SVCXPRT* xprt)
         return;
     }
 
-    /* Merge */
+    /* Collect */
     sem_wait(&os_sem);
     osec_eager_collect(&oc, latest_item);
     sem_post(&os_sem);
@@ -221,7 +220,7 @@ void* client_thread_fn(void* v)
 
         /* If updated try to collect some
          * tombstones and get the greatest
-         * stable item (or least 
+         * stable item.
          */
         stable_item = ospc_collect(&oc);
 
@@ -302,11 +301,11 @@ int node_init()
 int main(int argc, char* argv[])
 {
 
-    utils_start();
+    utils_init();
 
     /* Check argc. */
     if (argc < 2) {
-        printf("USAGE: ./node NODEID MERGE_RATE OPERATION_RATE ADD_TO_REM_RATIO PEERS_LEN DURATION EAGER_RATE\n");
+        printf("USAGE: ./node NODEID MERGE_RATE PEERS_LEN DURATION EAGER_RATE\n");
         return -1;
     }
 
@@ -318,17 +317,11 @@ int main(int argc, char* argv[])
     if (argc > 2) {
         MERGE_RATE = strtol(argv[2], NULL, 10);
         if (argc > 3) {
-            OPERATION_RATE = strtol(argv[3], NULL, 10);
+            PEERS_LEN = strtol(argv[3], NULL, 10);
             if (argc > 4) {
-                ADD_TO_REM_RATIO = strtol(argv[4], NULL, 10);
+                DURATION = strtol(argv[4], NULL, 10);
                 if (argc > 5) {
-                    PEERS_LEN = strtol(argv[5], NULL, 10);
-                    if (argc > 6) {
-                        DURATION = strtol(argv[6], NULL, 10);
-                        if (argc > 6) {
-                            EAGER_RATE = strtol(argv[7], NULL, 10);
-                        }
-                    }
+                    EAGER_RATE = strtol(argv[5], NULL, 10);
                 }
             }
         }

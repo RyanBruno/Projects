@@ -8,6 +8,7 @@
 #define NODE_H
 
 #include <semaphore.h>
+#include "ospc/ospc.h"
 
 /* Creates an RPC service and registers
  * rpc_merge_request with the port mapper
@@ -37,8 +38,6 @@ struct peer_node {
     char* peer_host;            // The node's host name (passed in to clnt_create()).
     unsigned long peer_prognum; // The RPC prognum (see man rpc(3)).
 };
-
-#include "ospc/ospc.h"
 
 /* Global orset and ospc_context */
 extern struct orset os;

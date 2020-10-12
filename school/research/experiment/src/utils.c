@@ -5,12 +5,11 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <time.h>
-#include "demo.h"
 
-time_t start_time;
+static time_t utils_start_time;
 
 /* Prints all items in an OrSet */
-void print_set(struct orset* o)
+void utils_print_set(struct orset* o)
 {
     unsigned long k;
     void* i;
@@ -40,17 +39,20 @@ void print_set(struct orset* o)
     printf("            == stats ==\n");
     printf("      total_items %d\n", total_items);
     printf("     active_items %d\n", active_items);
-    printf("  items_collected %d\n", items_collected);
     printf("             == END ==\n");
 }
 
-void utils_start()
+/* Call this before calling
+ * utils_print_stats.
+ */
+void utils_init()
 {
-    start_time = time(NULL);
+    utils_start_time = time(NULL);
 }
 
-void print_set_stats(struct orset* o, int node_id)
+/* Prints node_id,duration,items */
+void utils_print_stats(struct orset* o, int node_id)
 {
-    printf("%d,%li,%lu\n", node_id, time(NULL) - start_time,
+    printf("%d,%li,%lu\n", node_id, time(NULL) - utils_start_time,
             unordered_map_size(o->os_map));
 }
