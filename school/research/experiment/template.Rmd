@@ -17,6 +17,7 @@ library("tidyverse");theme_set(theme_bw())
 ```{r data, include=TRUE}
 
 data <- list.files(path = "data/", pattern = "*.csv$")
+data <- c("999.csv")
 
 for (i in 1:length(data)) { 
 
