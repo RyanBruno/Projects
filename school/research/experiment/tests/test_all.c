@@ -26,6 +26,7 @@ void run_test(int(*fn)(), char* name)
 int main()
 {
     run_test(test_ospc_baseline, "[ospc.c] Baseline Test");
+    run_test(test_ospc_collect, "[ospc.c] Local Collection Test");
     run_test(test_orset_baseline, "[orset.c] Baseline Test");
     run_test(test_orset_delete, "[orset.c] Delete Test");
     run_test(test_orset_merge, "[orset.c] Merge Test");

@@ -6,6 +6,8 @@ VPATH += src/std_unordered_map/:
 VPATH += src/unordered_map/:
 VPATH += src/xdr_orset/:
 VPATH += src/:
+VPATH += tests/:
+
 # For reference
 #.c  : $(CC) $(CPPFLAGS) $(CFLAGS) -c
 #.cpp: $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c
@@ -44,11 +46,10 @@ bot.o : node.h orset.h unordered_map.h
 node.o : orset.h osec.h ospc.h xdr_orset.h utils.h config.h
 utils.o : orset.h unordered_map.h
 
-#VPATH += tests/:
-#test_all.o : test_orset.c test_xdr_orset.c test_ospc.c unordered_map.h all
+test_all.o : test_orset.c test_xdr_orset.c test_ospc.c unordered_map.h all
 
-#test : test_all.o orset.o std_unordered_map.o ospc.o xdr_orset.o
-#	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+test : test_all.o orset.o std_unordered_map.o ospc.o xdr_orset.o utils.o
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 clean :
 	rm -f *.o

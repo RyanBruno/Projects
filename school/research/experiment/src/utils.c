@@ -29,8 +29,12 @@ void utils_print_set(struct orset* o)
 
     do {
         total_items++;
-        if (orset_is_tombstone(k) || orset_is_rockstone(o, i)) {
+        if (orset_is_tombstone(k)) {
             printf("%16lx => (Tombstone)\n", k);
+            continue;
+        }
+        if (orset_is_rockstone(o, i)) {
+            printf("%16lx => (Rockstone)\n", k);
             continue;
         }
         active_items++;

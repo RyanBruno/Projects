@@ -42,7 +42,7 @@ int test_orset_delete()
 
     orset_remove(&os, hi_k);
 
-    if (!(orset_is_tombstone(&os, orset_get(&os, hi_k))))
+    if (!(orset_is_rockstone(&os, orset_get(&os, hi_k))))
         return -1;
     return 0;
 }
@@ -61,13 +61,13 @@ int test_orset_large()
         orset_add(&os, (void*) fb);
     }
 
-    unordered_map_reset(os.os_map);
+    unordered_map_first(os.os_map, &k, &i);
 
-    while (unordered_map_next(os.os_map, &k, &i)) {
+    do {
         if (i == hi || i == wrld || i == fb)
             continue;
         return -1;
-    }
+    } while (unordered_map_next(os.os_map, &k, &i));
 
     return 0;
 }
@@ -79,6 +79,7 @@ int test_orset_merge()
     unsigned long k;
     void* i;
     long int t;
+    long int r;
 
     orset_create(&os, 1);
     orset_create(&other, 2);
@@ -101,7 +102,7 @@ int test_orset_merge()
      */
 
     t = orset_add(&os, (void*) hi);
-    unordered_map_add(other.os_map, t, (void*) hi);
+    unordered_map_add(other.os_map, t, (void*) strdup(hi));
 
     t = orset_add(&os, (void*) hi);
     orset_remove(&os, t);
@@ -110,25 +111,31 @@ int test_orset_merge()
     t = orset_add(&os, (void*) strdup(fb));
     orset_remove(&other, t);
 
-    orset_add(&other, (void*) fb);
+    orset_add(&other, (void*) strdup(fb));
 
     orset_merge(&os, &other);
 
     t = 2;
-    unordered_map_reset(os.os_map);
+    r = 2;
+    unordered_map_first(os.os_map, &k, &i);
 
-    while (unordered_map_next(os.os_map, &k, &i)) {
+    do {
+        if (orset_is_rockstone(&os, i))
+            if (r-- > 0)
+                continue;
             
-        if (orset_is_tombstone(&os, i))
+        if (orset_is_tombstone(k))
             if (t-- > 0)
                 continue;
 
-        if (i == hi || i == fb)
+        if (!strcmp(i, hi) || !strcmp(i, fb))
             continue;
 
         return -1;
-    }
+    } while (unordered_map_next(os.os_map, &k, &i));
+
     if (t != 0) return -1;
+    if (r != 0) return -1;
 
     return 0;
 }

@@ -22,7 +22,7 @@ time_t bot_start_time;
  */
 void* bot_thread_fn(void* v)
 {
-    unsigned char add = 0;
+    unsigned char add = 1;
     int n = 0;
 
     /* Set the start time. */

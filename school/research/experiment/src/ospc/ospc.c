@@ -193,7 +193,7 @@ uint64_t ospc_collect(struct ospc_context* oc)
          * that we created. It is no longer
          * needed.
          */
-        if (k < least_key) {
+        if (k <= least_key) {
             erase = k;
         }
     } while (unordered_map_next(oc->oc_orset->os_map, &k, &i));
