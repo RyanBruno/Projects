@@ -55,7 +55,7 @@ uint64_t EAGER_RATE = 10;
  * array contains the current node_id.
  * The client thread skips it.
  */
-struct peer_node peers[10] = {
+struct peer_node peers[20] = {
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100600L },
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100601L },
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100602L },
@@ -66,6 +66,16 @@ struct peer_node peers[10] = {
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100607L },
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100608L },
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100609L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100610L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100611L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100612L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100613L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100614L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100615L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100616L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100617L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100618L },
+    { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100619L },
 };
 int PEERS_LEN = 4;
 

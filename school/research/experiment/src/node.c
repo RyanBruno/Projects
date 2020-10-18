@@ -149,6 +149,7 @@ int register_procedure(unsigned long prognum)
  * sure it does not try to merge with
  * itself based on node_id.
  */
+// Peerlen peers mergelen
 void* client_thread_fn(void* v)
 {
     uint64_t last_stable_item = 0;
@@ -298,7 +299,7 @@ int node_init()
     return 0;
 }
 
-int main(int argc, char* argv[])
+int main2(int argc, char* argv[])
 {
 
     utils_init();

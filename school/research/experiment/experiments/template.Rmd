@@ -1,0 +1,56 @@
+---
+output: pdf_document
+classoption: landscape
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+#knitr::opts_chunk$set(include = FALSE)
+knitr::opts_chunk$set(fig.height = 6)
+knitr::opts_chunk$set(fig.width = 10)
+
+library("tidyverse");theme_set(theme_bw())
+```
+
+```{r data, include=TRUE}
+exp <- "175tests2-data/"
+
+csv <- read.csv("175tests2.csv")
+csv <- csv %>% 
+    arrange(file_name) %>%
+    mutate(file_name = paste(file_name, ".csv", sep="")) %>%
+    filter(duration == 300, num_nodes == 5)
+    #filter(num_nodes == 5, merge_rate == 3)
+
+data <- as_tibble(c())
+
+for (i in 1:length(csv$file_name)) {
+
+    temp <- read.csv(paste(exp, csv$file_name[i], sep=""))
+    temp <- temp %>% mutate(merge_rate = csv$merge_rate[i],
+                            num_nodes = csv$num_nodes[i],
+                            eager_rate = csv$eager_rate[i])
+    data <- bind_rows(data, temp)
+
+    #csv$node_id <- as.factor(csv$node_id)
+}
+data$eager_rate = as.factor(data$eager_rate)
+data$num_nodes = as.factor(data$num_nodes)
+data$merge_rate = as.factor(data$merge_rate)
+
+
+```
+```{r}
+
+for (nn in levels(data$merge_rate)) {
+    print(data %>% filter(merge_rate == nn) %>%
+    ggplot(aes(x = duration, y = items, color = eager_rate)) +
+        geom_point() +
+        geom_path() +
+        ggtitle(paste("merge_rate =", nn)))
+}
+
+```
+
