@@ -97,7 +97,7 @@ data$merge_rate = as.factor(data$merge_rate)
 ggplot(data, aes(x = duration, y = items, color = eager_rate)) +
     geom_point() +
     geom_path() +
-    geom_abline(slope = 2, intercept = 0) +
+    geom_abline(slope = 4.7, intercept = 0) +
     geom_abline(slope = 1/3, intercept = 750) +
     ggtitle("All On One (Intersect {450, 900}) | merge_rate = 30")
 ```
