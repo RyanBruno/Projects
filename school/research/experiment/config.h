@@ -37,8 +37,8 @@ unsigned int MERGE_RATE = 1;
 //#define MERGE_PERIOD 1
 
 /* The timeout for a single merge request */
-time_t MERGE_TIMEOUT = 20;
-//#define MERGE_TIMEOUT 20
+//time_t MERGE_TIMEOUT = 20;
+#define MERGE_TIMEOUT 20
 
 /* The amount of seconds between the demo
  * should run for.
