@@ -8,13 +8,102 @@ knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
 knitr::opts_chunk$set(message = FALSE)
 #knitr::opts_chunk$set(include = FALSE)
-knitr::opts_chunk$set(fig.height = 6)
-knitr::opts_chunk$set(fig.width = 10)
+knitr::opts_chunk$set(fig.height = 7)
+knitr::opts_chunk$set(fig.width = 11)
 
 library("tidyverse");theme_set(theme_bw())
 ```
 
-```{r data, include=TRUE}
+# Progress Report 10-21
+
+Memory Efficiency in Distributed Data types.
+
+\pagebreak
+
+Since Last time
+====
+
+- [x] Fixed Bug
+
+- [x] Re-ran Same Trials
+
+- [x] Ran Some Longer Trials
+
+- [x] Analysis of Results
+
+\pagebreak
+
+```{r, include=TRUE, fig.height = 3, fig.width = 5}
+exp <- "longertests-data/"
+
+csv <- read.csv("longertests.csv")
+csv <- csv %>% 
+    arrange(file_name) %>%
+    mutate(file_name = paste(file_name, ".csv", sep="")) %>%
+    filter(eager_rate != 50)
+    
+    #filter(duration == 300, merge_rate == 10)
+#> unique(csv$num_nodes)
+#[1]  2  3  4  5 10 15 20
+
+data <- as_tibble(c())
+
+for (i in 1:length(csv$file_name)) {
+
+    temp <- read.csv(paste(exp, csv$file_name[i], sep=""))
+    temp$node_id = as.factor(temp$node_id)
+
+    print(ggplot(temp, aes(x = duration, y = items, color = node_id)) +
+        geom_point() +
+        geom_path() +
+        ggtitle(paste("eager_rate =", csv$eager_rate[i])))
+
+    #temp <- temp %>% mutate(merge_rate = csv$merge_rate[i],
+    #                        num_nodes = csv$num_nodes[i],
+    #                        eager_rate = csv$eager_rate[i])
+    #data <- bind_rows(data, temp)
+
+
+    #csv$node_id <- as.factor(csv$node_id)
+}
+#data$eager_rate = as.factor(data$eager_rate)
+#data$num_nodes = as.factor(data$num_nodes)
+#data$merge_rate = as.factor(data$merge_rate)
+
+
+```
+```{r, include=TRUE}
+
+data <- as_tibble(c())
+
+for (i in 1:length(csv$file_name)) {
+
+    temp <- read.csv(paste(exp, csv$file_name[i], sep=""))
+
+    temp <- temp %>% mutate(merge_rate = csv$merge_rate[i],
+                            num_nodes = csv$num_nodes[i],
+                            eager_rate = csv$eager_rate[i])
+    data <- bind_rows(data, temp)
+
+
+}
+data$eager_rate = as.factor(data$eager_rate)
+data$num_nodes = as.factor(data$num_nodes)
+data$merge_rate = as.factor(data$merge_rate)
+
+```
+```{r}
+
+ggplot(data, aes(x = duration, y = items, color = eager_rate)) +
+    geom_point() +
+    geom_path() +
+    geom_abline(slope = 2, intercept = 0) +
+    geom_abline(slope = 1/3, intercept = 750) +
+    ggtitle("All On One (Intersect {450, 900}) | merge_rate = 30")
+```
+
+
+```{r data, include=TRUE, fig.height = 3, fig.width = 5}
 exp <- "175tests2-data/"
 
 csv <- read.csv("175tests2.csv")
@@ -22,17 +111,26 @@ csv <- csv %>%
     arrange(file_name) %>%
     mutate(file_name = paste(file_name, ".csv", sep="")) %>%
     filter(duration == 300, num_nodes == 5)
-    #filter(num_nodes == 5, merge_rate == 3)
+#> unique(csv$num_nodes)
+#[1]  2  3  4  5 10 15 20
 
 data <- as_tibble(c())
 
 for (i in 1:length(csv$file_name)) {
 
     temp <- read.csv(paste(exp, csv$file_name[i], sep=""))
+    #temp$node_id = as.factor(temp$node_id)
+
+    #print(ggplot(temp, aes(x = duration, y = items, color = node_id)) +
+    #    geom_point() +
+    #    geom_path() +
+    #    ggtitle(paste("eager_rate =", csv$eager_rate[i])))
+
     temp <- temp %>% mutate(merge_rate = csv$merge_rate[i],
                             num_nodes = csv$num_nodes[i],
                             eager_rate = csv$eager_rate[i])
     data <- bind_rows(data, temp)
+
 
     #csv$node_id <- as.factor(csv$node_id)
 }
@@ -42,15 +140,13 @@ data$merge_rate = as.factor(data$merge_rate)
 
 
 ```
-```{r}
-
-for (nn in levels(data$merge_rate)) {
-    print(data %>% filter(merge_rate == nn) %>%
-    ggplot(aes(x = duration, y = items, color = eager_rate)) +
-        geom_point() +
-        geom_path() +
-        ggtitle(paste("merge_rate =", nn)))
+```{r, include=TRUE}
+for (i in levels(data$merge_rate)) {
+    print(data %>% filter(merge_rate == i) %>%
+          ggplot(aes(x = duration, y = items, color = eager_rate)) +
+            geom_point() +
+            geom_path() +
+            ggtitle(paste("num_nodes = 5 | merge_rate =", i)))
 }
 
 ```
-
