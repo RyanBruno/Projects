@@ -1,7 +1,0 @@
-
-## Mapping To RPC
-
-Procedures
-
-
-

@@ -7,10 +7,12 @@
 
 typedef void* unordered_map;
 
+extern "C" {
+
 /* Allocates an unordered_map and returns
  * a pointer to it.
  */
-extern "C" unordered_map unordered_map_create()
+unordered_map unordered_map_create()
 {
     return (void*) new std::unordered_map<uint64_t, void*>();
 }
@@ -18,14 +20,14 @@ extern "C" unordered_map unordered_map_create()
 /* Deallocates unordered_map allocated by
  * unordered_map_create()
  */
-extern "C" void unordered_map_free(unordered_map um)
+void unordered_map_free(unordered_map um)
 {
     delete ((std::unordered_map<uint64_t, void*>*) um);
 }
 
 /* Associates 'i' with key 'k' in 'um'.
  */
-extern "C" void unordered_map_add(unordered_map um, uint64_t k, void* i)
+void unordered_map_add(unordered_map um, uint64_t k, void* i)
 {
     ((std::unordered_map<uint64_t, void*>*) um)->insert(std::make_pair(k, i));
 }
@@ -33,7 +35,7 @@ extern "C" void unordered_map_add(unordered_map um, uint64_t k, void* i)
 /* Gets the value of the item that has key
  * 'k' in 'um'.
  */
-extern "C" void* unordered_map_get(unordered_map um, uint64_t k)
+void* unordered_map_get(unordered_map um, uint64_t k)
 {
     try {
         return ((std::unordered_map<uint64_t, void*>*) um)->at(k);
@@ -48,7 +50,7 @@ extern "C" void* unordered_map_get(unordered_map um, uint64_t k)
  * 'um'. Return 1 on success and 0 if the map
  * is empty.
  */
-extern "C" int unordered_map_first(unordered_map um, uint64_t* k, void** i)
+int unordered_map_first(unordered_map um, uint64_t* k, void** i)
 {
     auto it = ((std::unordered_map<uint64_t, void*>*) um)->begin();
 
@@ -67,7 +69,7 @@ extern "C" int unordered_map_first(unordered_map um, uint64_t* k, void** i)
  * 'k' and 'i'. Will return 1 on success and 0
  * when the end has been reached.
  */
-extern "C" int unordered_map_next(unordered_map um, uint64_t* k, void** i)
+int unordered_map_next(unordered_map um, uint64_t* k, void** i)
 {
     auto it = ((std::unordered_map<uint64_t, void*>*) um)->find(*k);
 
@@ -87,14 +89,16 @@ extern "C" int unordered_map_next(unordered_map um, uint64_t* k, void** i)
 
 /* Erases 'k' from the map.
  */
-extern "C" void unordered_map_erase(unordered_map um, uint64_t k)
+void unordered_map_erase(unordered_map um, uint64_t k)
 {
     ((std::unordered_map<uint64_t, void*>*) um)->erase(k);
 }
 
 /* Returns the number of items in the map.
  */
-extern "C" size_t unordered_map_size(unordered_map um)
+size_t unordered_map_size(unordered_map um)
 {
     return (size_t) ((std::unordered_map<uint64_t, void*>*) um)->size();
 }
+
+} /* extern "C" */

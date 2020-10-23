@@ -8,6 +8,7 @@
 #define NODE_H
 
 #include <semaphore.h>
+#include "../config.h"
 #include "ospc/ospc.h"
 
 /* Creates an RPC service and registers
@@ -28,7 +29,7 @@ void* client_thread_fn(void* v);
  * below. It creates the global OrSet and
  * semaphore.
  */
-int node_init();
+int node_init(node_t nid);
 
 /* Used to build the baseline network
  * information about a single peer.
@@ -48,4 +49,4 @@ extern struct ospc_context oc;
  */
 extern sem_t os_sem;
 
-#endif
+#endif /* NODE_H */

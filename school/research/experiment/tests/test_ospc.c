@@ -1,4 +1,3 @@
-#include "../src/utils.h"
 
 int items_collected = 0;
 int test_ospc_baseline()

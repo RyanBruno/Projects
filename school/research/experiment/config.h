@@ -1,15 +1,5 @@
-#include "src/node.h"
-#include "src/bot.h"
-
-/* We achieve "plugin-like" modularity by
- * adding thread functions to this array.
- * Theses threads are creates on startup.
- */
-void *(*threads[]) (void*) = {
-    client_thread_fn,
-    bot_thread_fn,
-};
-
+#ifndef CONFIG_H
+#define CONFIG_H
 /* General Configuration */
 
 /* This defines how big the node id should
@@ -17,7 +7,6 @@ void *(*threads[]) (void*) = {
  * uint16_t or uint8_t.
  * uint8_t => max value = 256
  * uint16_t => max value = 65,536
- * TODO: Unused.
  */
 #define node_t uint8_t
 
@@ -28,28 +17,33 @@ void *(*threads[]) (void*) = {
  */
 #define VERSION_NUMBER 1
 
+/* The timeout for a single merge request */
+//time_t MERGE_TIMEOUT = 20;
+#define MERGE_TIMEOUT 20
+
+#ifdef CONCREATE
+#include "src/node.h"
+
+/* We achieve "plugin-like" modularity by
+ * adding thread functions to this array.
+ * Theses threads are creates on startup.
+ */
+void *(*threads[]) (void*) = {
+    client_thread_fn,
+    NULL,
+};
+
 /* Client thread configuration points */
 
 /* The amount of time between merge
  * requests.
  */
 unsigned int MERGE_RATE = 1;
-//#define MERGE_PERIOD 1
-
-/* The timeout for a single merge request */
-//time_t MERGE_TIMEOUT = 20;
-#define MERGE_TIMEOUT 20
 
 /* The amount of seconds between the demo
  * should run for.
  */
 time_t DURATION = 300;
-
-/* Eager Collection */
-
-/*
- */
-uint64_t EAGER_RATE = 10;
 
 /* Describes the network of peers. This
  * array contains the current node_id.
@@ -78,4 +72,5 @@ struct peer_node peers[20] = {
     { .peer_id = 0, .peer_host = "127.0.0.1", .peer_prognum = 100619L },
 };
 int PEERS_LEN = 4;
-
+#endif /* CONCREATE */
+#endif /* CONFIG_H */

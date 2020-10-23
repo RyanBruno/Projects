@@ -1,34 +1,24 @@
 /* Represents some logic to bring together
- * all modules into a full functioning mode.
+ * all modules into a full functioning node.
  * Its job is to handle incoming merge
- * requests and occasionally send merge
+ * requests and occasionally send merges
  * request to peers.
  */
+#include "node.h"
+
 #include <rpc/rpc.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 
-#include "node.h"
 #include "xdr_orset/xdr_orset.h"
-#include "utils.h"
 
 /* From config.h */
 extern time_t MERGE_RATE;
-extern unsigned int EAGER_RATE;
 extern int PEERS_LEN;
-extern struct peer_node peers[20];
-
-/* Todo fix */
-#define VERSION_NUMBER 1
-#define MERGE_TIMEOUT 20
+extern struct peer_node* peers;
 
 /* Global Node variables */
-int node_id;
+node_t node_id;
 struct orset os;
 struct ospc_context oc;
 sem_t os_sem;
@@ -187,8 +177,10 @@ void* client_thread_fn(void* v)
  * below. It creates the global OrSet and
  * semaphore.
  */
-int node_init()
+int node_init(node_t nid)
 {
+    node_id = nid;
+
     /* Create our OrSet */
     orset_create(&os, node_id);
     ospc_wrap(&os, &oc);

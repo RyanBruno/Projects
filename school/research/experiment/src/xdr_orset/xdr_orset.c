@@ -3,11 +3,14 @@
  * returns. xdr_orset is for OrSets. See
  * orset.h.
  */
+#include "semaphore.h"
 #include "xdr_orset.h"
-#include "../node.h"
 #include "../orset/orset.h"
 
 static char* NULL_STRING = "\0";
+
+/* From node.h */
+extern sem_t os_sem;
 
 struct xdr_orset_item_cur {
     struct orset* os;

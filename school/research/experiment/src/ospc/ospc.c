@@ -28,6 +28,9 @@ uint64_t ospc_merge(struct ospc_context* oc, struct orset* other)
     uint64_t k;
     void* i;
 
+    /* Ignore items already seen directly from each
+     * node.
+     */
     if (unordered_map_first(other->os_map, &k, &i)) {
         uint64_t erase = 0;
         do {

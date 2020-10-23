@@ -1,5 +1,3 @@
-#ifndef ORSET_H
-#define ORSET_H
 /* The OrSet abstract data type. A type of
  * Conflict-free abstract data type, the
  * OrSet sits on top of an unordered_map
@@ -10,8 +8,9 @@
  * vice-versa.
  */
 
+#include "../../config.h"
 #include "../unordered_map/unordered_map.h"
-#define node_t uint8_t
+
 #define NODE_ID_OFFSET (sizeof(uint64_t) - sizeof(node_t)) * 8
 /* The OrSet structure holds the underlying
  * unordered_map and some additional
@@ -70,5 +69,3 @@ void* orset_get(struct orset* os, uint64_t k);
  *  2. If item is not in 'os' add it to 'os'
  */
 void orset_merge(struct orset* os, struct orset* other);
-
-#endif

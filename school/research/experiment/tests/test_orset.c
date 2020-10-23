@@ -1,6 +1,4 @@
-#include <semaphore.h>
 
-sem_t os_sem;
 int test_orset_baseline()
 {
     struct orset os;

@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
+#include <rpc/rpc.h>
+#include "../src/node.h"
 #include "../src/xdr_orset/xdr_orset.h"
-#include "../src/ospc/ospc.h"
 
 const char* hi = "Hello ";
 const char* wrld = "world ";

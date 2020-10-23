@@ -10,15 +10,14 @@
 /* From config.h */
 extern time_t MERGE_RATE;
 extern time_t DURATION;
-extern unsigned int EAGER_RATE;
 extern int PEERS_LEN;
-extern struct peer_node peers[20];
-// TODO size
-extern void *(*threads[2]) (void*);
+extern struct peer_node* peers;
+extern void* (**threads) (void*);
 
 int main(int argc, char* argv[])
 {
     char c;
+    node_t node_id;
 
     while ((c = getopt(argc, argv, ":m:p:d:e:")) != -1) {
         switch (c) {
@@ -30,9 +29,6 @@ int main(int argc, char* argv[])
             break;
         case 'd':
             DURATION = strtol(optarg, NULL, 10);
-            break;
-        case 'e':
-            EAGER_RATE = strtol(optarg, NULL, 10);
             break;
         case ':':
             if (isprint (optopt)) {
@@ -76,7 +72,7 @@ int main(int argc, char* argv[])
     }
 
     /* Create our node's OrSet */
-    if (node_init() < 0)
+    if (node_init(node_id) < 0)
         return -1;
 
     /* Register our service */
@@ -93,12 +89,11 @@ int main(int argc, char* argv[])
         pthread_t thread;
 
         /* Creates all the threads in 'threads' */
-        for (int i = (sizeof(threads) / sizeof(threads[0]));
-             i > 0; i--)
+        for (int i = 0; threads[i] != NULL; i++)
         {
             /* Create a thread to adding and removing items */
             if (pthread_create(&thread, NULL,
-                        threads[i - 1], NULL))
+                        threads[i], NULL))
             {
                 fprintf(stderr, "pthread_create():\n");
                 exit(-1);
