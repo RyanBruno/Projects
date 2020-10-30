@@ -96,26 +96,58 @@ data$merge_rate = as.factor(data$merge_rate)
 levels(data$eager_rate) = c("Aggressive", "Medium",
                             "Low", "Casual")
 
+#"No Collection", "No Collection", "No Collection", 
+ggsave("out.png", height=7, width=12, units="in")
 ```
 ```{r}
 fit <- data %>% filter(duration > 1000, duration < 3600) %>% 
+        filter(eager_rate != "No Collection") %>% 
+        lm(items ~ duration, data = .)
+
+fit1 <- data %>% filter(duration > 1000, duration < 3600) %>%
+        filter(eager_rate == "No Collection") %>% 
         lm(items ~ duration, data = .)
 
 fit2 <- data %>% filter(duration > 1000, duration < 3600) %>%
         filter(eager_rate == "Casual") %>% 
         lm(items ~ duration, data = .)
 
-ggplot(data, aes(x = duration, y = items, color = eager_rate)) +
+fit2half <- data %>% filter(duration > 1000, duration < 3600) %>%
+        filter(eager_rate != "Casual") %>% 
+        lm(items ~ duration, data = .)
+
+fit3 <- data %>% filter(duration > 1000, duration < 3600) %>%
+        filter(eager_rate == "Low") %>% 
+        lm(items ~ duration, data = .)
+
+fit4 <- data %>% filter(duration > 1000, duration < 3600) %>%
+        filter(eager_rate == "Medium") %>% 
+        lm(items ~ duration, data = .)
+
+fit5 <- data %>% filter(duration > 1000, duration < 3600) %>%
+        filter(eager_rate == "Aggressive") %>% 
+        lm(items ~ duration, data = .)
+
+    #annotate("text", x = 150, y = fit2$coefficients["(Intercept)"] + 300, label = paste("Slope:", fit1$coefficients["duration"])) +
+ggplot(data , aes(x = duration, y = items, color = eager_rate)) +
     geom_point() +
     geom_path() +
     geom_abline(slope = fit2$coefficients["duration"], intercept = fit2$coefficients["(Intercept)"]) +
-    geom_abline(slope = fit$coefficients["duration"], intercept = fit$coefficients["(Intercept)"]) +
-    annotate("text", x = 200, y = fit$coefficients["(Intercept)"]-25, label = "Eager Collection") +
-    annotate("text", x = 200, y = fit2$coefficients["(Intercept)"]+125, label = "Casual Collection") +
-    #annotate("segment", x = 998, xend = 1002, y = 0, yend = 2500, colour = "red") +
-    #annotate("segment", x = 3598, xend = 3602, y = 0, yend = 2500, colour = "red") +
-    labs(x = "Duration", y = "Items", color = "Collection Type") +
+    geom_abline(slope = fit2half$coefficients["duration"], intercept = fit2half$coefficients["(Intercept)"]) +
+    #annotate("text", x = 200, y = 4000, label = paste("y =",round(digits=2, fit1$coefficients["(Intercept)"]),"+", round(fit1$coefficients["duration"], digits=2), "x")) +
+    #annotate("text", x = 500, y = 0, label = paste("Slope:", fit$coefficients["duration"])) +
+    annotate("text", x = 150, y = fit2$coefficients["(Intercept)"] + 150, label = "Casual Collection") +
+    annotate("text", x = 150, y = fit2half$coefficients["(Intercept)"] - 100, label = "Eager Collection") +
+    labs(x = "Duration (s)", y = "Items", color = "Collection Type") +
     ggtitle("Comparison of Collection Types.")
+```
+```{r}
+data$eager_rate <- case_when(data$eager_rate == "Casual" ~ 0,
+                             data$eager_rate != "Casual" ~ 1)
+hyptest <- data %>% filter(duration > 1000, duration < 3600) %>%
+    lm(items ~ duration + eager_rate + (eager_rate*duration), data = .)
+
+
 ```
 
 ```{r data, include=TRUE, fig.height = 3, fig.width = 5}

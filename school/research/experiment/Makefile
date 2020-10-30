@@ -24,7 +24,6 @@ all : std_unordered_map.o
 all : xdr_orset.o
 all : bot.o
 all : node.o
-all : init.o
 all : utils.o
 
 node : orset.o
@@ -34,7 +33,6 @@ node : std_unordered_map.o
 node : xdr_orset.o
 node : bot.o
 node : node.o
-node : init.o
 node : utils.o
 	$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
@@ -46,7 +44,6 @@ std_unordered_map.o : unordered_map.h
 xdr_orset.o : orset.h unordered_map.h
 bot.o : node.h orset.h unordered_map.h
 node.o : orset.h osec.h ospc.h xdr_orset.h utils.h config.h
-init.o :
 utils.o : orset.h unordered_map.h
 
 test_all.o : test_orset.c test_xdr_orset.c test_ospc.c unordered_map.h all

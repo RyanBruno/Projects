@@ -1,3 +1,4 @@
+%\documentclass[aspectratio=169]{beamer}
 \documentclass{beamer}
 
 \usetheme{Singapore}
@@ -35,9 +36,8 @@ text.fg}
 \setbeamercolor{titlelike}{fg=white}
 
 \title{Memory Efficiency and Conflict-free Replicated Data Types}
-%\subtitle{Evidence from India}
 \author{Ryan Bruno \and Dr. Armstrong}
-\date{\today}
+\date{October 30, 2020}
 
 \begin{document}
     % Title Frame
@@ -102,6 +102,36 @@ text.fg}
     \end{frame}
 
     % PP Slides 4 - 13
+    \begin{frame}
+        \includegraphics[page=1,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=2,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=3,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=4,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=5,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=6,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=7,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=8,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=9,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=10,width=\textwidth]{original}
+    \end{frame}
 
     \begin{frame}
         \begin{center}
@@ -111,7 +141,6 @@ text.fg}
             \large{Unbounded growth of tombstones.}
         \end{center}
     \end{frame}
-
 
     \begin{frame}[shrink]
         \frametitle{What does unbounded growth look like?}
@@ -132,11 +161,23 @@ text.fg}
         \begin{enumerate}
             \item - Requires local operational ordering and bounded
                 system size
-            \item - Tracks and pushes stability.
+            \item - Tracks and pushes stability information
         \end{enumerate}
     \end{frame}
 
     % PP Slides 15 - 16
+    \begin{frame}
+        \includegraphics[page=11,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=12,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=13,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=14,width=\textwidth]{original}
+    \end{frame}
 
     \begin{frame}
         \frametitle{Types of Collection}
@@ -151,11 +192,26 @@ text.fg}
         \begin{enumerate}
             \item \textbf{- Requires local operational ordering and bounded
                 system size.}
-            \item \textbf{- Tracks and pushes stability.}
+            \item \textbf{- Tracks and pushes stability information.}
         \end{enumerate}
     \end{frame}
 
     % PP Slides 17 - 21
+    \begin{frame}
+        \includegraphics[page=15,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=16,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=17,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=18,width=\textwidth]{original}
+    \end{frame}
+    \begin{frame}
+        \includegraphics[page=19,width=\textwidth]{original}
+    \end{frame}
 
     \begin{frame}[shrink]
         \frametitle{Primary Objective}
@@ -182,22 +238,175 @@ text.fg}
         \end{enumerate}
     \end{frame}
 
+    \begin{frame}[shrink]
+        \frametitle{Hypothesis}
+        \begin{center}
+        \begin{minipage}{4in}
+        1. While the data size of a node not using garbage collection
+        will grow linearly with the amount of operations; using garbage
+        collection will bound growth to the data growth rate.
+
+        \bigskip
+
+        2. An increase in garbage collection rate will lead to a
+        decrease in total items at a given time.
+        \end{minipage}
+        \end{center}
+    \end{frame}
+
+    \begin{frame}[shrink]
+        \frametitle{Goal Tree}
+        \begin{center}
+            \includegraphics[width=0.8\textwidth]{GoalTree}
+        \end{center}
+    \end{frame}
+
     % Results bounded growth
+    % Show unbounded with lines and slopes
 
     \begin{frame}
-        \frametitle{Results}
-        \includegraphics[width=\textwidth]{CollectionType1}
+        \frametitle{Bounded Growth}
+        \includegraphics[width=\textwidth]{BoundedGrowth1_2}
     \end{frame}
+
+
     \begin{frame}
-        \frametitle{Results}
-        \includegraphics[width=\textwidth]{CollectionType2}
+        \frametitle{Bounded Growth}
+        \includegraphics[width=\textwidth]{BoundedGrowth2_2}
+    \end{frame}
+
+    \begin{frame}[shrink]
+        \frametitle{Bounded Growth}
+
+        Linear regression:
+
+        {\tiny X=$(1000, 3600)$}
+
+        \begin{center}
+            $Items = 489.5 + 1.683 Duration$
+        \end{center}
+
+        \begin{center}
+            \begin{tabular}{ ||c c||}
+                \hline
+                Setting & Value \\
+                \hline
+                Growth Rate & $1/3$ \\
+                Nodes & 5 \\
+                Operation Rate & 1s \\
+                Merge Rate & 30s \\
+                Eager Rate & Varies \\
+                \hline
+            \end{tabular}
+        \end{center}
+
+        \begin{center}
+            $5Nodes*1/3 Items Per Sec = 1.66 Items Per Sec$
+            $5Nodes*1 Operation Per Sec = 5 Operations Per Sec$
+        \end{center}
     \end{frame}
 
     \begin{frame}
-        \frametitle{Results}
-        \includegraphics[width=\textwidth]{CollectionType3}
+        \frametitle{Collection Types}
+        \includegraphics[width=\textwidth]{CollectionType1_1}
+    \end{frame}
+    \begin{frame}
+        \frametitle{Collection Types}
+        \includegraphics[width=\textwidth]{CollectionType2_1}
     \end{frame}
 
-    % further research
+    \begin{frame}
+        \frametitle{Collection Types}
+        \includegraphics[width=\textwidth]{CollectionType3_1}
+    \end{frame}
+
+    \begin{frame}[shrink]
+        \frametitle{Collection Types}
+        Does eager collection make a difference?
+
+        \bigskip
+        \bigskip
+        \bigskip
+
+        \begin{center}
+            At X = 1000...
+
+            Eager Collection = 2,148.724
+
+            Casual Collection = 2,242.656
+
+            Difference: $\sim$94 tombstones
+
+            $\sim$4.4\%
+
+        \end{center}
+    \end{frame}
+
+    \begin{frame}
+        \frametitle{Collection Types}
+        \includegraphics[width=\textwidth]{CollectionType3_1}
+    \end{frame}
+
+    \begin{frame}[shrink]
+        \frametitle{Collection Types}
+        Are the slopes different?
+
+        \bigskip
+        \bigskip
+        \bigskip
+
+        \begin{center}
+            Hypothesis Test:
+
+            {\small $H_{0}: \beta_{1a} - \beta_{1b} = 0$}
+
+            \pause
+
+            \textbf{p-value = 0.0449}
+        \end{center}
+    \end{frame}
+
+    \begin{frame}
+        \frametitle{Conclusion}
+
+        \begin{center}
+        \begin{minipage}{4in}
+        \begin{enumerate}
+            \item 1. The growth rate of an OrSet using either garbage
+                collection algorithm is based on growth rate of
+                the data as opposed to the operation rate.
+            \bigskip
+            \item 2. The difference between casual collection and eager
+                collection can be seen through a shrinking difference in
+                items over time.
+        \end{enumerate}
+        \end{minipage}
+        \end{center}
+
+    \end{frame}
+
+    % Future research
+    \begin{frame}
+        \frametitle{Future Research}
+
+        \begin{center}
+        \begin{minipage}{4in}
+        \begin{enumerate}
+            \item Test which eager collection rate are best when
+                balanced with network overhead.
+            \bigskip
+            \item Explore why the gap between casual collection and eager
+                collection closes over time.
+            \bigskip
+            \item Prove and verify an OrSet network joining model that
+                is compatibile with both eager and casual collection.
+        \end{enumerate}
+        \end{minipage}
+        \end{center}
+    \end{frame}
+
+    \begin{frame}
+        \includegraphics[page=21,width=\textwidth]{original}
+    \end{frame}
 
 \end{document}

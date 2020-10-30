@@ -4,7 +4,7 @@
 /* The ratio of add to removes for each demo
  * operation.
  */
-#define ADD_TO_REM_RATIO 2
+#define ADD_TO_REM_RATIO 3
 
 /* The amount of seconds between each demo
  * operation. May also be represented as

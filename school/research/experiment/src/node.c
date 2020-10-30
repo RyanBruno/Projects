@@ -50,7 +50,8 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
 
     /* Merge */
     sem_wait(&os_sem);
-    latest_item = ospc_merge(&oc, &rmt_os);
+    //latest_item = ospc_merge(&oc, &rmt_os);
+    orset_merge(&os, &rmt_os);
     utils_print_stats(&os, node_id);
     sem_post(&os_sem);
 
@@ -206,6 +207,7 @@ void* client_thread_fn(void* v)
 
         /* Close the connection to our peer */
         clnt_destroy(client);
+        continue;
 
         /* Runs the OrSet garbage collector */
         sem_wait(&os_sem);
@@ -299,7 +301,7 @@ int node_init()
     return 0;
 }
 
-int main2(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 
     utils_init();
