@@ -67,14 +67,8 @@ int main(int argc, char* argv[])
     }
 
     /* Create our node's OrSet */
-    if (node_init(node_id) < 0)
+    if (node_init(node_id, peers[node_id].peer_prognum) < 0)
         return -1;
-
-    /* Register our service */
-    if (register_procedure(peers[node_id].peer_prognum)) {
-        fprintf(stderr, "register_procedure():\n");
-        exit(-1);
-    }
 
     /* Achieves "plugin-like modularity by
      * starting all functions in 'threads'

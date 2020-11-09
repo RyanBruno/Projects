@@ -11,11 +11,10 @@
 #include "../config.h"
 #include "ospc/ospc.h"
 
-/* Creates an RPC service and registers
- * rpc_merge_request with the port mapper
- * on 'prognum'.
+/* Merges a remote set with node's local
+ * set.
  */
-int register_procedure(unsigned long prognum);
+uint64_t merge_request(struct orset* rmt_os);
 
 /* The client thread occasionally sends
  * merge requests to other peers. It makes
@@ -24,12 +23,10 @@ int register_procedure(unsigned long prognum);
  */
 void* client_thread_fn(void* v);
 
-/* This function is great for stating a
- * node without using the main() function
- * below. It creates the global OrSet and
- * semaphore.
+/* Inits global OrSet, semaphore and RPC
+ * framework.
  */
-int node_init(node_t nid);
+int node_init(node_t node_id, unsigned long prognum);
 
 /* Used to build the baseline network
  * information about a single peer.

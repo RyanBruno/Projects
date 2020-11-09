@@ -1,5 +1,6 @@
 VPATH := src/orset/:
 VPATH += src/ospc/:
+VPATH += src/rpc/:
 VPATH += src/sequence/:
 VPATH += src/std_unordered_map/:
 VPATH += src/unordered_map/:
@@ -17,6 +18,7 @@ LDLIBS = -ltirpc -pthread
 
 all : orset.o 
 all : ospc.o
+all : rpc.o
 all : sequence.o
 all : std_unordered_map.o
 all : xdr_orset.o
@@ -26,6 +28,7 @@ all : init.o
 
 node : orset.o
 node : ospc.o
+node : rpc.o
 node : std_unordered_map.o
 node : xdr_orset.o
 node : config.o
@@ -35,6 +38,7 @@ node : init.o
 
 orset.o : unordered_map.h
 ospc.o : orset.h unordered_map.h
+rpc.o : node.h
 sequence.o : 
 std_unordered_map.o : unordered_map.h
 xdr_orset.o : orset.h unordered_map.h
