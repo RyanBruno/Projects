@@ -53,12 +53,8 @@ void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
 enum clnt_stat rpc_merge_make_request(int target_peer, uint64_t* res)
 {
     enum clnt_stat stat;
-    struct timeval to;
+    struct timeval to = {MERGE_TIMEOUT,0};
     CLIENT* client;
-
-    /* Setup timeout */
-    to.tv_sec = MERGE_TIMEOUT;
-    to.tv_usec = 0;
 
     /* Create a client to our peer */
     client = clnt_create(peers[target_peer].peer_host,
