@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 return 1;
             }
+            /* FALLTHROUGH */
         case '?':
             if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);

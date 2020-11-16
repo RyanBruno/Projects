@@ -66,6 +66,8 @@ int node_init(node_t node_id, unsigned long prognum)
  */
 void* client_thread_fn(void* v)
 {
+    (void)(v);
+
     for (;;) {
         enum clnt_stat stat;
         uint64_t latest_item;

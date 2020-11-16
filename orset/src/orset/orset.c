@@ -56,7 +56,7 @@ uint64_t orset_remove(struct orset* os, uint64_t k)
  */
 void* orset_get(struct orset* os, uint64_t k)
 {
-    unordered_map_get(os->os_map, k);
+    return unordered_map_get(os->os_map, k);
 }
 
 /* Merges orset 'other' into an orset 'os'.

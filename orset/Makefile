@@ -13,7 +13,7 @@ VPATH += tests/:
 #.cpp: $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c
 #.o  : $(CC) $(LDFLAGS) n.o $(LOADLIBES) $(LDLIBS)
 include_dirs = -I/usr/include/tirpc
-CFLAGS = $(include_dirs) $(libs)
+CFLAGS = $(include_dirs) $(libs) -Wall -Wextra
 LDLIBS = -ltirpc -pthread
 
 all : orset.o 

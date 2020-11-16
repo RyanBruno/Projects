@@ -36,14 +36,31 @@ void net_event_cb(struct bufferevent *bev, short what, void *arg)
         // We finished a requested connection on the bufferevent.
 }
 
+struct ggg {
+    size_t(*ggg_read)(struct evbuffer_iovec*, int, void*);
+};
+
 void net_write_cb(struct bufferevent *bev, void *arg)
 {
     // All data has been written.
 }
 
+// A read has taken place.
 void net_read_cb(struct bufferevent *bev, void *arg)
 {
-    // A read has taken place.
+    struct evbuffer* buf = bufferevent_get_input(bev);
+    struct ggg* gac = (struct ggg*) arg;
+    struct evbuffer_iovec* iov;
+    int n_vec;
+    size_t len;
+
+    while ((n_vec = evbuffer_peek(buf, 4096, NULL, NULL, 0)) > 0) {
+        iov = alloca(sizeof(struct evbuffer_iovec) * n_vec);
+        n_vec = evbuffer_peek(buf, 4096, NULL, iov, n_vec);
+        len = gac->ggg_read(iov, n_vec, NULL);
+        free(iov);
+        evbuffer_drain(buf, len);
+    }
 }
 
 void net_accept_cb(struct evconnlistener *listener, evutil_socket_t sock,

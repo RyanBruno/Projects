@@ -16,6 +16,7 @@ extern struct peer_node* peers;
  */
 void rpc_merge_request(struct svc_req *req, SVCXPRT *xprt)
 {
+    (void)(req);
     struct orset rmt_os;
     uint64_t rply;
 
@@ -95,7 +96,6 @@ enum clnt_stat rpc_merge_make_request(int target_peer, uint64_t* res)
  */
 int rpc_init(unsigned long prognum)
 {
-    int rc;
     SVCXPRT* xprt;
 
     /* Create a RPC service socket. */
