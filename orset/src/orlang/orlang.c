@@ -1,10 +1,7 @@
+#include "../net/net.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
-
-#include <event2/event.h>
-#include <event2/bufferevent.h>
-#include <event2/buffer.h>
-#include <event2/util.h>
 
 enum ORLANG_STATE {
     MESSAGE,
@@ -97,7 +94,7 @@ int orlang_putc(struct orlang_parser* op, char c)
     }
 }
 
-size_t orlang_putiov(struct evbuffer_iovec* iov, int n_vec, void* v)
+size_t orlang_putiov(struct net_iov_t* iov, ssize_t n_vec, void* v)
 {
     struct orlang_parser* op = (struct orlang_parser*) v;
     size_t num = 0;
@@ -105,8 +102,35 @@ size_t orlang_putiov(struct evbuffer_iovec* iov, int n_vec, void* v)
     for (int i = 0; i < n_vec; i++) {
         for (size_t j = 0; j < iov[i].iov_len; j++) {
             num++;
-            orlang_putc(op, ((char*) iov[i].iov_base)[j]);
+            orlang_putc(op, (iov[i].iov_base)[j]);
         }
     }
     return num;
+}
+
+struct orlang_parser* orlang_newparser()
+{
+    struct orlang_parser* op;
+
+    if (!(op = malloc(sizeof(struct orlang_parser)))) {
+        printf("orlang_newparser():\n");
+        return NULL;
+    }
+
+    op->ol_state = MESSAGE;
+
+    return op;
+}
+
+void* orlang_thread_fn(void* v)
+{
+    (void)(v);
+
+    struct net_context_t nc = {
+        .nc_read = orlang_putiov,
+        .nc_accept = (void * (*)()) orlang_newparser,
+    };
+
+    net_listen(8888, &nc);
+    net_dispatch();
 }
