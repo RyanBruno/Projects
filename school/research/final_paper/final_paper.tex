@@ -295,7 +295,7 @@ expects to be one node in a network of peers running the same software.
 The OR-Set data type exposes an interface as described below:
 
 Notation:
-$ function\_name(input) => Output $
+$ operation\_name(input) => Output $
 
 $ add(data) => unique\_key $ \\
 $ remove(unique\_key) => tombstone\_key $ \\
@@ -303,7 +303,7 @@ $ merge(local\_set, other\_set) $
 
 Keys (both unique, item keys and tombstone keys) are 64 bit unsigned
 integers. The first 8 bits are reserved for the origination node id. So
-each node begins it's count at 1 + (node\_id << 56). A unique item id is
+each node begins it's count at 1 + bitshift\_left(node\_id, 56). A unique item id is
 generated from this number by adding 2 to this number after use. To
 distinguish a tombstone id from an item id; even and odd numbers are
 used respectively. The value assigned to that tombstone id is the item
