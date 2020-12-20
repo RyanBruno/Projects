@@ -28,6 +28,16 @@ struct orlang_parser {
     char* ol_string_it;
 };
 
+uint64_t orlang_action_add(struct orlang_parser* op)
+{
+    return orset_add(&os, op->ol_string);
+}
+
+uint64_t orlang_action_remove(struct orlang_parser* op)
+{
+    return orset_remove(&os, op->ol_key);
+}
+
 int orlang_putc(struct orlang_parser* op, char c)
 {
     switch (op->ol_state) {
@@ -49,15 +59,20 @@ int orlang_putc(struct orlang_parser* op, char c)
         case STRING_LEN2:
             op->ol_strlen |= c;
             op->ol_state = STRING;
-            op->ol_string = malloc(op->ol_strlen);
+            op->ol_string = malloc(op->ol_strlen + 1);
             op->ol_string_it = op->ol_string;
             return 0;
         case STRING:
             *op->ol_string_it = c;
             op->ol_string_it++;
 
-            if (op->ol_string_it - op->ol_string >= op->ol_strlen)
+            if (op->ol_string_it - op->ol_string >= op->ol_strlen) {
                 op->ol_state = DONE;
+                *op->ol_string_it = '\0';
+                orlang_action_add(op);
+                free(op->ol_string);
+                op->ol_state = MESSAGE;
+            }
             return 1;
         case KEY1:
             op->ol_key = ((uint64_t) c) << 56;
