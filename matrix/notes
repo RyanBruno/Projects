@@ -1,0 +1,107 @@
+
+/.well-known matrix/client -> https
+    http://127.0.0.1:8888/_matrix/client/r0/voip/turnServer
+    /_matrix/client/r0/sync
+http://127.0.0.1:8888/_matrix/client/r0/sync?filter=1234567&timeout=30000&_cacheBuster=1610463597500
+GET /_matrix/client/r0/sync?filter=1234567&timeout=30000&_cacheBuster=1610463597500 HTTP/1.1
+HOST: ryan.com
+
+OBJECTS:
+
+
+  DocumentDB or Relational:
+    User Login
+     - User
+       - Identifier
+     - Password
+    
+    Devices (n-to-1 user)
+     - Device Id
+     - Device Display name
+
+
+    Filter (n-to-1 user?)
+     - TBD
+
+  Configuration:
+    Version
+     - r0.x.y
+
+
+    Homeservers:
+     - Base-url
+
+
+    Capabilities
+     - Change_password
+     - Roomversions
+     - Ratelimit
+
+Room
+ - alies
+ - alt_aliases
+ - creator
+ - is_feerate
+ - version
+ - predecessor
+ - join_rules
+
+
+Sync:
+    Rooms
+        Joined Rooms
+            Summary
+                heros
+                joined_member_count
+                invited_member_count
+            State
+                [content, type, event....]
+            Timeline
+                [event]
+                limited
+                prev_patch
+            Ephmeral
+                [events] /* Typing */
+            Account_data
+                [events]
+            Unread_notifications
+                highlight_count
+                not_count
+        Invited Rooms
+            [stripped events]
+        Left Rooms
+            State
+            Timeline
+            account_data
+    Presence
+        [Events]
+    Account_data
+        [Events]
+    to_device *extension
+        [Events]
+    device_list *extension
+    device_one_time_keys_count *extension
+
+
+
+Syncing
+ GET /_matrix/client/r0/sync
+ GET /_matrix/client/r0/rooms/{roomId}/...
+ PUT /_matrix/client/r0/rooms/{roomId}/{state,send}/{eventType}
+
+Room
+ POST /_matrix/client/r0/rooms/{roomId}/{join,leave,kick,ban...}
+
+
+
+
+
+
+EventTypes
+ m.room.canonical_alias
+ m.room.create
+ m.room.join_rules
+ m.room.member
+ m.room.power_levels
+ m.room.redaction
+

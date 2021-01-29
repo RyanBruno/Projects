@@ -462,6 +462,24 @@ error:
 
 }
 
+int put_rooms(const char* path, const char** get_params, const char* post_str, cJSON** res_r)
+{
+
+    *res_r = cJSON_CreateObject();
+    if (*res_r == NULL) goto error;
+
+    return 0;
+
+error:
+    printf("Unknown error\n");
+
+    return -1;
+}
+
+int get_rooms(const char* path, const char** get_params, const char* post_str, cJSON** res_r)
+{
+}
+
 int put_presence(const char* path, const char** get_params, const char* post_str, cJSON** res_r)
 {
 
@@ -580,7 +598,6 @@ int cli(int argc, const char* argv[],
         } else {
             // Error
         }
-        /* Bookmark 2 */
     } else if (!strncmp("/_matrix/client/r0/user/", argv[2], 24)) {
         printf("path: /_matrix/client/r0/user(%s)\n", argv[2]);
         if(!strcmp("GET", argv[1])) {
@@ -589,6 +606,17 @@ int cli(int argc, const char* argv[],
         } else if(!strcmp("POST", argv[1])) {
             printf("method: POST(%s)\n", argv[1]);
             post_user_filter(argv[2], get_params, post_str, res_r);
+        } else {
+            // Error
+        }
+    } else if (!strncmp("/_matrix/client/r0/rooms/", argv[2], 25)) {
+        printf("path: /_matrix/client/r0/rooms(%s)\n", argv[2]);
+        if(!strcmp("GET", argv[1])) {
+            printf("method: GET(%s)\n", argv[1]);
+            get_rooms(argv[2], get_params, post_str, res_r);
+        } else if(!strcmp("POST", argv[1])) {
+            printf("method: POST(%s)\n", argv[1]);
+            post_rooms(argv[2], get_params, post_str, res_r);
         } else {
             // Error
         }
