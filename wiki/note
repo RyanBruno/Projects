@@ -1,0 +1,16 @@
+
+Form Saver
+ Two Jobs:
+    *Parse POST requests
+    *Save File
+    Handle AAA
+    Signal Other program (fork exec?)
+
+Flow process
+
+uploads/<Name>/index.html
+||
+||
+mv markdown/<Name>/index.html archive/<Name>/index.html/<timestamp>
+mv uploads/<Name>/index.html markdown/<Name>/index.html
+
