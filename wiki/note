@@ -14,3 +14,7 @@ uploads/<Name>/index.html
 mv markdown/<Name>/index.html archive/<Name>/index.html/<timestamp>
 mv uploads/<Name>/index.html markdown/<Name>/index.html
 
+GIT intigration:
+
+    The entire thing needs to be one git repo
+
