@@ -10,9 +10,35 @@ Gensis means the beginnings. It tells the story of
 [Isaac](../Isaac), and
 [Jacob and his sons](../Jacob).
 
-#### God\'s Creation
+##### Table of Contents
+
+[1 Summary](#summary)
+
+[1.1 God\'s Creation](#gods-creation)
+
+[1.2 The Fall of Man](#the-fall-of-man)
+
+[1.3 Cain and Abel](#cain-and-abel)
+
+[1.4 Noah and The Flood](#noah-and-the-flood)
+
+[1.5 Abram (Abraham)](#abram-abraham)
+
+[1.6 Issac](#issac)
+
+[1.7 Jacob](#jacob)
+
+[1.8 Joseph](#joseph)
+
+[1.9 Conclusion](#conclusion)
+
+[2 Themes and Patterns](#themes-and-patterns)
+
+#### Summary
 
 ---
+
+#### God\'s Creation
 
 The first sentence of the Bible are:
 
@@ -45,8 +71,6 @@ named [Adam](../Adam_and_Eve) and after seeing that Adam needed a helper
 he create Eve.
 
 #### The Fall of Man
-
----
 
 After God\'s creation the Adam and Eve were located in the
 [Garden of Eden](../Garden_of_Eden); a beautiful garden of flowing
@@ -83,8 +107,6 @@ So God banished them from The Garden and guarded it with flaming swords.
 
 #### Cain and Abel
 
----
-
 [Cain and Abel](../Cain_and_Abel) were the direct descendants of Adam and
 Eve.
 The Bible tells us a story of when both Cain and Abel bring an offering
@@ -98,12 +120,10 @@ God then curses Cain to being a restless wanderer on the earth.
 
 #### Noah and The Flood
 
----
-
 Descendants of Adam and Eve populate the earth over time.
 God looks down on earth and sees that mankind is wicked in every
 inclination.
-[Noah](../Noah), a descendant of [Seth](../Seth) not Cain, was righteous
+[Noah](../Noah), a descendant of [Seth](../Seth) and not Cain, was righteous
 unlike the rest of mankind.
 So God told Noah to build an ark and put himself, his wife, his three
 sons, three daughter-in-laws, and two of every animal on the ark.
@@ -120,8 +140,6 @@ GEN 8:21 NIV
 From Noah, then again, humans populated the Earth.
 
 #### Abram (Abraham)
-
----
 
 After the Flood God entered into a covenant with [Abram](../Abraham).
 Abram, like his family predecessor Noah, was a man of great faith.
@@ -176,8 +194,6 @@ God provided a ram in-place of Issac as an offering.
 
 #### Issac
 
----
-
 Issac sent his servant out and his servant, with the help of God, found a
 woman named [Rebekah](../Rebekah) as a wife for Issac.
 Rebekah became pregnant with twins [Jacob](../Jacob) and
@@ -195,8 +211,6 @@ With his mother\'s advice Jacob feared Esau would try to kill him.
 So he fled [Beersheba](../Beersheba) for [Harran](../Harren).
 
 #### Jacob
-
----
 
 Jacob\'s tricks are what led him to flee Beersheba for Harran.
 Jacob stayed with a man named [Laben](../Laben), Rebekah\'s brother,
@@ -243,8 +257,6 @@ which are sometime referred to as
 
 #### Joseph
 
----
-
 [Joseph](../Joseph) was the most recent son of Jacob.
 As such he was Jacob\'s favorite son and Jacob made an ornate robe for
 him.
@@ -264,17 +276,52 @@ So Joseph was thrown in jail.
 But the Lord was still with him.
 
 Years later and through a series of events Joseph was given the chance
-to interpret dreams for the Pharaoh.
+to interpret dreams for the [Pharaoh](../Pharaoh1).
 Joseph told the Pharaoh that Egypt would have seven years of abundance
 followed by seven years of drought.
+These dreams were given by God and correctly interpreted by Joseph.
+So the Pharaoh, trusting in Joseph, put Joseph in charge of the harvest.
 
-<!-- Brothers returned -->
+During the seven years of abundance Joseph stored the extra grain for
+Egypt so they may have enough for the next seven years.
+The famine hit add all countries including 
+[Jacob](../Jacob) and Joseph\'s twelve brothers.
+Now Joseph\'s brothers did not know of Joseph\'s position and did not
+recognize him when they saw him.
+But Joseph recognized his brother.
+
+Joseph\'s brothers begged to buy grain from Joseph by bowing down and
+calling themselves servants of Joseph.
+While Joseph initial tested his brothers by calling them spies
+and forcing them to bring their youngest brother, Joseph eventually
+treated them nicely and forgave them for mistreating him.
+
+```
+"I am your brother Joseph, the one you sold into Egypt! And now, do not be distressed and do not be angry with yourselves for selling me here, because it was to save lives that God sent me ahead of you. For two years now there has been famine in the land, and for the next five years there will be no plowing and reaping . But God send me ahead of you to preserve for you a remnant of earth and to save your lives by a greatdeliverance."
+GEN 45:4-7 NIV
+```
+
+The brothers were send back to Jacob with carts, animals, and supplies
+in order to bring their entire family to Egypt.
+When Jacob heard all that happened he moved his entire family into Egypt
+to survive the famine and see his some before he dies.
+
+#### Conclusion
+
+The famine in Egypt only got worse but this also allowed Joseph to grow
+his own wealth and power.
+After seventeen years in Egypt Jacob became ill.
+He gave a blessing to his son and died in Egypt.
+Joseph reassured his brothers that they were forgiven and the
+descendants of Jacob stayed in Egypt for many generations.
+This setups the next book of the Bible
+[Exodus](../Exodus).
 
 #### Themes and Patterns
 
 ---
 
-**Creation Through Speech**
+#### Creation Through Speech
 
 The Bible tells us God created all things through speech.
 Perhaps Gods actions were actually something different then speech but
@@ -287,16 +334,16 @@ our world was created by the unbounded imagination of an all powerful God.
 This encourages us to explore our world at any depth because all
 depths were imagined and described by God.
 
-**God\'s Own Image**
+#### God\'s Own Image
 
-When God created man he created man "in his own image".
+When God created man he created man \"in his own image\".
 This means man and all of mankind were build with some properties of God
 while not being God.
 It is believed that man was created in God\'s images into to be God\'s
 representative on earth.
 This is also why we are gifted with our own [free will](../Free_Will).
 
-**Man\'s Desire to Be Above God**
+#### Man\'s Desire to Be Above God
 
 A common theme of the Bible are stories of mankind\'s desire to be above
 God and the consequences that follow.
@@ -307,12 +354,12 @@ It is also shown in the story of
 [The Tower of Babel](../The_Tower_of_Babel).
 
 
-**The Garden of Eden was not a Prison**
+#### The Garden of Eden was not a Prison
 
-**Sacrifice**
+#### Sacrifice
 
-**Punishment and Mercy**
+#### Punishment and Mercy
 
-**God Testing Abraham**
+#### God Testing Abraham
 
-**God Humbling Jacob and Joseph**
+#### God Humbling Jacob and Joseph

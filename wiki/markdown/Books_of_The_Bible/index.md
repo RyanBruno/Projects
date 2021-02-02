@@ -24,3 +24,11 @@ of it consists of ancient Jewish law.
 [Abraham](../Abraham),
 [Isaac](../Isaac), and
 [Jacob and his sons](../Jacob).
+
+[Exodus](../Exodus)
+: Exodus tells the story of God liberating the enslaved
+[Israelites](../The_Israelites)
+from Egypt with [Moses](../Moses) as their leader.
+God then enters into a [convenant](../Covenant) with
+the Israelites at
+[Mount Sinai](../Mount_Sinai).
