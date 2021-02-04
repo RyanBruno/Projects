@@ -6,25 +6,16 @@ then
     exit
 fi
 
-NAME=$(echo ${1} | cut -d'/' -f2); export NAME
+NAME=$(echo ${1} | cut -d'/' -f1); export NAME
 
-if [ ! -d pages/$NAME/ ]
-then
-    mkdir pages/$NAME/
-fi
+mkdir -p pages/$NAME/
 
-if [ -f uploads$1 ]
-then
-    sed -e 's/\r//' -i uploads$1
-    mv uploads$1 markdown/$NAME
-fi
-
-if [ -f markdown/$NAME/index.md ]
+if [ -f $NAME/index.md ]
 then
 
-    INDEX_SRC=$(cat markdown/$NAME/index.md); export INDEX_SRC
+    INDEX_SRC=$(cat $NAME/index.md); export INDEX_SRC
 
-    INDEX=$(pandoc -t html markdown/$NAME/index.md); export INDEX
+    INDEX=$(pandoc -t html $NAME/index.md); export INDEX
 fi
 
 find templates/ -type f |

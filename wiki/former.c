@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 
 #include <string.h>
@@ -18,7 +19,7 @@
 #define DEFAULT_NEXT "/"
 #define UPLOAD_PATH "uploads"
 #define UPLOAD_PATH_LEN 7
-#define SIGNAL_PROGRAM "./generate.sh"
+#define SIGNAL_PROGRAM "./signal.sh"
 #define NEXT_KEY "next"
 
 /* BEGIN: Taken from tutorial */
@@ -76,7 +77,9 @@ struct connection_info_struct
 {
     char *error_string; // Static string.
     const char* url;    // Handled by microhttpd
-    int fd;             // closed == -1 --- open != -1
+    char *data;         // Needs to be freed
+    char *data_ptr;
+    size_t data_cap;
     struct MHD_PostProcessor *postprocessor;
 };
 
@@ -94,44 +97,42 @@ iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
         return MHD_NO;
     }
 
-    /* Open file */
-    if (con_info->fd == -1) {
-        char buf[1024];
-        size_t url_len;
+    /* alloc data */
+    if (con_info->data == NULL) {
 
-        url_len = strlen(con_info->url);
+        con_info->data = malloc(4096);
 
-        if (url_len + UPLOAD_PATH_LEN >= sizeof(buf)) {
-            con_info->error_string = "Path too long\n";
+        if (con_info->data == NULL) {
+            con_info->error_string = "Out of memory\n";
             return MHD_NO;
         }
 
-        memcpy(buf, UPLOAD_PATH, UPLOAD_PATH_LEN);
-
-        memcpy(buf + UPLOAD_PATH_LEN,
-                con_info->url,
-                url_len + 1);
-
-        con_info->fd = open(buf,
-                O_CREAT | O_WRONLY | O_TRUNC,
-                0640);
-
-        if (con_info->fd < 0) {
-            con_info->error_string = "Could not open file\n";
-            return MHD_NO;
-        }
+        con_info->data_ptr = con_info->data;
+        con_info->data_cap = 4096;
     }
 
     /* Write data */
     if (size > 0) {
-        size_t written;
 
-        written = write(con_info->fd, data, size);
+        /* Resize if needed */
+        if (con_info->data_ptr - con_info->data + size > con_info->data_cap) {
+            size_t ptr_offset;
 
-        if (written != size) {
-            con_info->error_string = "Could not write to file\n";
-            return MHD_NO;
+            ptr_offset = con_info->data_ptr - con_info->data;
+            con_info->data_cap *= 2;
+
+            con_info->data = realloc(con_info->data, con_info->data_cap);
+
+            if (con_info->data == NULL) {
+                con_info->error_string = "Out of memory\n";
+                return MHD_NO;
+            }
+
+            con_info->data_ptr = con_info->data + ptr_offset;
         }
+
+        memcpy(con_info->data_ptr, data, size);
+        con_info->data_ptr += size;
     }
 
     /* Success */
@@ -146,7 +147,7 @@ void request_completed(void *cls, struct MHD_Connection *connection,
 
     if (con_info == NULL) return;
 
-    if (con_info->fd != -1) close(con_info->fd);
+    if (con_info->data != NULL) free(con_info->data);
     MHD_destroy_post_processor(con_info->postprocessor);        
     free(con_info);
 }
@@ -191,7 +192,7 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
         /* Setup struct */
         con_info->url = url;
         con_info->error_string = NULL;
-        con_info->fd = -1;
+        con_info->data = NULL;
 
         /* Create postprocessor */
         con_info->postprocessor = MHD_create_post_processor(connection,
@@ -231,12 +232,27 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
         return MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
     }
 
+    /* TODO Error handling */
     /* Signal external program */
+    int p[2];
+    if (pipe(p) < -1) {
+        // ERROR
+    }
+
     if (SIGNAL_PROGRAM != NULL)
     switch (vfork()) {
     case 0:
+        close(p[1]);
         // Child
-        execlp(SIGNAL_PROGRAM, SIGNAL_PROGRAM, url, NULL);
+        if (close(0) < 0) {
+            // Error
+        }
+        if (dup(p[0]) < 0) {
+            // Error
+        }
+
+        execlp(SIGNAL_PROGRAM, SIGNAL_PROGRAM, url + 1,
+                "7f84c21a0aa62acb5be82c4fd9936fa424d35979", NULL);
         break;
     case -1:
         // Error
@@ -245,8 +261,22 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
         break;
     default:
         // Parent
+        close(p[0]);
+        for (size_t w = 0; ;) {
+            size_t t;
+
+            if (w >= con_info->data_ptr - con_info->data) break;
+
+            t = write(p[1], con_info->data + w, (con_info->data_ptr - con_info->data) - w);
+            w += t;
+        }
+
+
+        close(p[1]);
+        wait(NULL);
         break;
     }
+    /* END TODO Error handling */
 
     /* Redirect user */
     next = MHD_lookup_connection_value(connection,
