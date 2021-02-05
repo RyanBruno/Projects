@@ -169,6 +169,8 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
     struct connection_info_struct *con_info = *con_cls;
     struct MHD_Response *response;
     const char* next;
+    char* user;
+    char* pass;
 
     /* POST only */
     if (strcmp(method, "POST")) {
@@ -184,6 +186,31 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
                             MHD_RESPMEM_PERSISTENT);
 
         return MHD_queue_response(connection, MHD_HTTP_OK, response);
+    }
+
+    user = MHD_basic_auth_get_username_password(connection,
+                                                &pass);
+    if (user == NULL || pass == NULL) {
+        struct MHD_Response *response;
+
+        response = MHD_create_response_from_buffer(0, NULL,
+                            MHD_RESPMEM_PERSISTENT);
+
+        return MHD_queue_basic_auth_fail_response(connection,
+                                                "Please login.",
+                                                response);
+    }
+
+    if (strcmp(user, "ryan") || strcmp(pass, "hardpass")) {
+        struct MHD_Response *response;
+
+        response = MHD_create_response_from_buffer(0, NULL,
+                            MHD_RESPMEM_PERSISTENT);
+
+        return MHD_queue_basic_auth_fail_response(connection,
+                                                "Incorrect password. Please Login.",
+                                                response);
+
     }
 
     /* Connection setup */
