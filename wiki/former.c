@@ -79,6 +79,7 @@ struct connection_info_struct
     const char* url;    // Handled by microhttpd
     char *data;         // Needs to be freed
     char *data_ptr;
+    char *commit;
     size_t data_cap;
     struct MHD_PostProcessor *postprocessor;
 };
@@ -90,6 +91,12 @@ iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
     uint64_t off, size_t size)
 {
     struct connection_info_struct *con_info = coninfo_cls;
+
+    if (!strcmp(key, "commit")) {
+
+        con_info->commit = strdup(data);
+        return MHD_YES;
+    }
 
     /* Check key */
     if (strcmp(key, KEY)) {
@@ -148,6 +155,7 @@ void request_completed(void *cls, struct MHD_Connection *connection,
     if (con_info == NULL) return;
 
     if (con_info->data != NULL) free(con_info->data);
+    if (con_info->commit != NULL) free(con_info->commit);
     MHD_destroy_post_processor(con_info->postprocessor);        
     free(con_info);
 }
@@ -252,7 +260,7 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
         }
 
         execlp(SIGNAL_PROGRAM, SIGNAL_PROGRAM, url + 1,
-                "7f84c21a0aa62acb5be82c4fd9936fa424d35979", NULL);
+                con_info->commit, NULL);
         break;
     case -1:
         // Error
