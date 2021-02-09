@@ -13,7 +13,7 @@
 
 #define SERVERKEYFILE "server.key"
 #define SERVERCERTFILE "server.pem"
-#define PORT 8888
+#define PORT 8889
 #define KEY "markdown"
 #define POSTBUFFERSIZE  512
 #define DEFAULT_NEXT "/"
@@ -80,10 +80,18 @@ struct connection_info_struct
     char *data;         // Needs to be freed
     char *data_ptr;
     char *commit;
+    char *filename;
     size_t data_cap;
     struct MHD_PostProcessor *postprocessor;
 };
 
+
+/* TODO 
+ * Save data of key to data. Pipe it in.
+ * All other keys should be saved and assumed one packet.
+ * passed ./<program> <url_path> <filename> <key>=<value> <key>=<value>...
+ * url_path and filename done
+ */
 static int 
 iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
     const char *filename, const char *content_type,
@@ -91,6 +99,10 @@ iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
     uint64_t off, size_t size)
 {
     struct connection_info_struct *con_info = coninfo_cls;
+    printf("fname: %s\n", filename);
+    printf("ctype: %s\n", content_type);
+    printf("tencoding: %s\n", transfer_encoding);
+    printf("key: %s\n", key);
 
     if (!strcmp(key, "commit")) {
 
@@ -102,6 +114,11 @@ iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
     if (strcmp(key, KEY)) {
         con_info->error_string = "Unknown key\n";
         return MHD_NO;
+    }
+
+    if (filename != NULL && con_info->filename == NULL) {
+        printf("Fname: %s\n", filename);
+        con_info->filename = strdup(filename);
     }
 
     /* alloc data */
@@ -156,6 +173,7 @@ void request_completed(void *cls, struct MHD_Connection *connection,
 
     if (con_info->data != NULL) free(con_info->data);
     if (con_info->commit != NULL) free(con_info->commit);
+    if (con_info->filename != NULL) free(con_info->filename);
     MHD_destroy_post_processor(con_info->postprocessor);        
     free(con_info);
 }
@@ -228,6 +246,8 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
         con_info->url = url;
         con_info->error_string = NULL;
         con_info->data = NULL;
+        con_info->commit = NULL;
+        con_info->filename = NULL;
 
         /* Create postprocessor */
         con_info->postprocessor = MHD_create_post_processor(connection,
@@ -286,7 +306,11 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
             // Error
         }
 
+        if (con_info->filename == NULL)
+            con_info->filename = strdup("");
+
         execlp(SIGNAL_PROGRAM, SIGNAL_PROGRAM, url + 1,
+                con_info->filename,
                 con_info->commit, NULL);
         break;
     case -1:
@@ -339,7 +363,7 @@ int main(int argc, const char* argv[])
         printf ("The key/certificate files could not be read.\n");
         return 1;
     }
-    daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD /*| MHD_USE_TLS*/,
+    daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD | MHD_USE_TLS,
                               PORT, NULL, NULL,
                         (MHD_AccessHandlerCallback) &answer_to_connection, NULL,
                         MHD_OPTION_NOTIFY_COMPLETED, &request_completed, NULL,
