@@ -99,10 +99,10 @@ iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
     uint64_t off, size_t size)
 {
     struct connection_info_struct *con_info = coninfo_cls;
-    printf("fname: %s\n", filename);
-    printf("ctype: %s\n", content_type);
-    printf("tencoding: %s\n", transfer_encoding);
-    printf("key: %s\n", key);
+    //printf("fname: %s\n", filename);
+    //printf("ctype: %s\n", content_type);
+    //printf("tencoding: %s\n", transfer_encoding);
+    //printf("key: %s\n", key);
 
     if (!strcmp(key, "commit")) {
 
@@ -117,7 +117,7 @@ iterate_post(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
     }
 
     if (filename != NULL && con_info->filename == NULL) {
-        printf("Fname: %s\n", filename);
+        //printf("Fname: %s\n", filename);
         con_info->filename = strdup(filename);
     }
 
@@ -189,6 +189,7 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
     const char* next;
     char* user;
     char* pass;
+    printf("%s\n", url);
 
     /* POST only */
     if (strcmp(method, "POST")) {
@@ -342,6 +343,7 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
                                            MHD_GET_ARGUMENT_KIND,
                                            NEXT_KEY);
 
+    printf("NEXT = %s\n", next);
     if (next == NULL) next = DEFAULT_NEXT;
 
     response = MHD_create_response_from_buffer(0, NULL, MHD_RESPMEM_PERSISTENT);
@@ -363,7 +365,7 @@ int main(int argc, const char* argv[])
         printf ("The key/certificate files could not be read.\n");
         return 1;
     }
-    daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD | MHD_USE_TLS,
+    daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD /*| MHD_USE_TLS */,
                               PORT, NULL, NULL,
                         (MHD_AccessHandlerCallback) &answer_to_connection, NULL,
                         MHD_OPTION_NOTIFY_COMPLETED, &request_completed, NULL,
