@@ -10,7 +10,7 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export XAUTHORITY="$XDG_RUNTIME_DIR"/Xauthority
 
 # Adds `~/.local/bin/` and all subdirectories to $PATH
-export PATH=$PATH:~/TheRepository/scripts/
+export PATH=$PATH:~/TheRepository/dist/scripts/:~/TheRepository/dist/bin/
 export EDITOR="vim"
 export TERMINAL="st"
 
