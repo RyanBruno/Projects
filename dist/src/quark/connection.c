@@ -102,9 +102,9 @@ connection_serve(struct connection *c, const struct server *srv)
 		http_prepare_response(&c->req, &c->res, srv);
 response:
 		/* generate response header */
-		if ((s = http_prepare_header_buf(&c->res, &c->buf))) {
+		if ((s = http_prepare_header_buf(&c->res, &c->buf, srv))) {
 			http_prepare_error_response(&c->req, &c->res, s);
-			if ((s = http_prepare_header_buf(&c->res, &c->buf))) {
+			if ((s = http_prepare_header_buf(&c->res, &c->buf, srv))) {
 				/* couldn't generate the header, we failed for good */
 				c->res.status = s;
 				goto err;

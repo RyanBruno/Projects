@@ -54,7 +54,7 @@ handlesignals(void(*hdl)(int))
 static void
 usage(void)
 {
-	const char *opts = "[-u user] [-g group] [-n num] [-d dir] [-l] "
+	const char *opts = "[-u user] [-g group] [-n num] [-d dir] [-l] [-c secs]"
 	                   "[-i file] [-v vhost] ... [-m map] ...";
 
 	die("usage: %s -p port [-h host] %s\n"
@@ -70,6 +70,7 @@ main(int argc, char *argv[])
 	struct rlimit rlim;
 	struct server srv = {
 		.docindex = "index.html",
+		.cache_max_age = -1,
 	};
 	size_t i;
 	int *insock = NULL, status = 0;
@@ -84,6 +85,13 @@ main(int argc, char *argv[])
 	char *group = "nogroup";
 
 	ARGBEGIN {
+	case 'c':
+		err = NULL;
+		srv.cache_max_age = strtonum(EARGF(usage()), 0, INT_MAX, &err);
+		if (err) {
+			die("strtonum '%s': %s", EARGF(usage()), err);
+		}
+		break;
 	case 'd':
 		servedir = EARGF(usage());
 		break;

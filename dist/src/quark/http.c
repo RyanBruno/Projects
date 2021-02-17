@@ -58,7 +58,8 @@ const char *res_field_str[] = {
 };
 
 enum status
-http_prepare_header_buf(const struct response *res, struct buffer *buf)
+http_prepare_header_buf(const struct response *res, struct buffer *buf,
+                         const struct server *srv)
 {
 	char tstmp[FIELD_MAX];
 	size_t i;
@@ -72,12 +73,24 @@ http_prepare_header_buf(const struct response *res, struct buffer *buf)
 	}
 
 	/* write data */
-	if (buffer_appendf(buf,
-	                   "HTTP/1.1 %d %s\r\n"
-	                   "Date: %s\r\n"
-	                   "Connection: close\r\n",
-	                   res->status, status_str[res->status], tstmp)) {
-		goto err;
+	if (srv->cache_max_age < 0) {
+		if (buffer_appendf(buf,
+		                   "HTTP/1.1 %d %s\r\n"
+		                   "Date: %s\r\n"
+		                   "Connection: close\r\n",
+		                   res->status, status_str[res->status], tstmp)) {
+			goto err;
+		}
+	} else {
+		if (buffer_appendf(buf,
+		                    "HTTP/1.1 %d %s\r\n"
+		                    "Date: %s\r\n"
+		                    "Cache-Control: max-age=%d\r\n"
+		                    "Connection: close\r\n",
+		                    res->status, status_str[res->status], tstmp,
+		                    srv->cache_max_age)) {
+			goto err;
+		}
 	}
 
 	for (i = 0; i < NUM_RES_FIELDS; i++) {

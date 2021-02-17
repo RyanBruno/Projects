@@ -85,7 +85,8 @@ struct response {
 	} file;
 };
 
-enum status http_prepare_header_buf(const struct response *, struct buffer *);
+enum status http_prepare_header_buf(const struct response *, struct buffer *,
+                                    const struct server *);
 enum status http_send_buf(int, struct buffer *);
 enum status http_recv_header(int, struct buffer *, int *);
 enum status http_parse_header(const char *, struct request *);

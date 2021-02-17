@@ -1,0 +1,156 @@
+From e71b9b7aac8c8c86fe4e4967d7bced3bbf157f56 Mon Sep 17 00:00:00 2001
+From: Ryan Bruno <ryan@rbruno.com>
+Date: Wed, 17 Feb 2021 17:28:02 -0500
+Subject: [PATCH] Added Cache-Control option for responses.
+
+This functionality is enabled by passing the -c <int> option on the
+command line. Quark will then return Cache-Control: max-age=<int> to
+every response. Good for forward proxies and local browser caching.
+---
+ connection.c |  4 ++--
+ http.c       | 27 ++++++++++++++++++++-------
+ http.h       |  3 ++-
+ main.c       | 10 +++++++++-
+ quark.1      |  3 +++
+ server.h     |  1 +
+ 6 files changed, 37 insertions(+), 11 deletions(-)
+
+diff --git a/connection.c b/connection.c
+index 8aca2ab..3b7270b 100644
+--- a/connection.c
++++ b/connection.c
+@@ -102,9 +102,9 @@ connection_serve(struct connection *c, const struct server *srv)
+ 		http_prepare_response(&c->req, &c->res, srv);
+ response:
+ 		/* generate response header */
+-		if ((s = http_prepare_header_buf(&c->res, &c->buf))) {
++		if ((s = http_prepare_header_buf(&c->res, &c->buf, srv))) {
+ 			http_prepare_error_response(&c->req, &c->res, s);
+-			if ((s = http_prepare_header_buf(&c->res, &c->buf))) {
++			if ((s = http_prepare_header_buf(&c->res, &c->buf, srv))) {
+ 				/* couldn't generate the header, we failed for good */
+ 				c->res.status = s;
+ 				goto err;
+diff --git a/http.c b/http.c
+index 5b9dade..87fefdb 100644
+--- a/http.c
++++ b/http.c
+@@ -58,7 +58,8 @@ const char *res_field_str[] = {
+ };
+ 
+ enum status
+-http_prepare_header_buf(const struct response *res, struct buffer *buf)
++http_prepare_header_buf(const struct response *res, struct buffer *buf,
++                         const struct server *srv)
+ {
+ 	char tstmp[FIELD_MAX];
+ 	size_t i;
+@@ -72,12 +73,24 @@ http_prepare_header_buf(const struct response *res, struct buffer *buf)
+ 	}
+ 
+ 	/* write data */
+-	if (buffer_appendf(buf,
+-	                   "HTTP/1.1 %d %s\r\n"
+-	                   "Date: %s\r\n"
+-	                   "Connection: close\r\n",
+-	                   res->status, status_str[res->status], tstmp)) {
+-		goto err;
++	if (srv->cache_max_age < 0) {
++		if (buffer_appendf(buf,
++		                   "HTTP/1.1 %d %s\r\n"
++		                   "Date: %s\r\n"
++		                   "Connection: close\r\n",
++		                   res->status, status_str[res->status], tstmp)) {
++			goto err;
++		}
++	} else {
++		if (buffer_appendf(buf,
++		                    "HTTP/1.1 %d %s\r\n"
++		                    "Date: %s\r\n"
++		                    "Cache-Control: max-age=%d\r\n"
++		                    "Connection: close\r\n",
++		                    res->status, status_str[res->status], tstmp,
++		                    srv->cache_max_age)) {
++			goto err;
++		}
+ 	}
+ 
+ 	for (i = 0; i < NUM_RES_FIELDS; i++) {
+diff --git a/http.h b/http.h
+index d08a3b4..ba18583 100644
+--- a/http.h
++++ b/http.h
+@@ -85,7 +85,8 @@ struct response {
+ 	} file;
+ };
+ 
+-enum status http_prepare_header_buf(const struct response *, struct buffer *);
++enum status http_prepare_header_buf(const struct response *, struct buffer *,
++                                    const struct server *);
+ enum status http_send_buf(int, struct buffer *);
+ enum status http_recv_header(int, struct buffer *, int *);
+ enum status http_parse_header(const char *, struct request *);
+diff --git a/main.c b/main.c
+index dac8eb6..e5c9a62 100644
+--- a/main.c
++++ b/main.c
+@@ -54,7 +54,7 @@ handlesignals(void(*hdl)(int))
+ static void
+ usage(void)
+ {
+-	const char *opts = "[-u user] [-g group] [-n num] [-d dir] [-l] "
++	const char *opts = "[-u user] [-g group] [-n num] [-d dir] [-l] [-c secs]"
+ 	                   "[-i file] [-v vhost] ... [-m map] ...";
+ 
+ 	die("usage: %s -p port [-h host] %s\n"
+@@ -70,6 +70,7 @@ main(int argc, char *argv[])
+ 	struct rlimit rlim;
+ 	struct server srv = {
+ 		.docindex = "index.html",
++		.cache_max_age = -1,
+ 	};
+ 	size_t i;
+ 	int *insock = NULL, status = 0;
+@@ -84,6 +85,13 @@ main(int argc, char *argv[])
+ 	char *group = "nogroup";
+ 
+ 	ARGBEGIN {
++	case 'c':
++		err = NULL;
++		srv.cache_max_age = strtonum(EARGF(usage()), 0, INT_MAX, &err);
++		if (err) {
++			die("strtonum '%s': %s", EARGF(usage()), err);
++		}
++		break;
+ 	case 'd':
+ 		servedir = EARGF(usage());
+ 		break;
+diff --git a/quark.1 b/quark.1
+index d752cc7..d2bbc21 100644
+--- a/quark.1
++++ b/quark.1
+@@ -43,6 +43,9 @@ conditional "If-Modified-Since"-requests (RFC 7232), range requests
+ hidden files and directories.
+ .Sh OPTIONS
+ .Bl -tag -width Ds
++.It Fl c Ar secs
++Enables the Cache-Control response header with max-age set to
++.Ar secs.
+ .It Fl d Ar dir
+ Serve
+ .Ar dir
+diff --git a/server.h b/server.h
+index 39232f8..6e9be35 100644
+--- a/server.h
++++ b/server.h
+@@ -28,6 +28,7 @@ struct server {
+ 	size_t vhost_len;
+ 	struct map *map;
+ 	size_t map_len;
++	int cache_max_age;
+ };
+ 
+ void server_init_thread_pool(int *, size_t, size_t, const struct server *);
+-- 
+2.30.1
+

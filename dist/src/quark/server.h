@@ -28,6 +28,7 @@ struct server {
 	size_t vhost_len;
 	struct map *map;
 	size_t map_len;
+	int cache_max_age;
 };
 
 void server_init_thread_pool(int *, size_t, size_t, const struct server *);

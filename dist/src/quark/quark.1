@@ -43,6 +43,9 @@ conditional "If-Modified-Since"-requests (RFC 7232), range requests
 hidden files and directories.
 .Sh OPTIONS
 .Bl -tag -width Ds
+.It Fl c Ar secs
+Enables the Cache-Control response header with max-age set to
+.Ar secs.
 .It Fl d Ar dir
 Serve
 .Ar dir
