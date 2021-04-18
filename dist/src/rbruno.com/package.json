@@ -1,0 +1,30 @@
+{
+  "name": "vue3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^7.24.0",
+    "eslint-plugin-vue": "^7.8.0",
+    "webpack-cli": "^4.6.0",
+    "webpack-dev-server": "^3.11.2"
+  },
+  "dependencies": {
+    "babel-loader": "^8.2.2",
+    "eslint-config-eslint": "^7.0.0",
+    "eslint-webpack-plugin": "^2.5.3",
+    "html-loader": "^2.1.2",
+    "html-webpack-plugin": "^5.3.1",
+    "markdown-loader": "^6.0.0",
+    "vue": "^2.6.12",
+    "vue-loader": "^15.9.6",
+    "vue-router": "^3.5.1",
+    "vue-template-compiler": "^2.6.12",
+    "webpack": "^5.30.0"
+  }
+}
