@@ -8,6 +8,7 @@
 #include "config.h"
 #include "server.h"
 #include "util.h"
+#include "proxy.h"
 
 enum req_field {
 	REQ_HOST,
@@ -91,7 +92,8 @@ enum status http_send_buf(int, struct buffer *);
 enum status http_recv_header(int, struct buffer *, int *);
 enum status http_parse_header(const char *, struct request *);
 void http_prepare_response(const struct request *, struct response *,
-                           const struct server *);
+                           const struct server *,
+                           struct proxy_request *);
 void http_prepare_error_response(const struct request *,
                                  struct response *, enum status);
 

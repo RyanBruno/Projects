@@ -728,7 +728,8 @@ parse_range(const char *str, size_t size, size_t *lower, size_t *upper)
 
 void
 http_prepare_response(const struct request *req, struct response *res,
-                      const struct server *srv)
+                      const struct server *srv,
+                      struct proxy_request *req_proxy_r)
 {
 	enum status s, tmps;
 	struct in6_addr addr;
@@ -797,8 +798,15 @@ http_prepare_response(const struct request *req, struct response *res,
 		s = tmps;
 		goto err;
 	}
+	/* Book */
 	if (stat(res->internal_path, &st) < 0) {
 		s = (errno == EACCES) ? S_FORBIDDEN : S_NOT_FOUND;
+
+		if (s == S_NOT_FOUND) { // && gateway != NULL
+            req_proxy_r->req = req;
+			//reverse_proxy_gateway(req, res, srv);
+			return;
+		}
 		goto err;
 	}
 

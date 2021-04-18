@@ -22,6 +22,7 @@ server_worker(void *data)
 	queue_event *event = NULL;
 	struct connection *connection, *c, *newc;
 	struct worker_data *d = (struct worker_data *)data;
+    struct proxy_request proxy_req;
 	int qfd;
 	ssize_t nready;
 	size_t i;
@@ -92,8 +93,32 @@ server_worker(void *data)
 					continue;
 				}
 			} else {
+
+                proxy_req.req = NULL;
+
 				/* serve existing connection */
-				connection_serve(c, d->srv);
+				connection_serve(c, d->srv, &proxy_req);
+
+                if (proxy_req.req != NULL) {
+                    if (!(newc = proxy_connection_create(NULL,
+                                            connection,
+                                            d->nslots))) {
+                        /* error (bad gateway?) */
+                    }
+
+                    /*
+                     * add event to the interest list
+                     * (we want IN, because we start
+                     * with receiving the header)
+                     */
+                    if (queue_add_fd(qfd, newc->fd,
+                                     QUEUE_EVENT_IN,
+                             0, newc) < 0) {
+                        /* not much we can do here */
+                        continue;
+                    }
+                    /* Set c->state to waiting? */
+                }
 
 				if (c->fd == 0) {
 					/* we are done */

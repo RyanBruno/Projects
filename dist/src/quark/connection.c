@@ -65,7 +65,8 @@ connection_reset(struct connection *c)
 }
 
 void
-connection_serve(struct connection *c, const struct server *srv)
+connection_serve(struct connection *c, const struct server *srv,
+                 struct proxy_request *req_proxy_r)
 {
 	enum status s;
 	int done;
@@ -99,7 +100,11 @@ connection_serve(struct connection *c, const struct server *srv)
 		}
 
 		/* prepare response struct */
-		http_prepare_response(&c->req, &c->res, srv);
+		http_prepare_response(&c->req, &c->res, srv, req_proxy_r);
+        if (req_proxy_r->req != NULL) {
+            return;
+        }
+
 response:
 		/* generate response header */
 		if ((s = http_prepare_header_buf(&c->res, &c->buf, srv))) {
@@ -151,6 +156,7 @@ response:
 			return;
 		}
 		break;
+
 	default:
 		warn("serve: invalid connection state");
 		return;
@@ -160,7 +166,7 @@ err:
 	connection_reset(c);
 }
 
-static struct connection *
+struct connection *
 connection_get_drop_candidate(struct connection *connection, size_t nslots)
 {
 	struct connection *c, *minc;

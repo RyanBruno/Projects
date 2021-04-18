@@ -1,8 +1,8 @@
 
-.PHONY: quark former quark-clean former-clean
+.PHONY: rbruno.com quark former quark-clean former-clean
 
 
-all : quark former
+all : quark former rbruno.com
 
 clean : quark-clean former-clean
 
@@ -19,3 +19,6 @@ quark :
 former : 
 	cd former/ && make
 	cp former/former ../bin/
+
+rbruno.com : 
+	cd rbruno.com/ && npx webpack

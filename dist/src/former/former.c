@@ -365,8 +365,11 @@ int main(int argc, const char* argv[])
         printf ("The key/certificate files could not be read.\n");
         return 1;
     }
+
+    long port = strtol(argv[1], NULL, 10);
+
     daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD /*| MHD_USE_TLS */,
-                              PORT, NULL, NULL,
+                              port, NULL, NULL,
                         (MHD_AccessHandlerCallback) &answer_to_connection, NULL,
                         MHD_OPTION_NOTIFY_COMPLETED, &request_completed, NULL,
                         MHD_OPTION_HTTPS_MEM_KEY, key_pem,
@@ -375,7 +378,8 @@ int main(int argc, const char* argv[])
 
     if (daemon == NULL) return 1;
 
-    getchar();
+    //getchar();
+    while(1) {}
 
     MHD_stop_daemon (daemon);
     free(key_pem);
