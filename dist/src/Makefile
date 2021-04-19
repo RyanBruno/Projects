@@ -21,4 +21,4 @@ former :
 	cp former/former ../bin/
 
 rbruno.com : 
-	cd rbruno.com/ && npx webpack
+	cd rbruno.com/ && make
