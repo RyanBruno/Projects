@@ -19,12 +19,15 @@ CFLAGS = $(include_dirs) $(libs) -Wall -Wextra
 CXXFLAGS = $(CFLAGS)
 LDLIBS = -ltirpc -pthread
 
-.PHONY: all clean
+.PHONY: all clean todo
 
 all: node
 
-node: $(OBJFILES)
-	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+clean :
+	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) test node)
+
+todo:
+	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
 
 %.o: %.cpp Makefile
 	@$(CXX) -ggdb $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -DTEST -c $< -o $@
@@ -32,8 +35,5 @@ node: $(OBJFILES)
 %.o: %.c Makefile
 	@$(CC) -ggdb $(CFLAGS) -MMD -MP -DTEST -c $< -o $@
 
-todolist:
-	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
-
-clean :
-	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) test node)
+node: $(filter src/%,$(OBJFILES))
+	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
