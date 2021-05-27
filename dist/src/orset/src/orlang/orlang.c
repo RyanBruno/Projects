@@ -1,3 +1,4 @@
+#ifdef FALSE
 #include "../net/net.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -149,3 +150,4 @@ void* orlang_thread_fn(void* v)
     net_listen(8888, &nc);
     net_dispatch();
 }
+#endif

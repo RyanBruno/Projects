@@ -12,11 +12,11 @@ void sequence_init(struct sequence* seq, size_t seq_size) // Size must be > 1
 
 void sequence_push(struct sequence* seq, void* si_data)
 {
-    int i;
+    size_t i;
 
     for (i = 0;; i++) {
         if (i > seq->seq_size - 1) {
-            size_t nsize;
+            //size_t nsize;
 
             seq->seq_size *= 1.5;
             if (!(seq->seq_seq = realloc(seq->seq_seq, sizeof(struct sequence_item) * seq->seq_size)))

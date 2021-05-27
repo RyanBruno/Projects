@@ -1,3 +1,4 @@
+#ifdef FALSE
 #include "net.h"
 
 #include <stdlib.h>
@@ -171,3 +172,4 @@ void net_dispatch()
     event_base_dispatch(net_event_base);
 }
 
+#endif

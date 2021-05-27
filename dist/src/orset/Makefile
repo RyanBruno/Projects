@@ -1,12 +1,14 @@
-VPATH := src/orset/:
-VPATH += src/ospc/:
-VPATH += src/rpc/:
-VPATH += src/sequence/:
-VPATH += src/std_unordered_map/:
-VPATH += src/unordered_map/:
-VPATH += src/xdr_orset/:
-VPATH += src/:
-VPATH += tests/:
+PROJDIRS := src
+
+SRCFILES := $(shell find $(PROJDIRS) -type f -name "*.c*")
+HDRFILES := $(shell find $(PROJDIRS) -type f -name "*.h")
+OBJFILES := $(SRCFILES:.c=.o)
+OBJFILES := $(OBJFILES:.cpp=.o)
+#TSTFILES := $(patsubst %.c,%_t,$(SRCFILES))
+DEPFILES    := $(SRCFILES:.c=.d)
+DEPFILES    := $(DEPFILES:.cpp=.d)
+#TSTDEPFILES := $(patsubst %,%.d,$(TSTFILES))
+ALLFILES := $(SRCFILES) $(HDRFILES) $(AUXFILES)
 
 # For reference
 #.c  : $(CC) $(CPPFLAGS) $(CFLAGS) -c
@@ -14,40 +16,24 @@ VPATH += tests/:
 #.o  : $(CC) $(LDFLAGS) n.o $(LOADLIBES) $(LDLIBS)
 include_dirs = -I/usr/include/tirpc
 CFLAGS = $(include_dirs) $(libs) -Wall -Wextra
+CXXFLAGS = $(CFLAGS)
 LDLIBS = -ltirpc -pthread
 
-all : orset.o 
-all : ospc.o
-all : rpc.o
-all : sequence.o
-all : std_unordered_map.o
-all : xdr_orset.o
-all : config.o
-all : node.o
-all : init.o
+.PHONY: all clean
 
-node : orset.o
-node : ospc.o
-node : rpc.o
-node : std_unordered_map.o
-node : xdr_orset.o
-node : config.o
-node : node.o
-node : init.o
-	$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+all: node
 
-orset.o : unordered_map.h
-ospc.o : orset.h unordered_map.h
-rpc.o : node.h
-sequence.o : 
-std_unordered_map.o : unordered_map.h
-xdr_orset.o : orset.h unordered_map.h
-config.o :
-node.o : orset.h ospc.h xdr_orset.h config.h
-init.o : node.h
-test_all.o : test_orset.c test_xdr_orset.c test_ospc.c all
+node: $(OBJFILES)
+	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
+%.o: %.cpp Makefile
+	@$(CXX) -ggdb $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -DTEST -c $< -o $@
+
+%.o: %.c Makefile
+	@$(CC) -ggdb $(CFLAGS) -MMD -MP -DTEST -c $< -o $@
+
+todolist:
+	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
 
 clean :
-	rm -f *.o
-	rm -f test
-	rm -f node
+	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) test node)

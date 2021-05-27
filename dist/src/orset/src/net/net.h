@@ -1,4 +1,5 @@
 
+#ifdef FALSE
 #include <event2/buffer.h>
 
 /* net's own vectorized io struct.
@@ -29,3 +30,4 @@ void net_listen(int port, struct net_context_t* nc);
  * callbacks.
  */
 void net_dispatch();
+#endif
