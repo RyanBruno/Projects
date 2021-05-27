@@ -1,0 +1,12 @@
+export default {
+    page() {
+        const p = this.$root.page
+            .find(x => x.URI === this.URI);
+
+        if (!p) {
+            return { title: "Not Found", content: "" };
+        }
+
+        return p;
+    },
+};

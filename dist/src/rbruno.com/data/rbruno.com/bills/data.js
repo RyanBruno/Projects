@@ -1,4 +1,3 @@
-
 /* Date-based Record
  *  - UUID (uuidgen -t)
  *
@@ -7,7 +6,7 @@
  *  - value (json)           <- y
  *   - Amount (cents) = long <-
  *   - Company = string
- *   - Due Date = 
+ *   - Due Date =
  *   - PDF URI
  *
  *  - Maps
@@ -23,6 +22,14 @@
  *
  */
 export default {
+    headers: [
+        "Company",
+        "Category",
+        "Amount",
+        "Paid",
+        "Due",
+        "Bill",
+    ],
     records: [
         {
             uuid: "77872fed-96ba-40a4-b07d-c520d78f1cd4",
@@ -216,6 +223,7 @@ export default {
                 Bill: "04_Apr_Trash.pdf",
             },
         },
+
         /* Power, Sewer */
     ],
 };

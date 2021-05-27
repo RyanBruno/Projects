@@ -14,3 +14,11 @@
 # R
 **.RData
 **.Rhistory
+
+# NPM
+package-lock.json
+**/node_modules/
+
+# Secrets
+**.pem
+**.key

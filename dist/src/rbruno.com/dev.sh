@@ -2,4 +2,5 @@
 
 rm dist/*
 make
-firefox dist/*
+FILE=$(echo ./dist/*.html)
+firefox ${FILE}#/nexus/ &
