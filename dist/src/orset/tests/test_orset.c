@@ -1,4 +1,4 @@
-
+#ifdef TESTS_INTERNAL
 int test_orset_baseline()
 {
     struct orset os;
@@ -29,14 +29,14 @@ int test_orset_delete()
 {
     struct orset os;
     unsigned long hi_k;
-    unsigned long wrld_k;
-    unsigned long fb_k;
+    //unsigned long wrld_k;
+    //unsigned long fb_k;
 
     orset_create(&os, 1);
 
     hi_k = orset_add(&os, (void*) hi);
-    wrld_k = orset_add(&os, (void*) wrld);
-    fb_k = orset_add(&os, (void*) fb);
+    /*wrld_k = */orset_add(&os, (void*) wrld);
+    /*fb_k = */orset_add(&os, (void*) fb);
 
     orset_remove(&os, hi_k);
 
@@ -137,4 +137,4 @@ int test_orset_merge()
 
     return 0;
 }
-
+#endif

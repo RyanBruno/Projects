@@ -1,4 +1,5 @@
 
+#ifdef TESTS_INTERNAL
 int items_collected = 0;
 int test_ospc_baseline()
 {
@@ -157,3 +158,4 @@ int test_ospc_collect()
     if (r != 0) return -1;
     return 0;
 }
+#endif

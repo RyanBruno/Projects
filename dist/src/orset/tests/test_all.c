@@ -20,6 +20,7 @@ void run_test(int(*fn)(), char* name)
 }
 
 
+#define TESTS_INTERNAL
 #include "test_orset.c"
 #include "test_xdr_orset.c"
 #include "test_ospc.c"

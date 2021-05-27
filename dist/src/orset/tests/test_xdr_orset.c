@@ -1,4 +1,5 @@
 
+#ifdef TESTS_INTERNAL
 int test_xdr_orset_encode()
 {
     struct orset os;
@@ -15,3 +16,4 @@ int test_xdr_orset_encode()
 
     return xdr_orset(&xdr, &os) == 0;
 }
+#endif

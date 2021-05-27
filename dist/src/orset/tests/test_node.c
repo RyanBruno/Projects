@@ -1,5 +1,4 @@
-
-
+#ifdef TESTS_INTERNAL
 char* test_node_data = "127.0.0.1 100600\n127.0.0.1 100601\n127.0.0.1 100602\n";
 
 int test_node_config_parser()
@@ -23,3 +22,4 @@ int test_node_config_parser()
     if (peers[1].peer_procnum != 100601) return -1;
     return 0;
 }
+#endif
