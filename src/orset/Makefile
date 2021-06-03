@@ -25,7 +25,7 @@ LDLIBS = -ltirpc -pthread
 all: orset liborset.so test
 
 clean :
-	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) $(PCHDRS) test node liborset.so)
+	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) $(PCHDRS) test orset liborset.so)
 
 todo:
 	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true

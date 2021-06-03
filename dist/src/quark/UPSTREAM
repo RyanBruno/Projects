@@ -1,6 +1,0 @@
-commit e2463e733e4880c1d8034e3b90072825509ceb69 (HEAD -> master, origin/master, origin/HEAD)
-Author: Laslo Hunhold <dev@frign.de>
-Date:   Mon Feb 15 18:25:33 2021 +0100
-
-Refactor server- and connection-logic into separate components
-...

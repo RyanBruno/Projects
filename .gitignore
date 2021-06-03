@@ -25,4 +25,5 @@ package-lock.json
 
 # Repository
 archive/
-dist/src/rbruno.com/dist/
+archive2/
+**/dist/
