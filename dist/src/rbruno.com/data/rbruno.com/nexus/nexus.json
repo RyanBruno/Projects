@@ -2,5 +2,6 @@
     { "title": "Home", "to": "/" },
     { "title": "Media", "to": "/media/hello-world/" },
     { "title": "Bills", "to": "/bills/" },
-    { "title": "Debt", "to": "/debt/" }
+    { "title": "Debt", "to": "/debt/" },
+    { "title": "GnuCash", "to": "/gnucash/" }
 ]
