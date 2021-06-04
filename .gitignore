@@ -28,7 +28,7 @@ package-lock.json
 **.gch
 **.d
 **.so
-orset
+#orset
 test
 
 # Repository

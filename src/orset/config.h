@@ -22,7 +22,7 @@
 #define MERGE_TIMEOUT 20
 
 #ifdef CONCREATE
-#include "src/node.h"
+#include "node.h"
 
 /* We achieve "plugin-like" modularity by
  * adding thread functions to this array.

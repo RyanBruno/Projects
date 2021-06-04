@@ -1,3 +1,3 @@
 #define CONCREATE
-#include "../config.h"
+#include "config.h"
 #undef CONCREATE

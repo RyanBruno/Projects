@@ -43,21 +43,21 @@ clean : clean_web clean_orset
 
 ## OrSet
 
-orset: $(filter src/orset/src/%,$(OBJFILES))
+orset: $(filter-out src/orset/tests/%,$(filter src/orset/%,$(OBJFILES)))
 	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 clean_orset:
 	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) $(PCHDRS) test orset liborset.so)
 
-liborset.so: $(filter-out src/orset/src/init.o,$(filter src/orset/src/%,$(OBJFILES)))
+liborset.so: $(filter-out src/orset/init.o,$(filter-out src/orset/tests/%,$(filter src/orset/%,$(OBJFILES))))
 	@$(CXX) -shared -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
-test: $(filter src/orset/tests/%,$(OBJFILES)) $(filter-out src/orset/src/init.o,$(filter src/orset/src/%,$(OBJFILES)))
+test: $(filter-out src/orset/init.o,$(filter src/orset/%,$(OBJFILES)))
 	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 ## Web
 web:
-	@cd web/ && npx webpack
+	@cd web/ && npx webpack > /dev/null
 
 dev_web: clean_web web
 	@cp web/dist/*.html web/dist/index.html

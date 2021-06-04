@@ -2,7 +2,7 @@
 
 #include "../node.h"
 #include "../xdr_orset/xdr_orset.h"
-#include "../../config.h"
+#include "../config.h"
 
 /* From config.h */
 extern struct peer_node* peers;

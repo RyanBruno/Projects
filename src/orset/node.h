@@ -8,7 +8,7 @@
 #define NODE_H
 
 #include <semaphore.h>
-#include "../config.h"
+#include "config.h"
 #include "ospc/ospc.h"
 
 /* Merges a remote set with node's local

@@ -8,7 +8,7 @@
  * vice-versa.
  */
 
-#include "../../config.h"
+#include "../config.h"
 #include "../unordered_map/unordered_map.h"
 
 #define NODE_ID_OFFSET (sizeof(uint64_t) - sizeof(node_t)) * 8
