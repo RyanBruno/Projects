@@ -23,6 +23,14 @@ package-lock.json
 **.pem
 **.key
 
+# Build
+**.o
+**.gch
+**.d
+**.so
+orset
+test
+
 # Repository
 archive/
 archive2/
