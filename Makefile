@@ -11,6 +11,12 @@ DEPFILES    := $(DEPFILES:.cpp=.d)
 #TSTDEPFILES := $(patsubst %,%.d,$(TSTFILES))
 ALLFILES := $(SRCFILES) $(HDRFILES) $(AUXFILES)
 
+# Actual Targets
+all: orset liborset.so test web 
+clean : clean_web clean_orset clean_shellbridge
+	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) $(PCHDRS))
+
+# C Building
 # For reference
 #.c  : $(CC) $(CPPFLAGS) $(CFLAGS) -c
 #.cpp: $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c
@@ -37,17 +43,13 @@ headers: $(PCHDRS)
 
 .PHONY: todo all clean web dev_web clean_web
 
-# Actual Targets
-all: orset liborset.so test web 
-clean : clean_web clean_orset
-
 ## OrSet
 
 orset: $(filter-out src/orset/tests/%,$(filter src/orset/%,$(OBJFILES)))
 	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 clean_orset:
-	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) $(PCHDRS) test orset liborset.so)
+	-@$(RM) test orset liborset.so
 
 liborset.so: $(filter-out src/orset/init.o,$(filter-out src/orset/tests/%,$(filter src/orset/%,$(OBJFILES))))
 	@$(CXX) -shared -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
@@ -69,3 +71,7 @@ clean_web:
 
 shellbridge: $(filter src/shellbridge/%,$(OBJFILES))
 	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
+clean_shellbridge:
+	-@$(RM) shellbridge
+
