@@ -18,7 +18,7 @@ ALLFILES := $(SRCFILES) $(HDRFILES) $(AUXFILES)
 include_dirs = -I/usr/include/tirpc
 CFLAGS = $(include_dirs) $(libs) -Wall -Wextra -fPIC
 CXXFLAGS = $(CFLAGS)
-LDLIBS = -ltirpc -pthread
+LDLIBS = -ltirpc -pthread -lmicrohttpd
 
 todo:
 	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
@@ -64,3 +64,8 @@ dev_web: clean_web web
 
 clean_web:
 	-@$(RM) -rf web/dist/*
+
+## Shell Bridge
+
+shellbridge: $(filter src/shellbridge/%,$(OBJFILES))
+	@$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
