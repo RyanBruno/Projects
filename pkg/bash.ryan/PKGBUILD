@@ -1,0 +1,21 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=bash.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryanns configured bash'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+#depends=('base')
+backup=('etc/bash.bashrc.ryan' 'etc/profile.ryan')
+source=(bash.ryan bash.bashrc.ryan profile.ryan)
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    mkdir -p $pkgdir/etc
+    install bash.ryan $pkgdir/usr/bin/bash.ryan
+    install bash.bashrc.ryan $pkgdir/etc/bash.bashrc.ryan
+    install profile.ryan $pkgdir/etc/profile.ryan
+}

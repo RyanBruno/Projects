@@ -1,0 +1,18 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=grab
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='A screen grab utility for X'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('ffmpeg' 'sxiv' 'xclip')
+#backup=()
+source=(grab)
+sha256sums=('SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    install grab $pkgdir/usr/bin/grab
+}

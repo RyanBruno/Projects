@@ -1,0 +1,20 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=apache.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryanns configured apache'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('vim')
+backup=('etc/httpd/conf/httpd.conf.ryan')
+source=(httpd.conf.ryan httpd.ryan.service)
+sha256sums=('SKIP' 'SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/lib/systemd/system/
+    mkdir -p $pkgdir/etc/httpd/conf/
+    install httpd.ryan.service $pkgdir/usr/lib/systemd/system/httpd.ryan.service
+    install httpd.conf.ryan $pkgdir/etc/httpd/conf/httpd.conf.ryan
+}

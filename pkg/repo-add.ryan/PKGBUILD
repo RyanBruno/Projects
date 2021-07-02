@@ -1,0 +1,17 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=repo-add.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='A small patch for repo-add that adds --pinentry-mode loopback'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('pacman')
+source=(repo-add.ryan)
+sha256sums=('SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    install repo-add.ryan $pkgdir/usr/bin/repo-add.ryan
+}

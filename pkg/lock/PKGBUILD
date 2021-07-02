@@ -1,0 +1,18 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=lock
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='A screenlocking utility for X w/ blur'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('ffmpeg' 'i3lock')
+#backup=()
+source=(lock)
+sha256sums=('SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    install lock $pkgdir/usr/bin/lock
+}

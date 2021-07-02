@@ -1,0 +1,18 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=base.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryans meta-package of standard, configured tools'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('base'
+         # Configured replacements
+         'bash.ryan' 'vim.ryan'
+         # Build Tools
+         'repo-add.ryan'
+         # X Tools
+         'lock' 'grab'
+         # HTTP
+         'apache.ryan' #'cgit'
+)

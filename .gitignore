@@ -35,3 +35,10 @@ test
 archive/
 archive2/
 **/dist/
+
+# pkg
+**.pkg.tar.xz
+**.pkg.tar.xz.sig
+pkg/**/pkg/**
+pkg/**/src/**
+

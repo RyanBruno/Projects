@@ -1,0 +1,3 @@
+#!/bin/sh
+
+bash --rcfile /etc/bash.bashrc.ryan $*
