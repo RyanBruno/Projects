@@ -14,6 +14,11 @@ enable-http-clone=1
 clone-prefix=http://10.0.1.1/cgit
 
 branch-sort=age
+readme=:README.html
+readme=:README.md
+readme=:README
+readme=:README.txt
+about-filter=/usr/lib/cgit/filters.ryan/about-formatting.sh
 
 section-from-path=-1
 scan-path=/srv/git/

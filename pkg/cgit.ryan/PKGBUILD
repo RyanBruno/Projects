@@ -6,13 +6,15 @@ pkgdesc='Ryanns configured cgit'
 arch=('any')
 url='https://github.com/RyanBruno/TheRepository'
 license=('GPL')
-depends=('cgit')
+depends=('cgit' 'python-markdown')
 backup=('etc/cgitrc')
-source=(cgitrc)
-sha256sums=('SKIP')
+source=(cgitrc about-formatting.sh)
+sha256sums=('SKIP' 'SKIP')
 #validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
 
 package() {
     mkdir -p $pkgdir/etc
+    mkdir -p $pkgdir/usr/lib/cgit/filters.ryan/html-converters
     install cgitrc $pkgdir/etc/cgitrc
+    install about-formatting.sh $pkgdir/usr/lib/cgit/filters.ryan/about-formatting.sh
 }
