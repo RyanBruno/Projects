@@ -1,12 +1,21 @@
 
+PKGs = apache.ryan \
+    base.ryan \
+    bash.ryan \
+    cgit.ryan \
+    grab \
+    lock \
+    nginx.ryan \
+    pacman.ryan \
+    repo-add.ryan \
+    vim.ryan
+
 
 %.ryan: %.ryan/* Makefile
 	@cd $@ && makepkg -s --force 1> /dev/null
 	@cd $@ && gpg -b *.pkg.tar.xz
 
-
-all: vim.ryan repo-add.ryan base.ryan vim.ryan lock grab apache.ryan bash.ryan
-
+all: $(PKGs)
 
 dist:
 	-@rm -rf /srv/http/pkg/core.ryan.db*
