@@ -41,7 +41,7 @@ headers: $(PCHDRS)
 	@$(CC) -ggdb $(CFLAGS) -MMD -MP -DTEST -c $< -o $@
 
 
-.PHONY: todo all clean web dev_web clean_web
+.PHONY: todo all clean web clean_web
 
 ## OrSet
 
@@ -61,11 +61,15 @@ test: $(filter-out src/orset/init.o,$(filter src/orset/%,$(OBJFILES)))
 web:
 	@cd web/ && npx webpack > /dev/null
 
-dev_web: clean_web web
-	@cp web/dist/*.html web/dist/index.html
-
 clean_web:
 	-@$(RM) -rf web/dist/*
+
+WEB_DEST = /srv/http/
+dist_web: web
+	@mkdir -p $(WEB_DEST)
+	@mkdir -p $(WEB_DEST)/static/
+	@cp web/dist/* $(WEB_DEST)
+	@cp web/static/* $(WEB_DEST)/static/
 
 ## Shell Bridge
 

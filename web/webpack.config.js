@@ -40,12 +40,12 @@ module.exports = {
         new VueLoaderPlugin(),
         new ESLintPlugin(),
         new HtmlWebpackPlugin({
-            filename: "rbruno.com.[fullhash].html",
-            template: "./src/rbruno.com.html",
+            filename: "rbruno.com.html",
+            template: "./rbruno.com/index.html",
         }),
     ],
     entry: {
-        rbruno_com: "./src/rbruno.com.js",
+        rbruno_com: "./rbruno.com/index.js",
     },
     output: {
         filename: "rbruno.com.[fullhash].js",

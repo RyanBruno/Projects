@@ -1,0 +1,20 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=pacman.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryanns configured pacman'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+#depends=('base')
+backup=('etc/pacman.conf.ryan')
+source=(pacman.ryan pacman.conf.ryan)
+sha256sums=('SKIP' 'SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    mkdir -p $pkgdir/etc
+    install pacman.ryan $pkgdir/usr/bin/pacman.ryan
+    install pacman.conf.ryan $pkgdir/etc/pacman.conf.ryan
+}
