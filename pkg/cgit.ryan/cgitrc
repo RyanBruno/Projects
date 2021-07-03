@@ -1,0 +1,16 @@
+#
+# cgit config
+#
+
+root-title=Ryan Bruno's git repositories
+root-desc=
+
+css=/cgit.css
+logo=/cgit.png
+
+#virtual-root=/
+
+enable-http-clone=1
+clone-prefix=http://10.0.1.1/cgit
+
+scan-path=/srv/git/

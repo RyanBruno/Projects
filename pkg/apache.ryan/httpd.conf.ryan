@@ -173,6 +173,7 @@ LoadModule autoindex_module modules/mod_autoindex.so
 <IfModule !mpm_prefork_module>
 	#LoadModule cgid_module modules/mod_cgid.so
 </IfModule>
+LoadModule cgi_module modules/mod_cgi.so
 <IfModule mpm_prefork_module>
 	#LoadModule cgi_module modules/mod_cgi.so
 </IfModule>
@@ -539,3 +540,16 @@ SSLRandomSeed startup builtin
 SSLRandomSeed connect builtin
 </IfModule>
 
+ScriptAlias /cgit "/usr/lib/cgit/cgit.cgi"
+Alias /cgit.css "/usr/share/webapps/cgit/cgit.css"
+Alias /cgit.png "/usr/share/webapps/cgit/cgit.png"
+<Directory "/usr/share/webapps/cgit/">
+    AllowOverride None
+    Options None Indexes
+    Require all granted
+</Directory>
+<Directory "/usr/lib/cgit/">
+    AllowOverride None
+    Options ExecCGI FollowSymlinks Indexes
+    Require all granted
+</Directory>

@@ -14,5 +14,5 @@ depends=('base'
          # X Tools
          'lock' 'grab'
          # HTTP
-         'apache.ryan' #'cgit'
+         'apache.ryan' 'cgit.ryan'
 )
