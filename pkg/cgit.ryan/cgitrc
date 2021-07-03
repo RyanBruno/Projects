@@ -13,4 +13,5 @@ logo=/cgit.png
 enable-http-clone=1
 clone-prefix=http://10.0.1.1/cgit
 
+section-from-path=-1
 scan-path=/srv/git/
