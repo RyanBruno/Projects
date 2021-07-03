@@ -1,0 +1,89 @@
+
+user http;
+worker_processes auto;
+worker_cpu_affinity auto;
+
+events {
+	multi_accept on;
+	worker_connections 1024;
+}
+
+http {
+	server {
+		listen		80;
+		#server_name	*;
+
+        location ~ /archlinux/.*\.(db|sig|files)$ {
+            #rewrite ^/archlinux/(.*) /$1    break;
+            proxy_pass http://mirrors$request_uri;
+        }
+
+        location ~ /archlinux/.*\.tar\.(xz|zst)$ {
+            #rewrite ^/archlinux/(.*) /$1    break;
+            try_files $uri @pkg_mirror;
+        }
+
+        location @pkg_mirror {
+            proxy_store    /srv/pacman-cache$request_uri;
+            proxy_redirect off;
+            proxy_store_access  user:rw group:rw all:r;
+            proxy_next_upstream error timeout http_404;
+            proxy_pass          http://mirrors$request_uri;
+        }
+
+		location / {
+	       proxy_pass http://127.0.0.1:88;
+	    }
+	}
+
+    upstream mirrors {
+        server 127.0.0.1:8001;
+        server 127.0.0.1:8002;
+        server 127.0.0.1:8003;
+        server 127.0.0.1:8004;
+        server 127.0.0.1:8005;
+        server 127.0.0.1:8006;
+    }
+
+    server {
+        listen  8001;
+        location /archlinux/ {
+            proxy_pass http://mirror.wdc1.us.leaseweb.net/archlinux/;
+        }
+    }
+
+    server {
+        listen  8002;
+        location /archlinux/ {
+            proxy_pass http://arch.mirror.constant.com/$repo/os/$arch;
+        }
+    }
+
+    server {
+        listen  8003;
+        location /archlinux/ {
+            proxy_pass http://mirrors.advancedhosters.com/archlinux/;
+        }
+    }
+
+    server {
+        listen  8004;
+        location /archlinux/ {
+            proxy_pass http://ftp.osuosl.org/pub/archlinux/;
+        }
+    }
+
+    server {
+        listen  8005;
+        location /archlinux/ {
+            proxy_pass http://iad.mirrors.misaka.one/archlinux/;
+        }
+    }
+
+    server {
+        listen  8006;
+        location /archlinux/ {
+            proxy_pass http://mirror.vtti.vt.edu/archlinux/;
+        }
+    }
+}
