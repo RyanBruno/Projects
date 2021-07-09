@@ -4,6 +4,6 @@ ListenPort = 51829
 PrivateKey = ${WG_PRIVKEY}
 
 [Peer]
-PublicKey = IEVuC9rP6VAjNBssb+1ujE2LhzSmMLMf0l8/Pz7jqBs=
+PublicKey = zFhdLwvIoKchoCrhDwF8CasNvIRT6qeSLgTn0NgTExs=
 AllowedIPs = 10.0.1.1/32
 Endpoint = 100.34.89.3:51871
