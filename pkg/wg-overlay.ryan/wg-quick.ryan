@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ ! -f /etc/wireguard.${2}.conf.ryan ]
+then
+    wg genkey | tee privatekey | wg pubkey > publickey
+    export WG_ADDRESS="10.0.1.2/32"
+    export WG_PRIVKEY=$(wg genkey)
+    export WG_PUBKEY=$(echo $WG_PRIVKEY | wg pubkey)
+    TEMPLATE=$(cat << EOF
+#!/bin/sh
+
+export WG_ADDRESS="${WG_ADDRESS}"
+export WG_PUBKEY="${WG_PUBKEY}"
+export WG_PRIVKEY="${WG_PRIVKEY}"
+EOF
+)
+    echo "$TEMPLATE" | envsubst > /etc/wireguard.${2}.conf.ryan
+fi
+
+source /etc/wireguard.${2}.conf.ryan
+
+cat /etc/wireguard/template.${2}.conf.ryan | envsubst > /etc/wireguard/${2}.conf
+
+wg-quick $*

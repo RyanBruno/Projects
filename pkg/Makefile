@@ -8,6 +8,7 @@ PKGs = apache.ryan \
     nginx.ryan \
     pacman.ryan \
     repo-add.ryan \
+    wg-overlay.ryan \
     vim.ryan
 
 

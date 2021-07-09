@@ -1,0 +1,22 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=wg-overlay.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryans Personal WireGuard Overlay network(s)'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('wireguard-tools')
+backup=('etc/wireguard/template.overlay01.conf.ryan')
+source=(wg-quick.ryan wg-quick.ryan@.service template.overlay01.conf.ryan)
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    mkdir -p $pkgdir/usr/lib/systemd/system
+    mkdir -p $pkgdir/etc/wireguard
+    install wg-quick.ryan $pkgdir/usr/bin/wg-quick.ryan
+    install wg-quick.ryan\@.service $pkgdir/usr/lib/systemd/system
+    install template.overlay01.conf.ryan $pkgdir/etc/wireguard/template.overlay01.conf.ryan
+}

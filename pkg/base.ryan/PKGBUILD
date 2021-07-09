@@ -8,7 +8,7 @@ url='https://github.com/RyanBruno/TheRepository'
 license=('GPL')
 depends=('base'
          # Configured replacements
-         'bash.ryan' 'vim.ryan' 'pacman.ryan'
+         'bash.ryan' 'vim.ryan' 'pacman.ryan' 'wg-overlay.ryan'
          # Build Tools
          'repo-add.ryan'
          # X Tools
