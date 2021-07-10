@@ -15,4 +15,6 @@ depends=('base'
          'lock' 'grab'
          # HTTP
          'apache.ryan' 'cgit.ryan'
+         # Email
+         'postfix' 'smartd.ryan'
 )

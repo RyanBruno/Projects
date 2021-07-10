@@ -9,6 +9,7 @@ PKGs = apache.ryan \
     pacman.ryan \
     repo-add.ryan \
     wg-overlay.ryan \
+    smartd.ryan \
     vim.ryan
 
 
