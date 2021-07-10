@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ssh -F /etc/ssh/ssh_config.ryan

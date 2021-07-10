@@ -26,6 +26,9 @@ fi
 stty -ixon # Disable ctrl-s and ctrl-q.
 HISTSIZE= HISTFILESIZE= # Infinite history.
 
+# Source ssh-agent
+eval $(ssh-agent)
+
 # Set the prompt
 export PS1="\[$(tput bold)\]\[$(tput setaf 1)\][\[$(tput setaf 3)\]\u\[$(tput setaf 2)\]@\[$(tput setaf 4)\]\h \[$(tput setaf 5)\]\W\[$(tput setaf 1)\]]\[$(tput setaf 7)\]\\$ \[$(tput sgr0)\]"
 
@@ -38,6 +41,7 @@ set -o vi
 alias mkdir="mkdir -pv" \
     vim="vim.ryan" \
     pacman="sudo pacman.ryan" \
+    ssh="ssh.ryan" \
     ls="ls -hN --color=auto --group-directories-first" \
     less="less --no-histdups" \
     la="ls -al" \
