@@ -1,0 +1,3 @@
+#!/bin/sh
+
+startx /etc/X11/xinitrc/xinitrc.ryan

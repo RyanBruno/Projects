@@ -1,0 +1,21 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=xinit.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryans configured xinit'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('vim')
+backup=('etc/X11/xinitrc/xinitrc.ryan')
+source=(xinitrc.ryan xinit.ryan startx.ryan)
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    mkdir -p $pkgdir/etc/X11/xinitrc
+    install xinit.ryan $pkgdir/usr/bin/xinit.ryan
+    install startx.ryan $pkgdir/usr/bin/startx.ryan
+    install xinitrc.ryan $pkgdir/etc/X11/xinitrc/xinitrc.ryan
+}
