@@ -42,6 +42,7 @@ alias mkdir="mkdir -pv" \
     vim="vim.ryan" \
     pacman="sudo pacman.ryan" \
     ssh="ssh.ryan" \
+    mv="mv -n" \
     ls="ls -hN --color=auto --group-directories-first" \
     less="less --no-histdups" \
     la="ls -al" \

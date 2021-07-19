@@ -1,6 +1,6 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=base.ryan
-pkgver=0.0.1
+pkgver=0.0.2
 pkgrel=1
 pkgdesc='Ryans meta-package of standard, configured tools'
 arch=('any')
@@ -16,5 +16,5 @@ depends=('base'
          # HTTP
          'apache.ryan' 'cgit.ryan'
          # Email
-         'postfix' 'smartd.ryan'
+         'postfix' 'logwatch' 'smartd.ryan'
 )

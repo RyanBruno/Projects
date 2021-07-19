@@ -1,6 +1,6 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=ssh.ryan
-pkgver=0.0.1
+pkgver=0.0.2
 pkgrel=1
 pkgdesc='Ryans configured ssh'
 arch=('any')
