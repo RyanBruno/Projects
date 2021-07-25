@@ -11,6 +11,7 @@ PKGs = apache.ryan \
     wg-overlay.ryan \
     smartd.ryan \
     ssh.ryan \
+    xinit.ryan \
     vim.ryan
 
 
