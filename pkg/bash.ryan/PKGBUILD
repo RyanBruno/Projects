@@ -1,8 +1,8 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=bash.ryan
-pkgver=0.0.1
+pkgver=0.0.2
 pkgrel=1
-pkgdesc='Ryanns configured bash'
+pkgdesc='Ryans configured bash'
 arch=('any')
 url='https://github.com/RyanBruno/TheRepository'
 license=('GPL')

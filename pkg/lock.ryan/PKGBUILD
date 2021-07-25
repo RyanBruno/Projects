@@ -1,6 +1,6 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=lock
-pkgver=0.0.1
+pkgver=0.0.2
 pkgrel=1
 pkgdesc='A screenlocking utility for X w/ blur'
 arch=('any')

@@ -1,6 +1,6 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=base.ryan
-pkgver=0.0.2
+pkgver=0.0.3
 pkgrel=1
 pkgdesc='Ryans meta-package of standard, configured tools'
 arch=('any')
@@ -11,10 +11,12 @@ depends=('base'
          'bash.ryan' 'vim.ryan' 'pacman.ryan' 'wg-overlay.ryan' 'xinit.ryan'
          # Build Tools
          'repo-add.ryan'
+         # xorg
+         'xinit.ryan'
          # X Tools
          'lock' 'grab'
          # HTTP
-         'apache.ryan' 'cgit.ryan'
+         'nginx.ryan' 'apache.ryan' 'cgit.ryan'
          # Email
          'postfix' 'logwatch' 'smartd.ryan'
 )

@@ -41,6 +41,8 @@ set -o vi
 alias mkdir="mkdir -pv" \
     vim="vim.ryan" \
     pacman="sudo pacman.ryan" \
+    startx="startx.ryan" \
+    xinit="xinit.ryan" \
     ssh="ssh.ryan" \
     mv="mv -n" \
     ls="ls -hN --color=auto --group-directories-first" \

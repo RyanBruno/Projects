@@ -12,6 +12,7 @@ PKGs = apache.ryan \
     smartd.ryan \
     ssh.ryan \
     xinit.ryan \
+    dwm.ryan \
     vim.ryan
 
 

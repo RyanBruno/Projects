@@ -18,4 +18,4 @@ done &
 xwallpaper --zoom .config/wallpaper/default
 
 #exec /usr/bin/i3
-exec /usr/local/bin/dwm
+exec /usr/bin/dwm
