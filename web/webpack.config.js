@@ -40,15 +40,22 @@ module.exports = {
         new VueLoaderPlugin(),
         new ESLintPlugin(),
         new HtmlWebpackPlugin({
+            filename: "ppm.html",
+            template: "./ppm/index.html",
+            chunks: [ "ppm" ],
+        }),
+        new HtmlWebpackPlugin({
             filename: "rbruno.com.html",
             template: "./rbruno.com/index.html",
+            chunks: [ "rbruno.com" ],
         }),
     ],
     entry: {
         rbruno_com: "./rbruno.com/index.js",
+        ppm: "./ppm/index.js",
     },
     output: {
-        filename: "rbruno.com.[fullhash].js",
+        filename: "[name].[fullhash].js",
         path: path.resolve(__dirname, "dist"),
         publicPath: "",
     },
