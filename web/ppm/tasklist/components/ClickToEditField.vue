@@ -1,6 +1,6 @@
 <template>
     <div>
-        <label :for="name">{{name}}</label>
+        <label :for="name">{{label}}</label>
         <p v-on:click="click" v-if="!edit">{{value}}</p>
         <input type="text"
                v-model="privValue"
@@ -16,6 +16,7 @@ export default {
         value: String,
         placeholder: String,
         name: String,
+        label: String,
     },
     data: function() {
         return {
@@ -38,6 +39,13 @@ export default {
 </script>
 
 <style scoped>
+div {
+    margin: 15px 0;
+}
+label {
+    font-size: 0.75em;
+    font-weight: bold;
+}
 input[type="text"] {
     width: 100%;
 }

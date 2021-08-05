@@ -6,6 +6,8 @@
                  v-on:click="tabSelected" />
         <simple-table :headers="headers"
                       v-on:click="editTask"
+                      v-on:edit="editStage"
+                      :editable="editable"
                       :cols="cols"
                       :items="visableItems" />
         <form-popup :initialData="formData"
@@ -37,6 +39,7 @@ export default {
             visableItems: TestData.tasks,
             isPopup: false,
             formData: {},
+            editable: {},
         };
     },
     components: {
@@ -67,8 +70,19 @@ export default {
 
             this.visableItems = temp;
         },
-        editTask: function(task) {
-            this.formData = task;
+        editStage: function(val) {
+            this.editable.item.stage = val;
+            this.editable = {};
+        },
+        editTask: function(item, col) {
+            if (col == "stage") {
+                this.editable = {
+                    item: item,
+                    col: col,
+                };
+                return;
+            }
+            this.formData = item;
             this.isPopup = true;
         },
         showAddTask: function() {

@@ -6,12 +6,15 @@
             <p id="title" v-if="!data.uuid">Add Task</p>
             <click-to-edit-field name="title"
                    placeholder="title"
+                   label="Title"
                    v-model="data.title" />
             <click-to-edit-field name="description"
                    placeholder="description"
+                   label="Description"
                    v-model="data.description" />
             <click-to-edit-field name="stage"
                    placeholder="stage"
+                   label="Stage"
                    v-model="data.stage" />
             <input type="button" value="Submit" v-on:click="clicked">
         </div>
