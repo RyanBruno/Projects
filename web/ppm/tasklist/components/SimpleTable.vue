@@ -11,8 +11,9 @@
                 <input type="text" :value="item[col]"
                         v-on:keydown.enter="edit"
                         v-if="editable.item == item && editable.col == col">
-                <div v-html="item[col]" v-on:click="click(item, col)"
+                <div v-on:click="click(item, col)"
                         v-if="!(editable.item == item && editable.col == col)">
+                        <p v-html="item[col]"></p>
                 </div>
             </td>
         </tr>
@@ -53,9 +54,24 @@ td, th {
 tr:nth-child(even) {
     background-color: var(--light);
 }
+td p, th p {
+    margin: 0;
+}
 td:nth-child(1), th:nth-child(1) {
     width: 250px;
     max-width: 20vw;
+}
+td:nth-child(1) p {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+td:nth-child(2) p {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
 }
 td:nth-child(3), th:nth-child(3) {
     width: 100px;

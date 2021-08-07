@@ -58,7 +58,7 @@ export default {
             uuid: "a2af28d2-524e-4464-a500-ad071151dfa7",
             title: "Text Area For Description",
             description: "Text area for description.",
-            stage: "Backlog",
+            stage: "Done",
         },
         {
             uuid: "eaa51de3-4b4b-468f-ba9d-001a700b0571",
@@ -70,13 +70,13 @@ export default {
             uuid: "c9fd603c-0ee0-4f77-a1fe-8400887daad2",
             title: "Truncate Long Data",
             description: "Columns of the task table should not be longer then a single line. When the text gets to be too long it should be trunkated. If possible adding a ... or fade out.",
-            stage: "Backlog",
+            stage: "Scoped",
         },
         {
             uuid: "8e272b67-b41f-48d8-af41-673dc98d1435",
             title: "Consistent Table Size including Scroll Bar",
             description: "When the scroll bar alternates between absent or present the table expands and shrinks. To stop from jittering we can keep the table size consistent dispite the scroll bar.",
-            stage: "Backlog",
+            stage: "Done",
         },
         {
             uuid: "8e3715a8-8bcb-4bdd-b9d8-f1f86450559f",

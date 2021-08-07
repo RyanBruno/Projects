@@ -117,6 +117,6 @@ export default {
 
 <style>
 div#page {
-    margin: 15px 15px;
+    margin: 15px calc(15px + calc(100% - 100vw)) 0 15px;
 }
 </style>

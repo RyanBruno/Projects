@@ -5,14 +5,17 @@
             <p id="title" v-if="data.uuid">Edit Task</p>
             <p id="title" v-if="!data.uuid">Add Task</p>
             <click-to-edit-field name="title"
+                   :textArea="false"
                    placeholder="title"
                    label="Title"
                    v-model="data.title" />
             <click-to-edit-field name="description"
+                   :textArea="true"
                    placeholder="description"
                    label="Description"
                    v-model="data.description" />
             <click-to-edit-field name="stage"
+                   :textArea="false"
                    placeholder="stage"
                    label="Stage"
                    v-model="data.stage" />

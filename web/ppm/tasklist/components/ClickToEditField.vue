@@ -6,7 +6,12 @@
                v-model="privValue"
                :placeholder="placeholder"
                :name="name"
-               v-if="edit">
+               v-if="edit && !textArea">
+        <textarea type="text"
+               v-model="privValue"
+               :placeholder="placeholder"
+               :name="name"
+               v-if="edit && textArea" />
     </div>
 </template>
 
@@ -17,6 +22,7 @@ export default {
         placeholder: String,
         name: String,
         label: String,
+        textArea: Boolean,
     },
     data: function() {
         return {
@@ -48,6 +54,10 @@ label {
 }
 input[type="text"] {
     width: 100%;
+}
+textarea {
+    width: 100%;
+    height: 150px;
 }
 p:hover {
     border: #8f8f9d solid 1px;
