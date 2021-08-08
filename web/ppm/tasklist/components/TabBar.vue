@@ -47,6 +47,7 @@ div.tab:hover {
     border-bottom: none;
 }
 div.tab {
+    cursor: pointer;
     border: white 1px solid;
     border-bottom: none;
     padding: 4px 10px 2px 10px;

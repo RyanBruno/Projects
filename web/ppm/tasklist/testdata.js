@@ -46,13 +46,13 @@ export default {
             uuid: "534c0b5f-23ea-422e-bfeb-be24d31c7789",
             title: "Form Input Validation",
             description: "It would be cool to have a running input charater count on the right side of each input box. For example: (10/100).",
-            stage: "Scoped",
+            stage: "Done",
         },
         {
             uuid: "2a4cbf30-5556-488a-ae3d-cbdb39ae33da",
             title: "Rich Text Area",
             description: "We need a rich text area for the Description field on the Add/Edit task popup. To keep it cool and simple lets just syntax highlight markdown. So as they are typing any text between *astricks* will be bold. Text between `backticks` will be syntax highlighted as code.",
-            stage: "Scoped",
+            stage: "Backlog",
         },
         {
             uuid: "a2af28d2-524e-4464-a500-ad071151dfa7",
@@ -82,7 +82,7 @@ export default {
             uuid: "8e3715a8-8bcb-4bdd-b9d8-f1f86450559f",
             title: "Click Icon When Hovering over Clickable Things",
             description: "The mouse hand should change to the click icon when hovering over the table cells and tabs.",
-            stage: "Scoped",
+            stage: "Done",
         },
     ],
 };
