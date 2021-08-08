@@ -1,14 +1,17 @@
 <template>
-    <div>
+    <div id="field">
         <label :for="name">{{label}}</label>
         <p v-on:click="click" v-if="!edit">{{value}}</p>
-        <input type="text"
-               v-model="privValue"
+        <simple-input
+               :value="value"
+               v-on:input="input"
                :placeholder="placeholder"
                :name="name"
-               v-if="edit && !textArea">
+               :max="100"
+               v-if="edit && !textArea" />
         <textarea type="text"
-               v-model="privValue"
+               :value="value"
+               v-on:input="input"
                :placeholder="placeholder"
                :name="name"
                v-if="edit && textArea" />
@@ -16,6 +19,8 @@
 </template>
 
 <script>
+import SimpleInput from "./SimpleInput.vue"
+
 export default {
     props: {
         value: String,
@@ -26,26 +31,26 @@ export default {
     },
     data: function() {
         return {
-            privValue: this.value,
             edit: this.value == "" || this.value == undefined,
         };
     },
-    watch: {
-        privValue: function(value) {
+    methods: {
+        input: function(value) {
             this.$emit("input", value);
         },
-    },
-    methods: {
         click: function() {
             this.$emit("click");
             this.edit = true;
         },
     },
+    components: {
+        simpleInput: SimpleInput,
+    },
 }
 </script>
 
 <style scoped>
-div {
+div#field {
     margin: 15px 0;
 }
 label {
