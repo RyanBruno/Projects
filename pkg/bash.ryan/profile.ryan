@@ -44,6 +44,7 @@ alias mkdir="mkdir -pv" \
     startx="startx.ryan" \
     xinit="xinit.ryan" \
     ssh="ssh.ryan" \
+    git="git -c core.sshCommand=ssh.ryan" \
     mv="mv -n" \
     ls="ls -hN --color=auto --group-directories-first" \
     less="less --no-histdups" \
