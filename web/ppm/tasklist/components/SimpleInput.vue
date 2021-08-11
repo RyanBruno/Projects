@@ -22,8 +22,8 @@ export default {
     },
     data: function() {
         return {
-            privValue: this.value,
-            n: this.value.length,
+            privValue: this.value || "",
+            n: (this.value || "").length,
         };
     },
     watch: {
