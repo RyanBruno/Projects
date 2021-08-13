@@ -64,7 +64,7 @@ web:
 clean_web:
 	-@$(RM) -rf web/dist/*
 
-WEB_DEST = /srv/http/
+WEB_DEST = /srv/http/drop/
 dist_web: web
 	@mkdir -p $(WEB_DEST)
 	@mkdir -p $(WEB_DEST)/static/

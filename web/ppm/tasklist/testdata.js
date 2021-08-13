@@ -84,5 +84,11 @@ export default {
             description: "The mouse hand should change to the click icon when hovering over the table cells and tabs.",
             stage: "Done",
         },
+        {
+            uuid: "98350823-2ce1-4fe0-a923-86f5582f9325",
+            title: "Dyanmic Data Loading",
+            description: "The website should fetch data from the backend instead of the data being compiled in.",
+            stage: "Idea",
+        },
     ],
 };
