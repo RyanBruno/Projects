@@ -49,10 +49,16 @@ module.exports = {
             template: "./rbruno.com/index.html",
             chunks: [ "rbruno.com" ],
         }),
+        new HtmlWebpackPlugin({
+            filename: "web3.com.html",
+            template: "./web3/index.html",
+            chunks: [ "web3" ],
+        }),
     ],
     entry: {
         rbruno_com: "./rbruno.com/index.js",
         ppm: "./ppm/index.js",
+        web3: "./web3/index.js",
     },
     output: {
         filename: "[name].[fullhash].js",
