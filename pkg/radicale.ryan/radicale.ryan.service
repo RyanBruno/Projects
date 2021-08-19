@@ -1,0 +1,42 @@
+[Unit]
+Description=radicale - A simple CalDAV (calendar) and CardDAV (contact) server (configured by ryan)
+After=syslog.target network.target
+Requires=network.target
+
+[Service]
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+ExecStart=/usr/bin/radicale -C /etc/radicale/config.ryan
+Group=radicale
+IPAccounting=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+PrivateUsers=yes
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ProtectSystem=strict
+RemoveIPC=true
+Restart=on-failure
+RestrictAddressFamilies=~AF_PACKET AF_NETLINK AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+StateDirectory=radicale
+SystemCallArchitectures=native
+SystemCallErrorNumber=EPERM
+SystemCallFilter=@system-service
+SystemCallFilter=~@resources
+UMask=0027
+User=radicale
+ReadWritePaths=/srv/webdav/radicale
+
+[Install]
+WantedBy=multi-user.target

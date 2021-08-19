@@ -1,0 +1,21 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=radicale.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryans configured radicale'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('radicale')
+backup=('etc/radicale/config.ryan')
+source=(config.ryan radicale.ryan.service)
+sha256sums=('SKIP' 'SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/lib/systemd/system/
+    mkdir -p $pkgdir/etc/radicale/
+    install radicale.ryan.service $pkgdir/usr/lib/systemd/system/radicale.ryan.service
+    install config.ryan $pkgdir/etc/radicale/config.ryan
+}
+#sudo openssl req -newkey rsa:2048 -nodes -keyout /etc/ssl/radicale.key.pem -x509 -days 365 -out /etc/ssl/radicale.cert.pem
