@@ -1,0 +1,24 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=calcurse.ryan
+pkgver=0.0.2
+pkgrel=1
+pkgdesc='Ryans configured calcurse'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=('calcurse' 'python-httplib2')
+backup=('etc/calcurse.ryan/conf' 'etc/calcurse.ryan/caldav/config')
+source=(calcurse.ryan calcurse-caldav.ryan conf keys config)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+#validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
+
+package() {
+    mkdir -p $pkgdir/usr/bin
+    mkdir -p $pkgdir/etc/calcurse.ryan/caldav
+    mkdir -p $pkgdir/etc/calcurse.ryan/hooks
+    install calcurse.ryan $pkgdir/usr/bin/calcurse.ryan
+    install calcurse-caldav.ryan $pkgdir/usr/bin/calcurse-caldav.ryan
+    install conf $pkgdir/etc/calcurse.ryan/conf
+    install keys $pkgdir/etc/calcurse.ryan/keys
+    install config $pkgdir/etc/calcurse.ryan/caldav/config
+}

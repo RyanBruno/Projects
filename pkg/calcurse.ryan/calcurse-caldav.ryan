@@ -1,0 +1,3 @@
+#!/bin/sh
+
+calcurse-caldav --config /etc/calcurse.ryan/caldav/config $*

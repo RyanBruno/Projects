@@ -1,0 +1,12 @@
+
+[General]
+Binary = calcurse.ryan
+DryRun = No
+
+Hostname = 10.0.1.1:5232
+Path = /root/3a80fb57-3b93-70d8-45ed-fc381b8c2d12/
+AuthMethod = basic
+SyncFilter = cal
+
+InsecureSSL = Yes
+HTTPS = Yes
