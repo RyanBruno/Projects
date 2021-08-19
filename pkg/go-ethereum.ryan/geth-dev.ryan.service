@@ -1,0 +1,12 @@
+[Unit]
+Description=Geth Instance (Dev Network)
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/geth --http --http.addr 0.0.0.0 --dev --http.corsdomain "*"
+LimitNOFILE=infinity
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

@@ -13,6 +13,7 @@ PKGs = apache.ryan \
     ssh.ryan \
     xinit.ryan \
     dwm.ryan \
+    go-ethereum.ryan \
     vim.ryan
 
 
