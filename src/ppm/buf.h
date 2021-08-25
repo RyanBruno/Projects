@@ -7,6 +7,7 @@ typedef struct {
 } buf;
 
 void buf_construct(buf* b, void* v, size_t s);
+void buf_deconstruct(buf* b);
 buf buf_move(buf* cur);
 void buf_insert(buf* b, void* v, size_t s);
 void buf_clear(buf* b);

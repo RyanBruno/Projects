@@ -1,3 +1,5 @@
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #define ptr_move(x) x
 
 /* buf */
@@ -9,17 +11,17 @@
 #include "http.h"
 
 /* work */
-#define T1 net
+#define T1 struct net
 #define T1_PREFIX net_
 #include "work.h"
 
 /* epoll_event */
-#define T1 work
+#define T1 struct work
 #define T1_PREFIX work_
 #include "epoll_event.h"
 
 /* linux_net */
-#define T1 work
+#define T1 struct work
 #define T1_PREFIX work_
 #include "linux_net.h"
 
@@ -28,7 +30,7 @@
 #define T1_PREFIX linux_net_
 #define T2 struct epoll_event
 #define T2_PREFIX epoll_event_
-#define T3 work
+#define T3 struct work
 #define T3_PREFIX work_
 #define T4 buf
 #define T4_PREFIX buf_

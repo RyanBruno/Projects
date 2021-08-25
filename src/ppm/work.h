@@ -4,26 +4,35 @@
 #define CCAT2(x, y) CCAT(x, y)
 #define T1_CCAT(x) CCAT2(T1_PREFIX, x)
 
-typedef struct {
+struct work {
     void (*fn)(void*, const void*);
-    struct T1* ctx;
-} work;
+    T1* ctx;
+};
 
-void work_move_mem(work* cur, work* other)
+#define T0 struct work
+#define T0_PREFIX work_
+#include "ptr.h"
+
+void work_deconstruct(struct work* wk)
 {
-    memcpy(other, cur, sizeof(work));
+    //T1_CCAT(deconstruct)(wk->ctx);
 }
 
-work work_move(work* cur)
+void work_move_mem(struct work* cur, struct work* other)
 {
-    work other;
+    memcpy(other, cur, sizeof(struct work));
+}
 
-    memcpy(&other, cur, sizeof(work));
+struct work work_move(struct work* cur)
+{
+    struct work other;
+
+    memcpy(&other, cur, sizeof(struct work));
 
     return other;
 }
 
-void work_exec(work* w, void* v)
+void work_exec(struct work* w, void* v)
 {
     w->fn(w->ctx, v);
 }

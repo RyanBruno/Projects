@@ -31,6 +31,14 @@ void http_construct(http* h)
     h->res_buf_ready = 0;
 }
 
+void http_deconstruct(http* h)
+{
+    T1_CCAT(deconstruct)(&h->buf);
+    if (h->method != NULL) free(h->method);
+    if (h->uri != NULL) free(h->method);
+    if (h->version != NULL) free(h->method);
+}
+
 int http_ready(http* h)
 {
     return h->res_buf_ready;
@@ -42,42 +50,42 @@ http_get(http* h)
     return &h->res_buf;
 }
 
-void http_insert(http* h, T1* b /* const-ref */)
+void http_insert(http* h, char* b /* const-ref */, size_t s)
 {
-    char* s;
+    char* str;
     char* p;
     size_t i;
 
-    T1_CCAT(insert)(&h->buf, T1_CCAT(str)(b), T1_CCAT(size)(b));
-    s = T1_CCAT(str)(&h->buf);
-    p = s;
+    T1_CCAT(insert)(&h->buf, b, s);
+    str = T1_CCAT(str)(&h->buf);
+    p = str;
 
-    h->method = s;
+    h->method = str;
 
-    for (i = 0; i < T1_CCAT(size)(&h->buf) && s[i] != ' ' && s[i] != '\r'; i++) {}
+    for (i = 0; i < T1_CCAT(size)(&h->buf) && str[i] != ' ' && str[i] != '\r'; i++) {}
     if (i >= T1_CCAT(size)(&h->buf)) return;
 
     if (h->method == NULL) h->method = strndup(p, i);
     p += ++i;
 
-    for (; i < T1_CCAT(size)(&h->buf) && s[i] != ' ' && s[i] != '\r'; i++) {}
+    for (; i < T1_CCAT(size)(&h->buf) && str[i] != ' ' && str[i] != '\r'; i++) {}
     if (i >= T1_CCAT(size)(&h->buf)) return;
 
     if (h->uri == NULL) {
         T1_CCAT(construct)(&h->res_buf, "HTTP/1.1 200 OK\r\n\r\n", 19);
         h->res_buf_ready = 1;
 
-        h->uri = strndup(p, i - (p - s));
+        h->uri = strndup(p, i - (p - str));
         printf("URI %s\n", h->uri);
     }
-    p += ++i - (p - s);
+    p += ++i - (p - str);
 
-    if (s[i - 1] == ' ') {
-        for (; i < T1_CCAT(size)(&h->buf) && s[i] != ' ' && s[i] != '\r'; i++) {}
+    if (str[i - 1] == ' ') {
+        for (; i < T1_CCAT(size)(&h->buf) && str[i] != ' ' && str[i] != '\r'; i++) {}
         if (i >= T1_CCAT(size)(&h->buf)) return;
 
-        if (h->version == NULL) h->version = strndup(p, i - (p - s));
-        p += ++i - (p - s);
+        if (h->version == NULL) h->version = strndup(p, i - (p - str));
+        p += ++i - (p - str);
     }
 }
 #undef T1_CCAT

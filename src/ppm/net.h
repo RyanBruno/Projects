@@ -27,51 +27,72 @@ struct net {
     T3 wk;
     T4 wbuf;
     T5 ctx;
+    int deconstructed;
 };
-typedef struct net net;
 
-void net_construct(net* n)
+#define T0 struct net
+#define T0_PREFIX net_
+#define T01 struct work
+#define T01_PREFIX work_
+#include "ptr.h"
+
+void net_construct(struct net* n)
 {
     T1_CCAT(construct)(&n->lux);
     n->fd = -1;
     n->wk.ctx = n;
     T4_CCAT(construct)(&n->wbuf, NULL, 0);
     T5_CCAT(construct)(&n->ctx);
+    n->deconstructed = 0;
 }
 
-void net_copy(net* cur, net* other)
+void net_deconstruct(struct net* n)
+{
+    int rc;
+
+    if (n->deconstructed) return;
+    n->deconstructed = 1;
+
+    T1_CCAT(deconstruct)(&n->lux);
+    if (n->fd > -1) rc = close(n->fd);
+    assert(rc == 0 || errno == EBADF);
+    assert(rc == 0 || errno == EINTR);
+    assert(rc == 0 || errno == EIO);
+    assert(rc == 0);
+    T3_CCAT(deconstruct)(&n->wk);
+    T4_CCAT(deconstruct)(&n->wbuf);
+    T5_CCAT(deconstruct)(&n->ctx);
+}
+
+void net_copy(struct net* cur, struct net* other)
 {
     T1_CCAT(copy)(&cur->lux, &other->lux);
     other->fd = -1;
     other->wk.ctx = other;
     T4_CCAT(construct)(&other->wbuf, NULL, 0);
     T5_CCAT(construct)(&other->ctx);
+    other->deconstructed = 0;
 }
 
-net net_move(net* n /* move */)
+struct net net_move(struct net* n /* move */)
 {
-    net other;
+    struct net other;
 
-    memcpy(&other, n, sizeof(net));
+    memcpy(&other, n, sizeof(struct net));
     n->wk.ctx = n;
-    memset(n, '\0', sizeof(net));
+    memset(n, '\0', sizeof(struct net));
 
     return other;
 }
 
-void net_move_mem(net* cur /* move */, net* other)
+void net_move_mem(struct net* cur /* move */, struct net* other)
 {
-    memcpy(other, cur, sizeof(net));
+    memcpy(other, cur, sizeof(struct net));
     other->wk.ctx = other;
-    memset(cur, '\0', sizeof(net));
+    memset(cur, '\0', sizeof(struct net));
 }
 
-void net_deconstruct(net* n)
-{
-    // TODO
-}
-
-void net_exec(net* n /* move */)
+void net_exec(struct net* n /* move */)
 {
     int num;
     T2 e[10];
@@ -91,33 +112,32 @@ void net_exec(net* n /* move */)
 
 void net_write(void* ctx, const void* v /* const-ref */)
 {
-    net* n = (net*) ctx;
+    struct net* n = (struct net*) ctx;
     const T2* ev = (T2*) v;
 
     write(n->fd, T4_CCAT(str)(&n->wbuf),
             T4_CCAT(size)(&n->wbuf));
+    /* next steps */
     exit(0);
 }
 
-void net_write_all(net* n, T4 b /* moved */)
+void net_write_all(struct net* n, T4* b /* const-ref */)
 {
     /* Copy bytes */
     T4_CCAT(insert)(&n->wbuf,
-            T4_CCAT(str)(&b),
-            T4_CCAT(size)(&b));
+            T4_CCAT(str)(b),
+            T4_CCAT(size)(b));
 
     /* Setup work struct */
     n->wk.fn = net_write;
 
     /* Insert & exec */
     T1_CCAT(replace)(&n->lux, n->fd, ptr_move(&n->wk), 1);
-
-    // TODO deconstruct b
 }
 
 void net_read(void* ctx, const void *v /* const-ref */)
 {
-    net* n = (net*) ctx;
+    struct net* n = (struct net*) ctx;
     const T2* ev = (T2*) v;
 
     if (ev->events & EPOLLIN || ev->events & EPOLLPRI) {
@@ -138,14 +158,11 @@ void net_read(void* ctx, const void *v /* const-ref */)
 
         b[s] = '\0';
 
-        // TODO detect modules and push
-        T4 buf;
-        buf_construct(&buf, b, s);
-        T5_CCAT(insert)(&n->ctx, &buf);
+        // TODO optional modules
+        T5_CCAT(insert)(&n->ctx, b, s);
 
         if (T5_CCAT(ready)(&n->ctx)) {
-            // pass in wk?
-            net_write_all(n, T4_CCAT(move)(T5_CCAT(get)(&n->ctx)));
+            net_write_all(n, T5_CCAT(get)(&n->ctx));
         }
         return;
     }
@@ -157,51 +174,53 @@ void net_read(void* ctx, const void *v /* const-ref */)
 
 void net_accept(void* ctx, const void* v /* const-ref */)
 {
-    net* n = (net*) ctx;
+    struct net* n = (struct net*) ctx;
     const T2* ev = (T2*) v;
 
     if (ev->events & EPOLLIN || ev->events & EPOLLPRI) {
-        net* nn;
+        net_ptr nn;
         socklen_t addr_len = sizeof(n->addr);
         int rc;
         int flags;
 
         /* Malloc new net struct */
-        nn = malloc(sizeof(net));
-        assert(nn != NULL);
+        net_ptr_construct(&nn, malloc(sizeof(struct net)));
+        assert(nn.ptr != NULL);
 
         /* Setup new net struct */
-        net_copy(n, nn);
+        net_copy(n, nn.ptr);
 
         /* Accept */
-        nn->fd = accept(n->fd, (struct sockaddr*) &nn->addr, &addr_len);
+        nn.ptr->fd = accept(n->fd, (struct sockaddr*) &nn.ptr->addr, &addr_len);
 
-        if (nn->fd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        if (nn.ptr->fd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
             return;
 
-        assert(nn->fd > -1 || errno == EBADF);
-        assert(nn->fd > -1 || errno == ECONNABORTED);
-        assert(nn->fd > -1 || errno == EINTR);
-        assert(nn->fd > -1 || errno == EINVAL);
-        assert(nn->fd > -1 || errno == EMFILE);
-        assert(nn->fd > -1 || errno == ENFILE);
-        assert(nn->fd > -1 || errno == ENOBUFS);
-        assert(nn->fd > -1 || errno == ENOMEM);
-        assert(nn->fd > -1 || errno == ENOTSOCK);
-        assert(nn->fd > -1 || errno == EOPNOTSUPP);
-        assert(nn->fd > -1 || errno == EPROTO);
-        assert(nn->fd > -1);
+        assert(nn.ptr->fd > -1 || errno == EBADF);
+        assert(nn.ptr->fd > -1 || errno == ECONNABORTED);
+        assert(nn.ptr->fd > -1 || errno == EINTR);
+        assert(nn.ptr->fd > -1 || errno == EINVAL);
+        assert(nn.ptr->fd > -1 || errno == EMFILE);
+        assert(nn.ptr->fd > -1 || errno == ENFILE);
+        assert(nn.ptr->fd > -1 || errno == ENOBUFS);
+        assert(nn.ptr->fd > -1 || errno == ENOMEM);
+        assert(nn.ptr->fd > -1 || errno == ENOTSOCK);
+        assert(nn.ptr->fd > -1 || errno == EOPNOTSUPP);
+        assert(nn.ptr->fd > -1 || errno == EPROTO);
+        assert(nn.ptr->fd > -1);
 
         /* Set socket to nonblocking */
-        flags = fcntl(nn->fd, F_GETFL, 0);
+        flags = fcntl(nn.ptr->fd, F_GETFL, 0);
         assert(flags != -1);
-        rc = fcntl(nn->fd, F_SETFL, flags | O_NONBLOCK);
+        rc = fcntl(nn.ptr->fd, F_SETFL, flags | O_NONBLOCK);
         assert(rc != -1);
 
         /* Setup work */
-        nn->wk.fn = net_read;
+        nn.ptr->wk.fn = net_read;
 
-        T1_CCAT(insert)(&nn->lux, nn->fd, ptr_move(&nn->w));
+        T1_CCAT(insert)(&nn.ptr->lux,
+                        nn.ptr->fd,
+                        net_ptr_morph(&nn, &nn.ptr->wk));
         printf("Accept\n");
         return;
     }
@@ -213,10 +232,12 @@ void net_accept(void* ctx, const void* v /* const-ref */)
 
 void net_listen_inet(int port)
 {
-    net n;
+    struct net n;
+    T3_CCAT(ptr) wk;
 
     /* Setup net struct */
     net_construct(&n);
+    T3_CCAT(ptr_construct)(&wk, &n.wk);
 
     /* Setup SockAddr */
     n.addr.sin_family = AF_INET;
@@ -270,8 +291,8 @@ void net_listen_inet(int port)
     n.wk.fn = net_accept;
 
     /* Insert & exec */
-    T1_CCAT(insert)(&n.lux, n.fd, ptr_move(&n.wk));
-    net_exec(&n /* TODO moved */); /* TODO fix (n is invalid */
+    T1_CCAT(insert)(&n.lux, n.fd, T3_CCAT(ptr_move)(&wk));
+    net_exec(&n /* TODO moved */); /* TODO fix (n is invalid) */
 }
 #undef T5_CCAT
 #undef T4_CCAT

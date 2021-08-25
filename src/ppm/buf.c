@@ -13,6 +13,15 @@ void buf_construct(buf* b, void* v, size_t s)
 
     memcpy(b->b, v, s);
 }
+
+void buf_deconstruct(buf* b)
+{
+    free(b->b);
+    b->s = 0;
+    b->c = 0;
+    b->b = NULL;
+}
+
 buf buf_move(buf* cur)
 {
     buf other;
