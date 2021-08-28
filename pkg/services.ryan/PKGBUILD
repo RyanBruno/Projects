@@ -1,0 +1,29 @@
+# Maintainer: Ryan Bruno <ryan@rbruno.com>
+pkgname=services.ryan
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='Ryans enabled services'
+arch=('any')
+url='https://github.com/RyanBruno/TheRepository'
+license=('GPL')
+depends=(
+    'nginx.ryan'
+    'apache.ryan'
+    'postfix.ryan'
+    'radicale.ryan'
+    'logwatch'
+    'smartd.ryan'
+)
+
+package() {
+    mkdir -p $pkgdir/etc/systemd/system/multi-user.target.wants/
+    mkdir -p $pkgdir/etc/systemd/system/timers.target.wants/
+
+    ln -s /usr/lib/systemd/system/nginx.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/nginx.ryan.service
+    ln -s /usr/lib/systemd/system/httpd.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/httpd.ryan.service
+    ln -s /usr/lib/systemd/system/postfix.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/postfix.ryan.service
+    ln -s /usr/lib/systemd/system/radicale.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/radicale.ryan.service
+    ln -s /usr/lib/systemd/system/smartd.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/smartd.ryan.service
+
+    ln -s /usr/lib/systemd/system/logwatch.service $pkgdir/etc/systemd/system/timers.target.wants/logwatch.service
+}

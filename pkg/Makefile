@@ -16,6 +16,8 @@ PKGs = apache.ryan \
     go-ethereum.ryan \
     calcurse.ryan \
     radicale.ryan \
+    postfix.ryan \
+    services.ryan \
     vim.ryan
 
 

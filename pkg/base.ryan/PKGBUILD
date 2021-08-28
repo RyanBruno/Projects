@@ -1,6 +1,6 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=base.ryan
-pkgver=0.0.3
+pkgver=0.0.5
 pkgrel=1
 pkgdesc='Ryans meta-package of standard, configured tools'
 arch=('any')
@@ -9,6 +9,7 @@ license=('GPL')
 depends=('base'
          # Configured replacements
          'bash.ryan' 'vim.ryan' 'pacman.ryan' 'wg-overlay.ryan' 'xinit.ryan'
+         'ssh.ryan'
          # Build Tools
          'repo-add.ryan'
          # xorg
@@ -18,5 +19,7 @@ depends=('base'
          # HTTP
          'nginx.ryan' 'apache.ryan' 'cgit.ryan'
          # Email
-         'postfix' 'logwatch' 'smartd.ryan'
+         'postfix.ryan' 'logwatch' 'smartd.ryan'
+         # caldav
+         'radicale.ryan' 'calcurse.ryan'
 )

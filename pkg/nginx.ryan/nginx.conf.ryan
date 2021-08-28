@@ -55,7 +55,7 @@ http {
     server {
         listen  8002;
         location /archlinux/ {
-            proxy_pass http://arch.mirror.constant.com/
+            proxy_pass http://arch.mirror.constant.com/;
         }
     }
 

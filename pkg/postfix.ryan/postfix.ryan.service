@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 CapabilityBoundingSet=~ CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_BOOT CAP_SYS_MODULE
-ExecReload=/usr/bin/postfix reload
-ExecStart=/usr/bin/postfix start
-ExecStop=/usr/bin/postfix stop
+ExecReload=/usr/bin/postfix.ryan reload
+ExecStart=/usr/bin/postfix.ryan start
+ExecStop=/usr/bin/postfix.ryan stop
 PIDFile=/var/spool/postfix/pid/master.pid
 PrivateDevices=true
 PrivateTmp=true
