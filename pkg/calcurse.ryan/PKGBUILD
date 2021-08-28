@@ -1,12 +1,12 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=calcurse.ryan
-pkgver=0.0.2
+pkgver=0.0.3
 pkgrel=1
 pkgdesc='Ryans configured calcurse'
 arch=('any')
 url='https://github.com/RyanBruno/TheRepository'
 license=('GPL')
-depends=('calcurse' 'python-httplib2')
+depends=('calcurse' 'python-httplib2' 'python-pyparsing')
 backup=('etc/calcurse.ryan/conf' 'etc/calcurse.ryan/caldav/config')
 source=(calcurse.ryan calcurse-caldav.ryan conf keys config)
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
