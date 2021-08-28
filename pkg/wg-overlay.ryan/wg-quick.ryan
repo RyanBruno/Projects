@@ -19,6 +19,6 @@ fi
 
 source /etc/wireguard.${2}.conf.ryan
 
-cat /etc/wireguard/template.${2}.conf.ryan | envsubst > /etc/wireguard/${2}.conf
+cat /usr/lib/wg-overlay.ryan/template.${2}.conf.ryan | envsubst > /etc/wireguard/${2}.conf
 
 wg-quick $*

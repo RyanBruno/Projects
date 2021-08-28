@@ -1,9 +1,21 @@
 [Interface]
 Address = ${WG_ADDRESS}
-ListenPort = 51829
+ListenPort = 51871
 PrivateKey = ${WG_PRIVKEY}
 
 [Peer]
-PublicKey = zFhdLwvIoKchoCrhDwF8CasNvIRT6qeSLgTn0NgTExs=
+PublicKey = Xi99Dw2kR53rx7TZgBq4qKrih6QpdU8d9rTT0zOVxDs=
 AllowedIPs = 10.0.1.1/32
 Endpoint = 100.34.89.3:51871
+
+[Peer]
+PublicKey = Rzgp/cpiRwkF8uPA2PNauKqAZclgWAjUO2OVVTc6XGw=
+AllowedIPs = 10.0.1.2/32
+
+[Peer]
+PublicKey = cKNds7mT4Yf/aBb7OPO4H+gGRSpW0v36iMXKzdZ6uXI=
+AllowedIPs = 10.0.1.3/32
+
+[Peer]
+PublicKey = kVsep5NVncTrKCL/smkhaHsdbr9OXOklE6wBPIh2aFk=
+AllowedIPs = 10.0.1.4/32
