@@ -19,10 +19,10 @@ void linux_net_construct(linux_net* lux)
     lux->epoll = epoll_create1(0);
     lux->original = 1;
 
-    assert(lux->epoll > -1 || errno == EINVAL);
-    assert(lux->epoll > -1 || errno == EMFILE);
-    assert(lux->epoll > -1 || errno == ENFILE);
-    assert(lux->epoll > -1 || errno == ENOMEM);
+    assert(lux->epoll > -1 || errno != EINVAL);
+    assert(lux->epoll > -1 || errno != EMFILE);
+    assert(lux->epoll > -1 || errno != ENFILE);
+    assert(lux->epoll > -1 || errno != ENOMEM);
     assert(lux->epoll > -1);
 }
 
@@ -36,9 +36,9 @@ void linux_net_deconstruct(linux_net* lux)
     if (lux->epoll > -1)
         rc = close(lux->epoll);
 
-    assert(rc == 0 || errno == EBADF);
-    assert(rc == 0 || errno == EINTR);
-    assert(rc == 0 || errno == EIO);
+    assert(rc == 0 || errno != EBADF);
+    assert(rc == 0 || errno != EINTR);
+    assert(rc == 0 || errno != EIO);
     assert(rc == 0);
 }
 
@@ -80,6 +80,23 @@ again:
     return n;
 }
 
+void linux_net_remove(linux_net* lux, int fd)
+{
+    int rc;
+
+    rc = epoll_ctl(lux->epoll, EPOLL_CTL_DEL, fd, NULL);
+
+    assert(rc > -1 || errno != EBADF);
+    assert(rc > -1 || errno != EEXIST);
+    assert(rc > -1 || errno != EINVAL);
+    assert(rc > -1 || errno != ELOOP);
+    assert(rc > -1 || errno != ENOENT);
+    assert(rc > -1 || errno != ENOMEM);
+    assert(rc > -1 || errno != ENOSPC);
+    assert(rc > -1 || errno != EPERM);
+    assert(rc > -1);
+}
+
 void linux_net_insert(linux_net* lux, int fd, T1_CCAT(ptr) wk /* move */)
 {
     int rc;
@@ -91,14 +108,15 @@ void linux_net_insert(linux_net* lux, int fd, T1_CCAT(ptr) wk /* move */)
     ev.data.ptr = wk.ptr;
 
     rc = epoll_ctl(lux->epoll, EPOLL_CTL_ADD, fd, &ev);
-    assert(rc > -1 || errno == EBADF);
-    assert(rc > -1 || errno == EEXIST);
-    assert(rc > -1 || errno == EINVAL);
-    assert(rc > -1 || errno == ELOOP);
-    assert(rc > -1 || errno == ENOENT);
-    assert(rc > -1 || errno == ENOMEM);
-    assert(rc > -1 || errno == ENOSPC);
-    assert(rc > -1 || errno == EPERM);
+    assert(rc > -1 || errno != EBADF);
+    assert(rc > -1 || errno != EEXIST);
+    assert(rc > -1 || errno != EINVAL);
+    assert(rc > -1 || errno != ELOOP);
+    assert(rc > -1 || errno != ENOENT);
+    assert(rc > -1 || errno != ENOMEM);
+    assert(rc > -1 || errno != ENOSPC);
+    assert(rc > -1 || errno != EPERM);
+    assert(rc > -1);
 }
 
 void linux_net_replace(linux_net* lux, int fd, T1* wk, int write)
@@ -113,14 +131,14 @@ void linux_net_replace(linux_net* lux, int fd, T1* wk, int write)
     ev.data.ptr = wk;
 
     rc = epoll_ctl(lux->epoll, EPOLL_CTL_MOD, fd, &ev);
-    assert(rc > -1 || errno == EBADF);
-    assert(rc > -1 || errno == EEXIST);
-    assert(rc > -1 || errno == EINVAL);
-    assert(rc > -1 || errno == ELOOP);
-    assert(rc > -1 || errno == ENOENT);
-    assert(rc > -1 || errno == ENOMEM);
-    assert(rc > -1 || errno == ENOSPC);
-    assert(rc > -1 || errno == EPERM);
+    assert(rc > -1 || errno != EBADF);
+    assert(rc > -1 || errno != EEXIST);
+    assert(rc > -1 || errno != EINVAL);
+    assert(rc > -1 || errno != ELOOP);
+    assert(rc > -1 || errno != ENOENT);
+    assert(rc > -1 || errno != ENOMEM);
+    assert(rc > -1 || errno != ENOSPC);
+    assert(rc > -1 || errno != EPERM);
 }
 #undef T1_CCAT
 #undef CCAT2

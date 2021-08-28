@@ -5,9 +5,16 @@
 /* buf */
 #include "buf.h"
 
+/* router */
+#define T1 buf
+#define T1_PREFIX buf_
+#include "router.h"
+
 /* http */
 #define T1 buf
 #define T1_PREFIX buf_
+#define T2 struct router
+#define T2_PREFIX router_
 #include "http.h"
 
 /* work */
@@ -38,7 +45,8 @@
 #define T5_PREFIX http_
 #include "net.h"
 
-int main()
+int main(int argc, char* argv[])
 {
-    net_listen_inet(8889);
+    assert(argc > 1);
+    net_listen_inet((int) strtol(argv[1], NULL, 10));
 }

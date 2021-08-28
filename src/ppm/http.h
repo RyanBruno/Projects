@@ -4,22 +4,19 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#if 0
-#define T1 buf
-#define T1_PREFIX buf_
-#endif
-
 #define CCAT(x, y) x ## y
 #define CCAT2(x, y) CCAT(x, y)
 #define T1_CCAT(x) CCAT2(T1_PREFIX, x)
+#define T2_CCAT(x) CCAT2(T2_PREFIX, x)
 
 typedef struct {
     T1 buf;
     char* method;
     char* uri;
     char* version;
-    T1 res_buf;
-    int res_buf_ready;
+    //T1 res_buf;
+    //int res_buf_ready;
+    T2 ctx;
 } http;
 
 void http_construct(http* h)
@@ -28,26 +25,28 @@ void http_construct(http* h)
     h->method = NULL;
     h->uri = NULL;
     h->version = NULL;
-    h->res_buf_ready = 0;
+    //h->res_buf_ready = 0;
+    T2_CCAT(construct)(&h->ctx);
 }
 
 void http_deconstruct(http* h)
 {
     T1_CCAT(deconstruct)(&h->buf);
     if (h->method != NULL) free(h->method);
-    if (h->uri != NULL) free(h->method);
-    if (h->version != NULL) free(h->method);
+    if (h->uri != NULL) free(h->uri);
+    if (h->version != NULL) free(h->version);
+    T2_CCAT(deconstruct)(&h->ctx);
 }
 
 int http_ready(http* h)
 {
-    return h->res_buf_ready;
+    return T2_CCAT(ready)(&h->ctx);
 }
 
 T1* /* const-ref */
 http_get(http* h)
 {
-    return &h->res_buf;
+    return T2_CCAT(get)(&h->ctx);
 }
 
 void http_insert(http* h, char* b /* const-ref */, size_t s)
@@ -60,8 +59,6 @@ void http_insert(http* h, char* b /* const-ref */, size_t s)
     str = T1_CCAT(str)(&h->buf);
     p = str;
 
-    h->method = str;
-
     for (i = 0; i < T1_CCAT(size)(&h->buf) && str[i] != ' ' && str[i] != '\r'; i++) {}
     if (i >= T1_CCAT(size)(&h->buf)) return;
 
@@ -72,11 +69,9 @@ void http_insert(http* h, char* b /* const-ref */, size_t s)
     if (i >= T1_CCAT(size)(&h->buf)) return;
 
     if (h->uri == NULL) {
-        T1_CCAT(construct)(&h->res_buf, "HTTP/1.1 200 OK\r\n\r\n", 19);
-        h->res_buf_ready = 1;
-
         h->uri = strndup(p, i - (p - str));
-        printf("URI %s\n", h->uri);
+        T2_CCAT(insert)(&h->ctx, h->uri);
+        return;
     }
     p += ++i - (p - str);
 
@@ -88,37 +83,11 @@ void http_insert(http* h, char* b /* const-ref */, size_t s)
         p += ++i - (p - str);
     }
 }
+#undef T2_CCAT
 #undef T1_CCAT
 #undef CCAT2
 #undef CCAT
+#undef T2_PREFIX
 #undef T1_PREFIX
+#undef T2
 #undef T1
-/* End: HTTP */
-
-#if 0
-int test_main2()
-{
-    http h;
-    buf b1;
-    buf b2;
-    buf b3;
-
-    http_construct(&h);
-
-    buf_construct(&b1, "GET", 3);
-    buf_construct(&b2, " /hello", 7);
-    buf_construct(&b3, "-world HTTP/1.1\r", 17);
-
-    /*http_insert(&h, buf_move(&b1));
-    printf("Break\n");
-    http_insert(&h, buf_move(&b2));
-    printf("Break\n");
-    http_insert(&h, buf_move(&b3));*/
-    printf("Method: -%s-\n", h.method);
-    printf("URI: -%s-\n", h.uri);
-    printf("Version: -%s-\n", h.version);
-    printf("End\n");
-
-    return 0;
-}
-#endif

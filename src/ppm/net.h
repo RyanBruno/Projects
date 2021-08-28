@@ -55,9 +55,9 @@ void net_deconstruct(struct net* n)
 
     T1_CCAT(deconstruct)(&n->lux);
     if (n->fd > -1) rc = close(n->fd);
-    assert(rc == 0 || errno == EBADF);
-    assert(rc == 0 || errno == EINTR);
-    assert(rc == 0 || errno == EIO);
+    assert(rc == 0 || errno != EBADF);
+    assert(rc == 0 || errno != EINTR);
+    assert(rc == 0 || errno != EIO);
     assert(rc == 0);
     T3_CCAT(deconstruct)(&n->wk);
     T4_CCAT(deconstruct)(&n->wbuf);
@@ -106,19 +106,46 @@ void net_exec(struct net* n /* move */)
                     NULL);
         }
     }
-
-    //net_deconstruct(n); // TODO fix
 }
 
 void net_write(void* ctx, const void* v /* const-ref */)
 {
     struct net* n = (struct net*) ctx;
     const T2* ev = (T2*) v;
+    ssize_t s;
 
-    write(n->fd, T4_CCAT(str)(&n->wbuf),
+    s = write(n->fd, T4_CCAT(str)(&n->wbuf),
             T4_CCAT(size)(&n->wbuf));
-    /* next steps */
-    exit(0);
+
+    if (s == 0) {
+        printf("EOF\n");
+        exit(0);
+    }
+
+    if (s < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        return;
+
+    assert(s > -1 || errno != EBADF);
+    assert(s > -1 || errno != EDESTADDRREQ);
+    assert(s > -1 || errno != EDQUOT);
+    assert(s > -1 || errno != EFAULT);
+    assert(s > -1 || errno != EFBIG);
+    assert(s > -1 || errno != EINTR);
+    assert(s > -1 || errno != EINVAL);
+    assert(s > -1 || errno != EIO);
+    assert(s > -1 || errno != ENOSPC);
+    assert(s > -1 || errno != EPERM);
+    assert(s > -1 || errno != EPIPE);
+    assert(s > -1);
+
+    T4_CCAT(read)(&n->wbuf, s);
+
+    if (T4_CCAT(size)(&n->wbuf) < 1)
+    {
+        T1_CCAT(remove)(&n->lux, n->fd);
+
+        net_deconstruct(n);
+    }
 }
 
 void net_write_all(struct net* n, T4* b /* const-ref */)
@@ -196,17 +223,17 @@ void net_accept(void* ctx, const void* v /* const-ref */)
         if (nn.ptr->fd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
             return;
 
-        assert(nn.ptr->fd > -1 || errno == EBADF);
-        assert(nn.ptr->fd > -1 || errno == ECONNABORTED);
-        assert(nn.ptr->fd > -1 || errno == EINTR);
-        assert(nn.ptr->fd > -1 || errno == EINVAL);
-        assert(nn.ptr->fd > -1 || errno == EMFILE);
-        assert(nn.ptr->fd > -1 || errno == ENFILE);
-        assert(nn.ptr->fd > -1 || errno == ENOBUFS);
-        assert(nn.ptr->fd > -1 || errno == ENOMEM);
-        assert(nn.ptr->fd > -1 || errno == ENOTSOCK);
-        assert(nn.ptr->fd > -1 || errno == EOPNOTSUPP);
-        assert(nn.ptr->fd > -1 || errno == EPROTO);
+        assert(nn.ptr->fd > -1 || errno != EBADF);
+        assert(nn.ptr->fd > -1 || errno != ECONNABORTED);
+        assert(nn.ptr->fd > -1 || errno != EINTR);
+        assert(nn.ptr->fd > -1 || errno != EINVAL);
+        assert(nn.ptr->fd > -1 || errno != EMFILE);
+        assert(nn.ptr->fd > -1 || errno != ENFILE);
+        assert(nn.ptr->fd > -1 || errno != ENOBUFS);
+        assert(nn.ptr->fd > -1 || errno != ENOMEM);
+        assert(nn.ptr->fd > -1 || errno != ENOTSOCK);
+        assert(nn.ptr->fd > -1 || errno != EOPNOTSUPP);
+        assert(nn.ptr->fd > -1 || errno != EPROTO);
         assert(nn.ptr->fd > -1);
 
         /* Set socket to nonblocking */
@@ -248,14 +275,14 @@ void net_listen_inet(int port)
     n.fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     /* Error checks */
-    assert(n.fd > -1 || errno == EACCES);
-    assert(n.fd > -1 || errno == EAFNOSUPPORT);
-    assert(n.fd > -1 || errno == EINVAL);
-    assert(n.fd > -1 || errno == EMFILE);
-    assert(n.fd > -1 || errno == ENFILE);
-    assert(n.fd > -1 || errno == ENOBUFS);
-    assert(n.fd > -1 || errno == ENOMEM);
-    assert(n.fd > -1 || errno == EPROTONOSUPPORT);
+    assert(n.fd > -1 || errno != EACCES);
+    assert(n.fd > -1 || errno != EAFNOSUPPORT);
+    assert(n.fd > -1 || errno != EINVAL);
+    assert(n.fd > -1 || errno != EMFILE);
+    assert(n.fd > -1 || errno != ENFILE);
+    assert(n.fd > -1 || errno != ENOBUFS);
+    assert(n.fd > -1 || errno != ENOMEM);
+    assert(n.fd > -1 || errno != EPROTONOSUPPORT);
     assert(n.fd > -1);
 
     /* Bind */
@@ -263,28 +290,28 @@ void net_listen_inet(int port)
     rc = bind(n.fd, (struct sockaddr*) &n.addr,
             sizeof(n.addr));
 
-    assert(rc > -1 || errno == EACCES);
-    assert(rc > -1 || errno == EADDRINUSE);
-    assert(rc > -1 || errno == EBADF);
-    assert(rc > -1 || errno == EINVAL);
-    assert(rc > -1 || errno == ENOTSOCK);
-    assert(rc > -1 || errno == EACCES);
-    assert(rc > -1 || errno == EADDRNOTAVAIL);
-    assert(rc > -1 || errno == EFAULT);
-    assert(rc > -1 || errno == ELOOP);
-    assert(rc > -1 || errno == ENAMETOOLONG);
-    assert(rc > -1 || errno == ENOENT);
-    assert(rc > -1 || errno == ENOMEM);
-    assert(rc > -1 || errno == ENOTDIR);
-    assert(rc > -1 || errno == EROFS);
+    assert(rc > -1 || errno != EACCES);
+    assert(rc > -1 || errno != EADDRINUSE);
+    assert(rc > -1 || errno != EBADF);
+    assert(rc > -1 || errno != EINVAL);
+    assert(rc > -1 || errno != ENOTSOCK);
+    assert(rc > -1 || errno != EACCES);
+    assert(rc > -1 || errno != EADDRNOTAVAIL);
+    assert(rc > -1 || errno != EFAULT);
+    assert(rc > -1 || errno != ELOOP);
+    assert(rc > -1 || errno != ENAMETOOLONG);
+    assert(rc > -1 || errno != ENOENT);
+    assert(rc > -1 || errno != ENOMEM);
+    assert(rc > -1 || errno != ENOTDIR);
+    assert(rc > -1 || errno != EROFS);
     assert(rc > -1);
 
     /* Listen */
     rc = listen(n.fd, 100);
-    assert(rc > -1 || errno == EADDRINUSE);
-    assert(rc > -1 || errno == EBADF);
-    assert(rc > -1 || errno == ENOTSOCK);
-    assert(rc > -1 || errno == EOPNOTSUPP);
+    assert(rc > -1 || errno != EADDRINUSE);
+    assert(rc > -1 || errno != EBADF);
+    assert(rc > -1 || errno != ENOTSOCK);
+    assert(rc > -1 || errno != EOPNOTSUPP);
     assert(rc > -1);
 
     /* Setup work struct */
