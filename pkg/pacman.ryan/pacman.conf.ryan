@@ -74,19 +74,19 @@ LocalFileSigLevel = Optional
 #Include = /etc/pacman.d/mirrorlist
 
 [core.ryan]
-Server = http://10.0.1.1/pkg/
+Server = http://repo/pkg/
 
 [core]
-Server = http://10.0.1.1/archlinux/$repo/os/$arch
+Server = http://repo/archlinux/$repo/os/$arch
 
 [extra]
-Server = http://10.0.1.1/archlinux/$repo/os/$arch
+Server = http://repo/archlinux/$repo/os/$arch
 
 #[community-testing]
 #Include = /etc/pacman.d/mirrorlist
 
 [community]
-Server = http://10.0.1.1/archlinux/$repo/os/$arch
+Server = http://repo/archlinux/$repo/os/$arch
 
 # If you want to run 32 bit applications on your x86_64 system,
 # enable the multilib repositories as required here.
@@ -95,7 +95,7 @@ Server = http://10.0.1.1/archlinux/$repo/os/$arch
 #Include = /etc/pacman.d/mirrorlist
 
 [multilib]
-Server = http://10.0.1.1/archlinux/$repo/os/$arch
+Server = http://repo/archlinux/$repo/os/$arch
 
 # An example of a custom package repository.  See the pacman manpage for
 # tips on creating your own repositories.

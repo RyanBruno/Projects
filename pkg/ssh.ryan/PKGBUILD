@@ -1,6 +1,6 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=ssh.ryan
-pkgver=0.0.2
+pkgver=0.0.4
 pkgrel=1
 pkgdesc='Ryans configured ssh'
 arch=('any')
@@ -8,13 +8,18 @@ url='https://github.com/RyanBruno/TheRepository'
 license=('GPL')
 #depends=('ssh.ryan')
 backup=('etc/ssh/ssh_config.ryan')
-source=(ssh.ryan ssh_config.ryan)
-sha256sums=('SKIP' 'SKIP')
+source=(ssh.ryan ssh_config.ryan sshd_config.ryan sshd.ryan.service authorized_keys)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 #validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
 
 package() {
     mkdir -p $pkgdir/usr/bin
     mkdir -p $pkgdir/etc/ssh
+    mkdir -p $pkgdir/usr/lib/systemd/system
+    mkdir -p $pkgdir/usr/lib/ssh.ryan
     install ssh.ryan $pkgdir/usr/bin/ssh.ryan
     install ssh_config.ryan $pkgdir/etc/ssh/ssh_config.ryan
+    install sshd_config.ryan $pkgdir/etc/ssh/sshd_config.ryan
+    install sshd.ryan.service $pkgdir/usr/lib/systemd/system/sshd.ryan.service
+    install authorized_keys $pkgdir/usr/lib/ssh.ryan/authorized_keys
 }
