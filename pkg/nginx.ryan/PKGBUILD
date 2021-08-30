@@ -1,6 +1,6 @@
 # Maintainer: Ryan Bruno <ryan@rbruno.com>
 pkgname=nginx.ryan
-pkgver=0.0.1
+pkgver=0.0.4
 pkgrel=1
 pkgdesc='Ryans configured nginx'
 arch=('any')
@@ -8,13 +8,15 @@ url='https://github.com/RyanBruno/TheRepository'
 license=('GPL')
 depends=('nginx-mainline')
 backup=('etc/nginx/nginx.conf.ryan')
-source=(nginx.conf.ryan nginx.ryan.service)
-sha256sums=('SKIP' 'SKIP')
+source=(nginx.conf.ryan nginx.ryan.service nginx.ryan)
+sha256sums=('SKIP' 'SKIP' 'SKIP')
 #validpgpkeys=('915EBB9C9889E4AEB983CD96F15F942AA25D5A6A')
 
 package() {
     mkdir -p $pkgdir/usr/lib/systemd/system/
+    mkdir -p $pkgdir/usr/bin/
     mkdir -p $pkgdir/etc/nginx/
     install nginx.ryan.service $pkgdir/usr/lib/systemd/system/nginx.ryan.service
     install nginx.conf.ryan $pkgdir/etc/nginx/nginx.conf.ryan
+    install nginx.ryan $pkgdir/usr/bin/nginx.ryan
 }

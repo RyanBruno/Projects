@@ -1,0 +1,6 @@
+#!/bin/sh
+
+[ -e /srv/pacman-cache ] || echo "Creating /srv/pacman-cache" &&
+mkdir -p /srv/pacman-cache && chown http:http /srv/pacman-cache
+
+nginx $* -g 'pid /run/nginx.pid; error_log stderr;'
