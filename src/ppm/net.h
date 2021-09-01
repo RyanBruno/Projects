@@ -110,8 +110,9 @@ void net_exec(struct net* n /* move */)
 
 void net_write(void* ctx, const void* v /* const-ref */)
 {
+    (void) v;
     struct net* n = (struct net*) ctx;
-    const T2* ev = (T2*) v;
+    //const T2* ev = (T2*) v; // TODO
     ssize_t s;
 
     s = write(n->fd, T4_CCAT(str)(&n->wbuf),

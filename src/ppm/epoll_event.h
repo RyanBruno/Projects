@@ -5,6 +5,7 @@
 #define T1_CCAT(x) CCAT2(T1_PREFIX, x)
 void epoll_event_exec(struct epoll_event* ev, void* v)
 {
+    (void) v;
     T1_CCAT(exec)(ev->data.ptr, ev);
 }
 #undef T1_CCAT

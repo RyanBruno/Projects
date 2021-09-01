@@ -1,5 +1,4 @@
-#include "user_story.h"
-#include "user_story_test_data.h"
+#if 0
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,6 +18,8 @@ void
 user_story_repo_get_by_id(unsigned long id,
         struct user_story* user_story_r)
 {
+    (void) id;
+    (void) user_story_r;
 }
 
 void
@@ -41,6 +42,7 @@ user_story_update(struct user_story* user_story,
         const char* value /* move */)
 {
     struct user_story_edit* user_story_edit;
+    (void) field;
 
     user_story_edit = malloc(sizeof(struct user_story_edit));
     assert(user_story_edit != NULL);
@@ -72,6 +74,7 @@ user_story_update_stage(struct user_story* user_story,
         const char* stage /* const-ref */)
 {
     struct user_story_life_cycle* user_story_life_cycle;
+    (void) stage;
 
     user_story_life_cycle = malloc(sizeof(struct user_story_life_cycle));
     assert(user_story_life_cycle != NULL);
@@ -85,6 +88,8 @@ user_story_update_stage(struct user_story* user_story,
 const char*
 user_story_str(struct user_story* user_story /* const-ref */)
 {
-    printf("%llu\n", user_story->id);
+    printf("%lu\n", user_story->id);
+    return NULL;
 }
 
+#endif

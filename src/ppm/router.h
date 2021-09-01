@@ -57,7 +57,7 @@ router_insert(struct router* r, const char* uri)
     if (dlhandle == NULL) printf("%s\n", dlerror());
     assert(dlhandle != NULL);
 
-    symbol = dlsym(dlhandle, "hello_world");
+    symbol = dlsym(dlhandle, "entry");
 
     if (symbol == NULL) printf("%s\n", dlerror());
     assert(symbol != NULL);

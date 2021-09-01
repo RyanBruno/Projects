@@ -12,11 +12,12 @@ T0_CCAT(ptr_move) (T0_CCAT(ptr)* cur)
     T0_CCAT(ptr) other;
 
     other.ptr = cur->ptr;
+    //cur->ptr = NULL;
 
     return other;
 }
 
-T0_CCAT(ptr)
+void
 T0_CCAT(ptr_construct) (T0_CCAT(ptr)* ptr, void* p)
 {
     ptr->ptr = (T0*) p;
@@ -27,8 +28,10 @@ T01_CCAT(ptr)
 T0_CCAT(ptr_morph) (T0_CCAT(ptr)* ptr, void* p)
 {
     T01_CCAT(ptr) other;
+    (void) ptr;
 
     other.ptr = (T01*) p;
+    //ptr->ptr = NULL;
 
     return other;
 }

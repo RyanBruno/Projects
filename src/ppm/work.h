@@ -15,6 +15,7 @@ struct work {
 
 void work_deconstruct(struct work* wk)
 {
+    (void) wk;
     //T1_CCAT(deconstruct)(wk->ctx);
 }
 

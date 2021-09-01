@@ -62,7 +62,7 @@ int linux_net_select(linux_net* lux, struct epoll_event* e, int c, int timeout)
 
 again:
     printf("Listening....\n");
-    n = epoll_wait(lux->epoll, e, c, -1);
+    n = epoll_wait(lux->epoll, e, c, timeout);
 
     if (n == 0) {
         /* Timeout */

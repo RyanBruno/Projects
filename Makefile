@@ -12,8 +12,8 @@ DEPFILES    := $(DEPFILES:.cpp=.d)
 ALLFILES := $(SRCFILES) $(HDRFILES) $(AUXFILES)
 
 # Actual Targets
-all: orset liborset.so test web 
-clean : clean_web clean_orset clean_shellbridge
+all: orset liborset.so test web ppm ppm2
+clean : clean_web clean_orset clean_shellbridge clean_ppm clean_ppm2
 	-@$(RM) $(wildcard $(OBJFILES) $(DEPFILES) $(PCHDRS))
 
 # C Building
@@ -22,9 +22,10 @@ clean : clean_web clean_orset clean_shellbridge
 #.cpp: $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c
 #.o  : $(CC) $(LDFLAGS) n.o $(LOADLIBES) $(LDLIBS)
 include_dirs = -I/usr/include/tirpc
-CFLAGS = $(include_dirs) $(libs) -Wall -Wextra -fPIC
+CFLAGS = $(include_dirs) $(libs) -fPIC
+#-Wall -Wextra
 CXXFLAGS = $(CFLAGS)
-LDLIBS = -ltirpc -pthread -lmicrohttpd
+LDLIBS = -ltirpc -pthread -lmicrohttpd -ldl
 
 todo:
 	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
@@ -34,14 +35,31 @@ headers: $(PCHDRS)
 %.gch: % Makefile
 	@$(CXX) -ggdb $(CFLAGS) -c $< -o $@
 
-%.o: %.cpp Makefile headers
+%.o: %.cpp Makefile# headers
 	@$(CXX) -ggdb $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -DTEST -c $< -o $@
 
-%.o: %.c Makefile headers
+%.o: %.c Makefile# headers
 	@$(CC) -ggdb $(CFLAGS) -MMD -MP -DTEST -c $< -o $@
 
 
-.PHONY: todo all clean web clean_web
+.PHONY: todo all clean web clean_web clean_ppm clean_ppm2
+
+## PPM
+
+ppm: $(filter src/ppm/%,$(OBJFILES))
+	$(CXX) -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
+clean_ppm:
+	-@$(RM) ppm
+
+hello.so: $(filter src/ppm2/%,$(OBJFILES))
+	$(CXX) -shared -ggdb $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
+## PPM2
+
+
+clean_ppm2:
+	-@$(RM) hello.so
 
 ## OrSet
 
