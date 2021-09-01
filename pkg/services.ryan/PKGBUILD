@@ -13,6 +13,7 @@ depends=(
     'radicale.ryan'
     'logwatch'
     'smartd.ryan'
+    'ssh.ryan'
 )
 
 package() {
@@ -24,6 +25,7 @@ package() {
     ln -s /usr/lib/systemd/system/postfix.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/postfix.ryan.service
     ln -s /usr/lib/systemd/system/radicale.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/radicale.ryan.service
     ln -s /usr/lib/systemd/system/smartd.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/smartd.ryan.service
+    ln -s /usr/lib/systemd/system/sshd.ryan.service $pkgdir/etc/systemd/system/multi-user.target.wants/sshd.ryan.service
 
     ln -s /usr/lib/systemd/system/logwatch.service $pkgdir/etc/systemd/system/timers.target.wants/logwatch.service
 }
