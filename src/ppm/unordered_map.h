@@ -32,15 +32,15 @@ void T2_CCAT(insert)(struct CCAT2(unordered_map_, T2_TYPE)* um,
     {
         void* ptr;
 
-        ptr = malloc((um->s + 5) * sizeof(struct T2_CCAT(key_val)));
+        ptr = realloc(um->data, (um->s + 5) * sizeof(struct T2_CCAT(key_val)));
         assert(ptr != NULL);
 
         um->data = ptr;
         um->c = um->s + 5;
     }
 
-    CCAT2(T1_PREFIX, move_mem)(k, &um->data[um->s].key);
-    CCAT2(T2_PREFIX, move_mem)(v, &um->data[um->s].val);
+    CCAT2(T1_PREFIX, move_mem)(&um->data[um->s].key, k);
+    CCAT2(T2_PREFIX, move_mem)(&um->data[um->s].val, v);
     um->s++;
 }
 
@@ -60,13 +60,13 @@ struct T2_CCAT(key_val)*
 T2_CCAT(next)(struct CCAT2(unordered_map_, T2_TYPE)* um,
         struct T2_CCAT(key_val)* kv)
 {
-    for (int i = 0; i < um->s; i++) {
+    for (int i = 0; i + 1 < um->s; i++) {
         struct T2_CCAT(key_val)* tmp;
 
         tmp = &um->data[i];
 
         if (CCAT2(T1_PREFIX, equals)(&tmp->key, &kv->key))
-            return tmp;
+            return &um->data[i + 1];
     }
 
     return NULL;

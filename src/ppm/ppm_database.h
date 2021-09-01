@@ -30,6 +30,15 @@ struct ppm_database {
     struct T1_T6 user_story_stage;
 };
 
+void ppm_database_construct(struct ppm_database* db)
+{
+    T2_CCAT(construct)(&db->user_story);
+    T3_CCAT(construct)(&db->user_story_edit);
+    T4_CCAT(construct)(&db->user_story_field);
+    T5_CCAT(construct)(&db->user_story_life_cycle);
+    T6_CCAT(construct)(&db->user_story_stage);
+}
+
 #undef CCAT
 #undef CCAT2
 

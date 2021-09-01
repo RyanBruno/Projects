@@ -8,6 +8,9 @@
 /* ulong */
 #include "ulong.h"
 
+/* str */
+#include "str.h"
+
 /* user_story */
 #include "user_story_model.h"
 
@@ -54,6 +57,50 @@
 #define T2_TYPE struct user_story_edit
 #define T2_PREFIX user_story_edit_
 #define T3 user_story_id
+#define T4 unsigned long
+#define T4_PREFIX ulong_
+#include "find.h"
+
+/* find */
+#define T1 struct unordered_map
+#define T1_PREFIX unordered_map_
+#define T2 user_story_field
+#define T2_TYPE struct user_story_field
+#define T2_PREFIX user_story_field_
+#define T3 id
+#define T4 unsigned long
+#define T4_PREFIX ulong_
+#include "find.h"
+
+/* find */
+#define T1 struct unordered_map
+#define T1_PREFIX unordered_map_
+#define T2 user_story_field
+#define T2_TYPE struct user_story_field
+#define T2_PREFIX user_story_field_
+#define T3 field
+#define T4 const char* 
+#define T4_PREFIX str_
+#include "find.h"
+
+/* find */
+#define T1 struct unordered_map
+#define T1_PREFIX unordered_map_
+#define T2 user_story_life_cycle
+#define T2_TYPE struct user_story_life_cycle
+#define T2_PREFIX user_story_life_cycle_
+#define T3 user_story_id
+#define T4 unsigned long
+#define T4_PREFIX ulong_
+#include "find.h"
+
+/* find */
+#define T1 struct unordered_map
+#define T1_PREFIX unordered_map_
+#define T2 user_story_stage
+#define T2_TYPE struct user_story_stage
+#define T2_PREFIX user_story_stage_
+#define T3 id
 #define T4 unsigned long
 #define T4_PREFIX ulong_
 #include "find.h"
@@ -112,8 +159,73 @@
 #define T5_PREFIX http_
 #include "net.h"
 
+/* user_story_view */
+#include "user_story_view.h"
+
 int main(int argc, char* argv[])
 {
-    assert(argc > 1);
-    net_listen_inet((int) strtol(argv[1], NULL, 10));
+    struct ppm_database db;
+
+    ppm_database_construct(&db);
+
+    struct user_story us = {
+        .id = 1,
+    };
+
+    struct user_story_edit us_edit_msg = {
+        .id = 2,
+        .user_story_id = 1,
+        .user_story_field_id = 4,
+        .value = "Hello",
+    };
+    struct user_story_edit us_edit_desc = {
+        .id = 3,
+        .user_story_id = 1,
+        .user_story_field_id = 5,
+        .value = "World",
+    };
+    struct user_story_field us_field_msg = {
+        .id = 4,
+        .field = "message",
+    };
+    struct user_story_field us_field_desc = {
+        .id = 5,
+        .field = "description",
+    };
+    struct user_story_life_cycle us_life_cycle = {
+        .id = 6,
+        .user_story_id = 1,
+        .user_story_stage_id = 7,
+    };
+    struct user_story_stage us_stage = {
+        .id = 7,
+        .stage = "In Progress",
+    };
+
+    unordered_map_user_story_insert(&db.user_story,
+            &us.id,
+            &us);
+    unordered_map_user_story_edit_insert(&db.user_story_edit,
+            &us_edit_msg.id,
+            &us_edit_msg);
+    unordered_map_user_story_edit_insert(&db.user_story_edit,
+            &us_edit_desc.id,
+            &us_edit_desc);
+    unordered_map_user_story_field_insert(&db.user_story_field,
+            &us_field_msg.id,
+            &us_field_msg);
+    unordered_map_user_story_field_insert(&db.user_story_field,
+            &us_field_desc.id,
+            &us_field_desc);
+    unordered_map_user_story_life_cycle_insert(&db.user_story_life_cycle,
+            &us_life_cycle.id,
+            &us_life_cycle);
+    unordered_map_user_story_stage_insert(&db.user_story_stage,
+            &us_stage.id,
+            &us_stage);
+
+    user_story_view_table(&db, NULL, 0);
+    /*assert(argc > 1);
+    net_listen_inet((int) strtol(argv[1], NULL, 10));*/
+    return 0;
 }

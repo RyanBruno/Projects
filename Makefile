@@ -22,7 +22,7 @@ clean : clean_web clean_orset clean_shellbridge clean_ppm clean_ppm2
 #.cpp: $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c
 #.o  : $(CC) $(LDFLAGS) n.o $(LOADLIBES) $(LDLIBS)
 include_dirs = -I/usr/include/tirpc
-CFLAGS = $(include_dirs) $(libs) -fPIC
+CFLAGS = $(include_dirs) $(libs) -fPIC -fdiagnostics-color=always
 #-Wall -Wextra
 CXXFLAGS = $(CFLAGS)
 LDLIBS = -ltirpc -pthread -lmicrohttpd -ldl

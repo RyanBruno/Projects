@@ -1,4 +1,4 @@
-
+#if 0
 /* TODO string */
 const char*
 str_move(const char* str);
@@ -14,3 +14,4 @@ user_story_update_description(struct user_story* user_story,
 void
 user_story_update_stage(struct user_story* user_story,
         const char* stage /* const-ref */);
+#endif
